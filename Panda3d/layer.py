@@ -7,6 +7,7 @@ Created on Wed Feb  6 05:46:01 2019
 """
 
 from corticalColumn import cCorticalColumn
+from panda3d.core import NodePath,PandaNode,TextNode
 
 class cLayer():
         
@@ -17,7 +18,15 @@ class cLayer():
             self.corticalColumns.append(c)
     def createGfx(self,loader):
         
-        self.__node = loader.loadModel("models/panda")
+        self.__node = NodePath(PandaNode('layer1'))#TextNode('layerText')#loader.loadModel("models/teapot")
+        
+        text = TextNode('node name')
+        text.setText("Layer1")
+        
+        textNodePath = self.__node.attachNewNode(text)
+        
+        textNodePath.setPos(0,-5,0)
+            
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(1, 1, 1)
         

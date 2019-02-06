@@ -20,7 +20,7 @@ class cApp(ShowBase):
         self.mouseX_last=0
         self.mouseY_last=0
         self.rotateCamera=False
-        self.move_y=0
+        self.move_z=50
         
                 
          # Load the environment model.
@@ -91,9 +91,9 @@ class cApp(ShowBase):
         lens.setNear(0.01)
         lens.setFar(1000.0)
         self.cam.node().setLens(lens)
-        self.camera.setPos(-90, -0.5, 1)
-        self.heading = -95.0
-        self.pitch = 0.0
+        self.camera.setPos(40, -80, 0)
+        self.heading = 0.0
+        self.pitch = -30.0
         
         
         self.accept('mouse1',self.mouseEvent,["left",True])
@@ -145,11 +145,11 @@ class cApp(ShowBase):
         
         
         move_x = deltaT * speed * -self.keys['a'] + deltaT * speed * self.keys['d']
-        move_z = deltaT * speed * self.keys['s'] + deltaT * speed * -self.keys['w']
-        self.move_y += deltaT * speed * self.keys['shift'] + deltaT * speed * -self.keys['control']
+        move_y = deltaT * speed * self.keys['s'] + deltaT * speed * -self.keys['w']
+        self.move_z += deltaT * speed * self.keys['shift'] + deltaT * speed * -self.keys['control']
         
-        self.camera.setPos(self.camera,move_x, -move_z, 0)
-        self.camera.setZ(self.move_y)
+        self.camera.setPos(self.camera,move_x, -move_y, 0)
+        self.camera.setZ(self.move_z)
         
         self.heading += (deltaT * 90 * self.keys['arrow_left'] +
                          deltaT * 90 * -self.keys['arrow_right'] +
