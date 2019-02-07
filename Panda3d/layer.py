@@ -10,20 +10,30 @@ from corticalColumn import cCorticalColumn
 from panda3d.core import NodePath,PandaNode,TextNode
 
 class cLayer():
+    
+    indexNameIncrement=0
+    
+    def __init__(self,name,nOfColumns,nOfNeuronsPerColumn):
         
-    def __init__(self,nOfColumns,nOfNeuronsPerColumn):
+        if name=='':
+            cLayer.indexNameIncrement+=1
+            name="L"+str(cLayer.indexNameIncrement)
+        self.name=name
+        
         self.corticalColumns = []
         for i in range(nOfColumns):
             c = cCorticalColumn(nOfNeuronsPerColumn)
             self.corticalColumns.append(c)
-    def createGfx(self,loader):
+            
+    def CreateGfx(self,loader):
         
-        self.__node = NodePath(PandaNode('layer1'))#TextNode('layerText')#loader.loadModel("models/teapot")
+        self.__node = NodePath(PandaNode('Layer'))#TextNode('layerText')#loader.loadModel("models/teapot")
         
-        text = TextNode('node name')
-        text.setText("Layer1")
+        text = TextNode('Node name')
+        text.setText(self.name)
         
         textNodePath = self.__node.attachNewNode(text)
+        textNodePath.setScale(2)
         
         textNodePath.setPos(0,-5,0)
             
@@ -32,7 +42,7 @@ class cLayer():
         
         y=0
         for c in self.corticalColumns:
-            c.createGfx(loader)
+            c.CreateGfx(loader)
             c.getNode().setPos(0,y,0)
             y+=3
             c.getNode().reparentTo(self.__node)

@@ -10,9 +10,12 @@ from panda3d.core import LColor
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode,PerspectiveLens
 
 from htm import cHTM 
+from gui import cGUI
 
 class cApp(ShowBase):
  
+    FOCAL_LENGTH = 500
+    
     def __init__(self):
         ShowBase.__init__(self)
         
@@ -22,53 +25,22 @@ class cApp(ShowBase):
         self.rotateCamera=False
         self.move_z=50
         
-                
-         # Load the environment model.
-        self.cube = self.loader.loadModel("cube")#/media/Data/Data/Panda3d/
-        
-        # Reparent the model to render.
-        self.cube.reparentTo(self.render)
-        # Apply scale and position transforms on the model.
-        
-        self.cube.setScale(10, 10, 10)
-        self.cube.setPos(-8, 42, 0)
-        
-        self.cube.setColor(1.0,0,0,1.0)
-        self.cube.setRenderModeThickness(5)
-        
-        self.cube.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
-        
-        
-        form = GeomVertexFormat.getV3()
-        
-        vdata = GeomVertexData('myLine',form,Geom.UHStatic)
-        
-        vdata.setNumRows(1)
-        
-        vertex = GeomVertexWriter(vdata,'vertex')
-        
-        vertex.addData3f(0,0,0)
-        vertex.addData3f(0,0,10)
-        
-        prim = GeomLines(Geom.UHStatic)
-        prim.addVertices(0,1)
-        
-        geom = Geom(vdata)
-        geom.addPrimitive(prim)
-        
-        node = GeomNode('gnode')
-        node.addGeom(geom)
-        
-        nodePath = self.render.attachNewNode(node)
+    
+        #self.CreateTestScene()
+         
 
         self.SetupCameraAndKeys()
 
         self.taskMgr.add(self.update, 'main loop')
         
+        self.accept(self.win.getWindowEvent(),self.onWindowEvent)
         
-        self.htm = cHTM(3,10,3)
         
-        self.htm.createGfx(self.loader)
+        self.gui = cGUI()
+        
+        self.htm = cHTM()
+        
+        self.htm.CreateGfx(self.loader)
         self.htm.getNode().reparentTo(self.render)
         
 
@@ -86,11 +58,16 @@ class cApp(ShowBase):
         self.disableMouse()
 
         # Setup camera
+        width = self.win.getProperties().getXSize()
+        height = self.win.getProperties().getYSize()
         lens = PerspectiveLens()
         lens.setFov(60)
-        lens.setNear(0.01)
-        lens.setFar(1000.0)
+
+        lens.setAspectRatio(width/height)
+        #lens.setFilmSize(width,height)
+        #lens.setFocalLength(self.FOCAL_LENGTH)
         self.cam.node().setLens(lens)
+        
         self.camera.setPos(40, -80, 0)
         self.heading = 0.0
         self.pitch = -30.0
@@ -101,6 +78,18 @@ class cApp(ShowBase):
         self.accept('mouse3',self.mouseEvent,["right",True])
         self.accept('mouse3-up',self.mouseEvent,["right",False])
         
+    def onWindowEvent(self,window):
+        width = self.win.getProperties().getXSize()
+        height = self.win.getProperties().getYSize()
+        
+        lens = PerspectiveLens()
+        lens.setFov(60)
+        lens.setAspectRatio(width/height)
+        
+        
+        #lens.setFilmSize(width,height)
+        #lens.setFocalLength(self.FOCAL_LENGTH)
+        self.cam.node().setLens(lens)
         
     def push_key(self, key, value):
         """Stores a value associated with a key."""
@@ -140,6 +129,7 @@ class cApp(ShowBase):
             deltaX = mw.getMouseX() - self.mouseX_last
             deltaY = mw.getMouseY() - self.mouseY_last
             
+            
             self.mouseX_last = mw.getMouseX()
             self.mouseY_last = mw.getMouseY()        
         
@@ -153,15 +143,55 @@ class cApp(ShowBase):
         
         self.heading += (deltaT * 90 * self.keys['arrow_left'] +
                          deltaT * 90 * -self.keys['arrow_right'] +
-                         deltaT * 10000 * -deltaX)
+                         deltaT * 5000 * -deltaX)
         self.pitch += (deltaT * 90 * self.keys['arrow_up'] +
                        deltaT * 90 * -self.keys['arrow_down']+
-                       deltaT * 10000 * deltaY)
+                       deltaT * 5000 * deltaY)
         self.camera.setHpr(self.heading, self.pitch, 0)
         
         
         return task.cont
         
+    
+    def CreateTestScene(self):
+        
+        # Load the environment model.
+        self.cube = self.loader.loadModel("cube")#/media/Data/Data/Panda3d/
+        
+        # Reparent the model to render.
+        self.cube.reparentTo(self.render)
+        # Apply scale and position transforms on the model.
+        
+        self.cube.setScale(10, 10, 10)
+        self.cube.setPos(-8, 42, 0)
+        
+        self.cube.setColor(1.0,0,0,1.0)
+        self.cube.setRenderModeThickness(5)
+        
+        self.cube.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+        
+        
+        form = GeomVertexFormat.getV3()
+        
+        vdata = GeomVertexData('myLine',form,Geom.UHStatic)
+        
+        vdata.setNumRows(1)
+        
+        vertex = GeomVertexWriter(vdata,'vertex')
+        
+        vertex.addData3f(0,0,0)
+        vertex.addData3f(0,0,10)
+        
+        prim = GeomLines(Geom.UHStatic)
+        prim.addVertices(0,1)
+        
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        node = GeomNode('gnode')
+        node.addGeom(geom)
+        
+        nodePath = self.render.attachNewNode(node)
         
         
         

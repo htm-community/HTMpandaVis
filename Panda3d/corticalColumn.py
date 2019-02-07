@@ -18,7 +18,7 @@ class cCorticalColumn():
             n = cNeuron()
             self.neurons.append(n)
             
-    def createGfx(self,loader):
+    def CreateGfx(self,loader):
         
         self.__node = NodePath(PandaNode('column'))# loader.loadModel("models/box")
         self.__node.setPos(0, 0, 0)
@@ -26,9 +26,9 @@ class cCorticalColumn():
         
         z=0
         for n in self.neurons:
-            n.createGfx(loader)
+            n.CreateGfx(loader)
             n.getNode().setPos(0,0,z)
-            z+=4
+            z+=1
             n.getNode().reparentTo(self.__node)
         
         return

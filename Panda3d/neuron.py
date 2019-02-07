@@ -14,12 +14,23 @@ class cNeuron():
         self.state = False if random.randint(0,1)==0 else True
         
         
-    def createGfx(self,loader):
+    def CreateGfx(self,loader):
         
         self.__node = loader.loadModel("cube")
         self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
         self.__node.setPos(0, 0, 0)
-        self.__node.setScale(1, 1, 1)
+        self.__node.setScale(0.5, 0.5, 0.5)
+        
+        self.UpdateState()
 
+    def UpdateState(self):
+        if self.state:
+            self.__node.setColor(1.0,0.0,0.0,1.0)#red
+        else:
+            self.__node.setColor(1.0,1.0,1.0,1.0)#white
+            
+        #self.__node.setRenderModeThickness(5)
+        self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+        
     def getNode(self):
         return self.__node
