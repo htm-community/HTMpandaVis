@@ -10,14 +10,9 @@ from corticalColumn import cCorticalColumn
 from panda3d.core import NodePath,PandaNode,TextNode
 
 class cLayer():
-    
-    indexNameIncrement=0
-    
+        
     def __init__(self,name,nOfColumns,nOfNeuronsPerColumn):
         
-        if name=='':
-            cLayer.indexNameIncrement+=1
-            name="L"+str(cLayer.indexNameIncrement)
         self.name=name
         
         self.corticalColumns = []
