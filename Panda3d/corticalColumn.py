@@ -17,6 +17,8 @@ class cCorticalColumn():
         for i in range(nOfNeuronsPerColumn):
             n = cNeuron()
             self.neurons.append(n)
+          
+        self.state = False
             
     def CreateGfx(self,loader):
         
@@ -32,6 +34,14 @@ class cCorticalColumn():
             n.getNode().reparentTo(self.__node)
         
         return
+      
+    def UpdateState(self,state):
+      
+      self.state = state
+      
+      for n in self.neurons:
+        n.state = state
+        n.UpdateState()
 
     def getNode(self):
         return self.__node

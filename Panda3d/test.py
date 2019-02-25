@@ -9,6 +9,8 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import LColor
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode,PerspectiveLens
 
+from direct.gui.DirectGui import OnscreenImage,DirectButton,DirectFrame
+
 import socket, pickle
 from enum import Enum
 import _thread
@@ -19,8 +21,8 @@ import time
 from htm import cHTM 
 from gui import cGUI
 
-inputData = []
-inputDataChange = False
+serverData = None
+serverDataChange = False
 terminateClientThread = False
 
 class cApp(ShowBase):
@@ -37,7 +39,7 @@ class cApp(ShowBase):
         self.move_z=50
         
     
-        #self.CreateTestScene()
+        self.CreateTestScene()
          
 
         self.SetupCameraAndKeys()
@@ -47,17 +49,46 @@ class cApp(ShowBase):
         self.accept(self.win.getWindowEvent(),self.onWindowEvent)
         
         
-        #self.gui = cGUI()
+        width = self.win.getProperties().getXSize()
+        height = self.win.getProperties().getYSize()
+        
+        self.gui = cGUI(width,height)
+        
+                
         
         self.htm = cHTM(self.loader)
         
-        self.htm.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
-        self.htm.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
+#        self.button = DirectFrame(frameColor = (0,0,0,0.3),
+#                      frameSize=(-1, 1, -1, 1),
+#                      pos=(1, -1, -1))
+#        
+#        self.button.reparentTo(pixel2d)
+#        self.button.setPos(0, 0, 0)
+#        self.button.setScale(364, 1, 50)
+#       
+        #self.gui.myFrame.reparentTo(pixel2d)
+        
+#        myFrame = DirectFrame(frameColor = (0,0,0,0.3),frameSize=(-1, 1, -1, 1),pos=(1, -1, -1))
+#        
+        
+        
+#        self.logo = OnscreenImage(image = 'Logo.png') # Image size is 728x100
+#        self.logo.reparentTo(pixel2d)
+#        self.logo.setPos(0, 0, 0)
+#        self.logo.setScale(364, 1, 50)
+
+
+        #self.htm.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
+        
+        #self.htm.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
         
         
         #nOfLayers=3,nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3
+        
+        #self.pixel2d.reparentTo(self.render2d)
+        
         
         self.htm.getNode().reparentTo(self.render)
         
@@ -84,6 +115,7 @@ class cApp(ShowBase):
         lens.setAspectRatio(width/height)
         #lens.setFilmSize(width,height)
         #lens.setFocalLength(self.FOCAL_LENGTH)
+        lens.setFar(500.0)
         self.cam.node().setLens(lens)
         
         self.camera.setPos(40, -80, 0)
@@ -110,14 +142,16 @@ class cApp(ShowBase):
       width = self.win.getProperties().getXSize()
       height = self.win.getProperties().getYSize()
       
-      lens = PerspectiveLens()
+      lens = self.cam.node().getLens()
       lens.setFov(60)
       lens.setAspectRatio(width/height)
       
-      
+      lens.setFar(500.0)
       #lens.setFilmSize(width,height)
       #lens.setFocalLength(self.FOCAL_LENGTH)
       self.cam.node().setLens(lens)
+      
+      self.gui.onWindowEvent(window)
         
     def push_key(self, key, value):
         """Stores a value associated with a key."""
@@ -142,7 +176,7 @@ class cApp(ShowBase):
                 
         
     def update(self, task):
-      global inputDataChange
+      global serverDataChange
       """Updates the camera based on the keyboard input. Once this is
       done, then the CellManager's update function is called."""
       deltaT = globalClock.getDt()
@@ -179,18 +213,23 @@ class cApp(ShowBase):
       self.camera.setHpr(self.heading, self.pitch, 0)
       
       
-      if len(inputData)!=0 and inputDataChange:
-        inputDataChange=False
+      if serverDataChange and len(serverData.inputs)!=0:
+        serverDataChange=False
         
+        
+        inputData = serverData.inputs
         for i in range(len(inputData)):
         
-          if len(self.htm.inputs)<=i:#if no input is created
+          if len(self.htm.inputs)<=i:#if no input instances exists
             self.htm.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
           
-          self.htm.inputs[i].UpdateData(inputData[i])
+          self.htm.inputs[i].UpdateState(inputData[i])
         
+
+        if len(self.htm.layers)==0:#if no input instances exists
+          self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=serverData.columnDimensions,nOfNeuronsPerColumn=serverData.cellsPerColumn)
         
-        
+        self.htm.layers[0].UpdateState(activeColumns=serverData.activeColumnIndices,activeCells=serverData.activeCells)
         
       
       return task.cont
@@ -247,6 +286,10 @@ class ServerData(object):
   def __init__(self):
     self.a = 0
     self.inputs = []
+    self.activeColumnIndices=[]
+    self.activeCells=[]
+    self.columnDimensions=0
+    self.cellsPerColumn=0
     
     
 class CLIENT_CMD(Enum):
@@ -271,7 +314,7 @@ def InitClient():
   _thread.start_new_thread( RunClient, () )
 
 def RunClient():
-  global inputDataChange,inputData,terminateClientThread
+  global serverDataChange,serverData,terminateClientThread
   
   HOST = 'localhost'
   PORT = 50007
@@ -314,8 +357,10 @@ def RunClient():
     if rxData[0]==SERVER_CMD.SEND_DATA:          
       #print(rxData[1].input)
       #print(type(rxData[1].input))
-      inputData=rxData[1].inputs
-      inputDataChange=True
+      serverData=rxData[1]
+      serverDataChange=True
+      #print("Data income")
+
     elif rxData[0]==SERVER_CMD.NA:
       print("Server has data not available")
       time.sleep(1)

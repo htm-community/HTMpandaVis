@@ -54,7 +54,7 @@ class cInput():
       
       return
     
-  def UpdateData(self,data):
+  def UpdateState(self,data):
     
     if len(data)!=self.count:
       print("Given data for input does not match number of bits in input!")

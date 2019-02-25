@@ -43,6 +43,19 @@ class cLayer():
             c.getNode().reparentTo(self.__node)
         
         return
+    
+    def UpdateState(self,activeColumns,activeCells):
+    
+      #print("COLUMNS SIZE:"+str(len(self.corticalColumns)))
+      
+      for col in self.corticalColumns:
+        col.UpdateState(False)
+      
+      for i in activeColumns:
+        #print("COLUMNS SIZE:"+str(len(self.corticalColumns)))
+        #print(i)
+        self.corticalColumns[i].UpdateState(True)
+      
 
     def getNode(self):
         return self.__node
