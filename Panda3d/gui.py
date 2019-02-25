@@ -15,25 +15,17 @@ class cGUI:
     print("EVENT")
     
   def __init__(self,width,height):
-        
-    scaleX = cGUI.PANEL_WIDTH_PX / width
+      
+    FRAME_WIDTH = 100
+    FRAME_HEIGHT = 600
    
-    ratio = width/height
-   
-    self.myFrame = DirectFrame(frameColor = (0,0,0,0.3),frameSize=(-1, 1, -1, 1),pos=(1, -1, -1))#left,right,bottom,top #x,y,z
+    self.myFrame = DirectFrame(frameColor = (0,0,0,0.3),frameSize=(0, FRAME_WIDTH, -FRAME_HEIGHT, 0),#pos=(1, -1, -1),
+                                parent=pixel2d,pos=(10,0,-10))#pos=(x,-,-y) origin is center,scale(x,-,y))
+    #,scale=(FRAME_WIDTH,1,FRAME_HEIGHT)
+      
+    self.button = DirectButton(text = ("OK", "click!", "rolling over", "disabled"), scale=0.1,parent=self.myFrame, command=self.btnEvent)
+    self.button.setPos(40,0,-50)
     
-    self.myFrame.reparentTo(pixel2d)
-    self.myFrame.setPos(0, 0, 0)
-    self.myFrame.setScale(364, 1, 50)
-        
-    #self.myFrame.setPos(100,0,-100)
-    #self.myFrame = DirectFrame(frameColor = (0,0,0,0.3),frameSize=(0,scaleX*ratio*2,-1,1),#left,right,bottom,top
-                             #pos=(-ratio,0,0))#x,y,z
- 
-  
-    #self.button = DirectButton(text = ("OK", "click!", "rolling over", "disabled"), scale=.05, command=self.btnEvent)
-    
-    #self.button.reparentTo(self.myFrame)
   
   def onWindowEvent(self,window):
    
