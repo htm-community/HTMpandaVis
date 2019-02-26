@@ -13,8 +13,8 @@ from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom
 from client import SocketClient
 import math
 
-from pandac.PandaModules import CollisionTraverser,CollisionNode
-from pandac.PandaModules import CollisionHandlerQueue,CollisionRay
+from panda3d.core import CollisionTraverser,CollisionNode
+from panda3d.core import CollisionHandlerQueue,CollisionRay
 
     
 from htm import cHTM 
@@ -60,6 +60,10 @@ class cApp(ShowBase):
         self.CreateTestScene()
         
         self.SetupOnClick()
+        
+        self.client = SocketClient()
+        self.client.setGui(self.gui)
+        
         
 #        self.logo = OnscreenImage(image = 'Logo.png') # Image size is 728x100
 #        self.logo.reparentTo(pixel2d)
@@ -221,23 +225,25 @@ class cApp(ShowBase):
       self.camera.setHpr(self.heading, self.pitch, 0)
       
       
-      if client.serverDataChange and len(client.serverData.inputs)!=0:
-        client.serverDataChange=False
+      if self.client.serverDataChange and len(self.client.serverData.inputs)!=0:
+        self.client.serverDataChange=False
         
         
-        inputData = client.serverData.inputs
+        inputData = self.client.serverData.inputs
+        inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
+        
+        #UPDATES INPUTS
         for i in range(len(inputData)):
-        
           if len(self.htm.inputs)<=i:#if no input instances exists
             self.htm.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
           
-          self.htm.inputs[i].UpdateState(inputData[i])
+          self.htm.inputs[i].UpdateState(inputData[i],inputsValueString)
         
-
+        # UPDATES LAYERS
         if len(self.htm.layers)==0:#if no input instances exists
-          self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=client.serverData.columnDimensions,nOfNeuronsPerColumn=client.serverData.cellsPerColumn)
+          self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
         
-        self.htm.layers[0].UpdateState(activeColumns=client.serverData.activeColumnIndices,activeCells=client.serverData.activeCells)
+        self.htm.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumnIndices,activeCells=self.client.serverData.activeCells)
         
       
       return task.cont
@@ -287,11 +293,11 @@ class cApp(ShowBase):
         
     def HandlePickedObject(self,obj):
       print("PICKED OBJECT:")
-      #print(obj)
+      print(obj)
       thisId = int(obj.getTag('clickable'))
       print("TAG:"+str(thisId))
       
-      parent = obj.getParent()
+      parent = obj.getParent().getParent()#skip LOD node
       tag = parent.getTag('clickable')
       if tag=="":
         print("Parent is not clickable!")
@@ -325,13 +331,14 @@ class cApp(ShowBase):
         self.myHandler.sortEntries()
         
         pickedObj = self.myHandler.getEntry(0).getIntoNodePath()
+        print(self.myHandler.getEntries())
         pickedObj = pickedObj.findNetTag('clickable')
+        print(pickedObj)
         if not pickedObj.isEmpty():
           self.HandlePickedObject(pickedObj)
         
 if __name__ == "__main__":
     
-  client = SocketClient()
   app = cApp()
   app.run()
 

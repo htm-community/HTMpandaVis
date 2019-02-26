@@ -13,16 +13,18 @@ from direct.gui.DirectGui import DirectFrame,DirectButton
 class cGUI:
   PANEL_WIDTH_PX = 100 # width in pixels
   
+    
   def btnEv_forward(self):
     print("Forward")
-  def btnEv_backward(self):
-    print("Backward")
+    self.cmdStepForward=True
   def btnEv_StartStop(self):
     print("StartStop")
     if self.btnRunStop['text']=='Run':
         self.btnRunStop.setText("Stop")
+        self.cmdRun=True
     else:
         self.btnRunStop.setText("Run")
+        self.cmdStop=True
     
   def __init__(self,width,height):
       
@@ -38,17 +40,18 @@ class cGUI:
                                pos=(50,0,-30))
     
     
-    self.btnBack = DirectButton(text = ("Step backward"), scale=15,parent=self.myFrame, command=self.btnEv_backward,
-                                pos=(50,0,-55))
-    
-    
     self.btnRunStop = DirectButton(text = ("Run"), scale=15,parent=self.myFrame, command=self.btnEv_StartStop,
                                 pos=(50,0,-80))
     
+    self.ResetCommands()
     
     
+  def ResetCommands(self):
+    self.cmdRun=False
+    self.cmdStop=False
+    self.cmdStepForward=False
     
-  
+    
   def onWindowEvent(self,window):
    
     width = window.getProperties().getXSize()

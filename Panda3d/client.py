@@ -17,7 +17,7 @@ class ClientData(object):
 
 class ServerData(object):
   def __init__(self):
-    self.a = 0
+    self.inputsValueString = [] #ordinary expressed value that is represented by SDRs
     self.inputs = []
     self.activeColumnIndices=[]
     self.activeCells=[]
@@ -28,6 +28,9 @@ class ServerData(object):
 class CLIENT_CMD(Enum):
   QUIT = 0
   REQ_DATA = 1
+  CMD_RUN = 2
+  CMD_STOP = 3
+  CMD_STEP_FWD = 4
   
 class SERVER_CMD(Enum):
   SEND_DATA = 0
@@ -43,9 +46,13 @@ class SocketClient():
     self.serverDataChange = False
     self.terminateClientThread = False
     
+    self.gui = None
+    
+  def setGui(self,gui):
+    self.__gui = gui
     
   @staticmethod
-  def PackData(cmd,data):
+  def PackData(cmd,data=[]):
     # Create an instance of ProcessData() to send to server.
     d = [cmd,data]
     # Pickle the object and send it to the server
@@ -71,49 +78,58 @@ class SocketClient():
         time.sleep(1)
         continue
     
-    print("Connected to server")
+    print("Connected to server:"+HOST+":"+str(PORT))
     
     while(not self.terminateClientThread):
-      s.send(SocketClient.PackData(CLIENT_CMD.REQ_DATA,ClientData()))
+      s.send(SocketClient.PackData(CLIENT_CMD.REQ_DATA))
+      
+      if self.gui.cmdRun:
+        s.send(SocketClient.PackData(CLIENT_CMD.CMD_RUN))
+      elif self.gui.cmdStop:
+        s.send(SocketClient.PackData(CLIENT_CMD.CMD_STOP))
+      elif self.gui.cmdStepForward:
+        s.send(SocketClient.PackData(CLIENT_CMD.CMD_STEP_FWD))
+      
+      self.gui.ResetCommands()
       
       #print("Requested data")
-      
-      rxLen = 4096
-      rxRawData=b''
-      
-      while(rxLen>=4096):
-        partData = s.recv(4096)
-        rxLen=len(partData)
-        #print(rxLen)
-        #print(type(partData))
-        
-        rxRawData = b''.join([rxRawData,partData])
-        
-        
-      #print(rxRawData)
-      #print(type(rxRawData))
-      rxData = pickle.loads(rxRawData,encoding='latin1')
-      
-          
-      if rxData[0]==SERVER_CMD.SEND_DATA:          
-        #print(rxData[1].input)
-        #print(type(rxData[1].input))
-        self.serverData=rxData[1]
-        self.serverDataChange=True
-        #print("Data income")
-  
-      elif rxData[0]==SERVER_CMD.NA:
-        print("Server has data not available")
-        time.sleep(1)
-      else:
-        print("Unknown command:"+str(rxData[0]))
+      self.ReceiveData(s)
     
     
-    variable = [CLIENT_CMD.QUIT]
-    # Pickle the object and send it to the server
-    #protocol must be specified to be able to work with py2 on server side
-    rawData = pickle.dumps(variable,protocol=2)
-    s.send(rawData)
+    
+    #send that we as a client are quitting
+    s.send(SocketClient.PackData(CLIENT_CMD.QUIT))
+    
+  def ReceiveData(self,s):
+    rxLen = 4096
+    rxRawData=b''
+    
+    while(rxLen>=4096):
+      partData = s.recv(4096)
+      rxLen=len(partData)
+      #print(rxLen)
+      #print(type(partData))
+      
+      rxRawData = b''.join([rxRawData,partData])
+      
+      
+    #print(rxRawData)
+    #print(type(rxRawData))
+    rxData = pickle.loads(rxRawData,encoding='latin1')
+    
+        
+    if rxData[0]==SERVER_CMD.SEND_DATA:          
+      #print(rxData[1].input)
+      #print(type(rxData[1].input))
+      self.serverData=rxData[1]
+      self.serverDataChange=True
+      #print("Data income")
+
+    elif rxData[0]==SERVER_CMD.NA:
+      print("Server has data not available")
+      time.sleep(1)
+    else:
+      print("Unknown command:"+str(rxData[0]))
       
     s.close()       
     print("ClientThread terminated")     

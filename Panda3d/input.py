@@ -26,13 +26,22 @@ class cInput():
       
       self.__node = NodePath(PandaNode('Input'))#TextNode('layerText')#loader.loadModel("models/teapot")
       
-      text = TextNode('Node name')
+      text = TextNode('name text')
       text.setText(self.name)
       
       textNodePath = self.__node.attachNewNode(text)
       textNodePath.setScale(2)
-      
       textNodePath.setPos(0,-5,0)
+      
+      # value string that represents what is encoded into SDR
+      textVal = TextNode('value text')
+      textVal.setText("no value")
+      
+      textValNodePath = self.__node.attachNewNode(textVal)
+      textValNodePath.setScale(2)
+      textValNodePath.setPos(0,-5+(self.rows*3)/2,3*self.count/self.rows)
+      textValNodePath.setHpr(90,0,0)
+      
           
       self.__node.setPos(0, 0, 0)
       self.__node.setScale(1, 1, 1)
@@ -54,7 +63,7 @@ class cInput():
       
       return
     
-  def UpdateState(self,data):
+  def UpdateState(self,data,text):
     
     if len(data)!=self.count:
       print("Given data for input does not match number of bits in input!")
