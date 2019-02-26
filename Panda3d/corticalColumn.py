@@ -20,15 +20,19 @@ class cCorticalColumn():
           
         self.state = False
             
-    def CreateGfx(self,loader):
+    def CreateGfx(self,loader,idx):
         
         self.__node = NodePath(PandaNode('column'))# loader.loadModel("models/box")
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(1, 1, 1)
         
+        self.__node.setTag('clickable',str(idx))#to be able to click on it
+        
         z=0
+        idx=0
         for n in self.neurons:
-            n.CreateGfx(loader)
+            n.CreateGfx(loader,idx)
+            idx+=1
             n.getNode().setPos(0,0,z)
             z+=1
             n.getNode().reparentTo(self.__node)

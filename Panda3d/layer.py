@@ -22,9 +22,9 @@ class cLayer():
             
     def CreateGfx(self,loader):
         
-        self.__node = NodePath(PandaNode('Layer'))#TextNode('layerText')#loader.loadModel("models/teapot")
+        self.__node = NodePath(PandaNode('Layer_'+self.name))#TextNode('layerText')#loader.loadModel("models/teapot")
         
-        text = TextNode('Node name')
+        text = TextNode('Layer text node')
         text.setText(self.name)
         
         textNodePath = self.__node.attachNewNode(text)
@@ -36,8 +36,10 @@ class cLayer():
         self.__node.setScale(1, 1, 1)
         
         y=0
+        idx=0
         for c in self.corticalColumns:
-            c.CreateGfx(loader)
+            c.CreateGfx(loader,idx)
+            idx+=1
             c.getNode().setPos(0,y,0)
             y+=3
             c.getNode().reparentTo(self.__node)

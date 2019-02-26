@@ -30,7 +30,7 @@ class cInput():
       text.setText(self.name)
       
       textNodePath = self.__node.attachNewNode(text)
-      textNodePath.setScale(1)
+      textNodePath.setScale(2)
       
       textNodePath.setPos(0,-5,0)
           

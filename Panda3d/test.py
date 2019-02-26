@@ -9,25 +9,24 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import LColor
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode,PerspectiveLens
 
-from direct.gui.DirectGui import OnscreenImage,DirectButton,DirectFrame
 
-import socket, pickle
-from enum import Enum
-import _thread
+from client import SocketClient
 import math
-import numpy
-import time
+
+from pandac.PandaModules import CollisionTraverser,CollisionNode
+from pandac.PandaModules import CollisionHandlerQueue,CollisionRay
+
     
 from htm import cHTM 
 from gui import cGUI
 
-serverData = None
-serverDataChange = False
-terminateClientThread = False
+
 
 class cApp(ShowBase):
  
     FOCAL_LENGTH = 500
+    
+    focusCursor = None
     
     def __init__(self):
         ShowBase.__init__(self)
@@ -39,13 +38,12 @@ class cApp(ShowBase):
         self.move_z=50
         
     
-        self.CreateTestScene()
+        self.CreateBasement()#to not be lost if there is nothing around
+        
          
 
         self.SetupCameraAndKeys()
-
         self.taskMgr.add(self.update, 'main loop')
-        
         self.accept(self.win.getWindowEvent(),self.onWindowEvent)
         
         
@@ -55,23 +53,13 @@ class cApp(ShowBase):
         self.gui = cGUI(width,height)
         
                 
-        
         self.htm = cHTM(self.loader)
         
         
-#        self.button = DirectFrame(frameColor = (0,0,0,0.3),
-#                      frameSize=(-1, 1, -1, 1),
-#                      pos=(1, -1, -1))
-#        
-#        self.button.reparentTo(pixel2d)
-#        self.button.setPos(0, 0, 0)
-#        self.button.setScale(364, 1, 50)
-#       
-        #self.gui.myFrame.reparentTo(pixel2d)
         
-#        myFrame = DirectFrame(frameColor = (0,0,0,0.3),frameSize=(-1, 1, -1, 1),pos=(1, -1, -1))
-#        
+        self.CreateTestScene()
         
+        self.SetupOnClick()
         
 #        self.logo = OnscreenImage(image = 'Logo.png') # Image size is 728x100
 #        self.logo.reparentTo(pixel2d)
@@ -123,16 +111,32 @@ class cApp(ShowBase):
         self.pitch = -30.0
         
         
-        self.accept('mouse1',self.mouseEvent,["left",True])
-        self.accept('mouse1-up',self.mouseEvent,["left",False])
-        self.accept('mouse3',self.mouseEvent,["right",True])
-        self.accept('mouse3-up',self.mouseEvent,["right",False])
+        self.accept('mouse1',self.onMouseEvent,["left",True])
+        self.accept('mouse1-up',self.onMouseEvent,["left",False])
+        self.accept('mouse3',self.onMouseEvent,["right",True])
+        self.accept('mouse3-up',self.onMouseEvent,["right",False])
+      
+      
+    def SetupOnClick(self):
+      
+      pickerNode = CollisionNode('mouseRay')
+      pickerNP = self.camera.attachNewNode(pickerNode)
+      pickerNode.setFromCollideMask(GeomNode.getDefaultCollideMask())
+      self.pickerRay = CollisionRay()
+      pickerNode.addSolid(self.pickerRay)
+      
+      self.myTraverser = CollisionTraverser('mouseCollisionTraverser')
+      
+      self.myHandler = CollisionHandlerQueue()
+      
+      self.myTraverser.addCollider(pickerNP,self.myHandler)
         
+    
     def CloseApp(self):
-      global terminateClientThread
+      
       print("CLOSE app event")
       __import__('sys').exit(0)
-      terminateClientThread=True
+      client.terminateClientThread=True
       
     def onWindowEvent(self,window):
       
@@ -157,7 +161,7 @@ class cApp(ShowBase):
         """Stores a value associated with a key."""
         self.keys[key] = value
         
-    def mouseEvent(self, event,press):
+    def onMouseEvent(self, event,press):
         #print(event)
         if event=='right':
             self.rotateCamera=press
@@ -173,10 +177,11 @@ class cApp(ShowBase):
                 props.setCursorHidden(True)
                 props.setMouseMode(WindowProperties.M_relative)
                 self.win.requestProperties(props)"""
-                
+        elif event == 'left' and press:
+          self.onClickObject()
         
     def update(self, task):
-      global serverDataChange
+      
       """Updates the camera based on the keyboard input. Once this is
       done, then the CellManager's update function is called."""
       deltaT = globalClock.getDt()
@@ -196,6 +201,9 @@ class cApp(ShowBase):
           self.mouseX_last = mw.getMouseX()
           self.mouseY_last = mw.getMouseY()        
       
+      if deltaT > 0.05:
+        #FPS are low, limit deltaT
+        deltaT=0.05
       
       move_x = deltaT * speed * -self.keys['a'] + deltaT * speed * self.keys['d']
       move_y = deltaT * speed * self.keys['s'] + deltaT * speed * -self.keys['w']
@@ -213,11 +221,11 @@ class cApp(ShowBase):
       self.camera.setHpr(self.heading, self.pitch, 0)
       
       
-      if serverDataChange and len(serverData.inputs)!=0:
-        serverDataChange=False
+      if client.serverDataChange and len(client.serverData.inputs)!=0:
+        client.serverDataChange=False
         
         
-        inputData = serverData.inputs
+        inputData = client.serverData.inputs
         for i in range(len(inputData)):
         
           if len(self.htm.inputs)<=i:#if no input instances exists
@@ -227,15 +235,14 @@ class cApp(ShowBase):
         
 
         if len(self.htm.layers)==0:#if no input instances exists
-          self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=serverData.columnDimensions,nOfNeuronsPerColumn=serverData.cellsPerColumn)
+          self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=client.serverData.columnDimensions,nOfNeuronsPerColumn=client.serverData.cellsPerColumn)
         
-        self.htm.layers[0].UpdateState(activeColumns=serverData.activeColumnIndices,activeCells=serverData.activeCells)
+        self.htm.layers[0].UpdateState(activeColumns=client.serverData.activeColumnIndices,activeCells=client.serverData.activeCells)
         
       
       return task.cont
         
-    
-    def CreateTestScene(self):
+    def CreateBasement(self):#it will create basement object, just for case that nothing is drawn to be not lost
         
         # Load the environment model.
         self.cube = self.loader.loadModel("cube")#/media/Data/Data/Panda3d/
@@ -252,13 +259,13 @@ class cApp(ShowBase):
         
         self.cube.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
         
+        self.cube.setTag('clickable','1')
+        
+    def CreateTestScene(self):
         
         form = GeomVertexFormat.getV3()
-        
         vdata = GeomVertexData('myLine',form,Geom.UHStatic)
-        
         vdata.setNumRows(1)
-        
         vertex = GeomVertexWriter(vdata,'vertex')
         
         vertex.addData3f(0,0,0)
@@ -275,112 +282,56 @@ class cApp(ShowBase):
         
         nodePath = self.render.attachNewNode(node)
         
+        self.htm.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
+        self.htm.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfNeuronsPerColumn=10)
         
-
-class ClientData(object):
-  def __init__(self):
-    self.a = 0
-    self.b = 0
-
-class ServerData(object):
-  def __init__(self):
-    self.a = 0
-    self.inputs = []
-    self.activeColumnIndices=[]
-    self.activeCells=[]
-    self.columnDimensions=0
-    self.cellsPerColumn=0
-    
-    
-class CLIENT_CMD(Enum):
-  QUIT = 0
-  REQ_DATA = 1
-  
-class SERVER_CMD(Enum):
-  SEND_DATA = 0
-  NA = 1
-  
-  
-def PackData(cmd,data):
-  # Create an instance of ProcessData() to send to server.
-  d = [cmd,data]
-  # Pickle the object and send it to the server
-  #protocol must be specified to be able to work with py2 on server side
-  rawData = pickle.dumps(d,protocol=2)
- 
-  return rawData
-
-def InitClient():
-  _thread.start_new_thread( RunClient, () )
-
-def RunClient():
-  global serverDataChange,serverData,terminateClientThread
-  
-  HOST = 'localhost'
-  PORT = 50007
-  # Create a socket connection, keep trying if no success
-  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  connected=False
-  
-  while(not connected):
-    try:
-      s.connect((HOST, PORT))
-      connected=True
-    except Exception:
-      time.sleep(1)
-      continue
-  
-  print("Connected to server")
-  
-  while(not terminateClientThread):
-    s.send(PackData(CLIENT_CMD.REQ_DATA,ClientData()))
-    
-    #print("Requested data")
-    
-    rxLen = 4096
-    rxRawData=b''
-    
-    while(rxLen>=4096):
-      partData = s.recv(4096)
-      rxLen=len(partData)
-      #print(rxLen)
-      #print(type(partData))
+    def HandlePickedObject(self,obj):
+      print("PICKED OBJECT:")
+      #print(obj)
+      thisId = int(obj.getTag('clickable'))
+      print("TAG:"+str(thisId))
       
-      rxRawData = b''.join([rxRawData,partData])
-      
-      
-    #print(rxRawData)
-    #print(type(rxRawData))
-    rxData = pickle.loads(rxRawData,encoding='latin1')
-    
+      parent = obj.getParent()
+      tag = parent.getTag('clickable')
+      if tag=="":
+        print("Parent is not clickable!")
+      else:
+        parentId = int(tag)
+        print("PARENT TAG:")
+        print("TAG:"+str(parentId))
         
-    if rxData[0]==SERVER_CMD.SEND_DATA:          
-      #print(rxData[1].input)
-      #print(type(rxData[1].input))
-      serverData=rxData[1]
-      serverDataChange=True
-      #print("Data income")
+      
+      
+      
+      if obj.getName() == 'neuron':
+        print("We clicked neuron")
+        
+        newFocus = self.htm.layers[0].corticalColumns[parentId].neurons[thisId]
+        if self.focusCursor!=None:
+          self.focusCursor.resetFocus()#reset previous
+        self.focusCursor = newFocus
+        self.focusCursor.setFocus()
 
-    elif rxData[0]==SERVER_CMD.NA:
-      print("Server has data not available")
-      time.sleep(1)
-    else:
-      print("Unknown command:"+str(rxData[0]))
-  
-  
-  variable = [CLIENT_CMD.QUIT]
-  # Pickle the object and send it to the server
-  #protocol must be specified to be able to work with py2 on server side
-  rawData = pickle.dumps(variable,protocol=2)
-  s.send(rawData)
-    
-  s.close()       
-  print("ClientThread terminated")     
-  
+      
+        
+    def onClickObject(self):
+      mpos = self.mouseWatcherNode.getMouse()
+      self.pickerRay.setFromLens(self.camNode,mpos.getX(),mpos.getY())
+      
+      self.myTraverser.traverse(render)
+      #assume for simplicity's sake that myHandler is a CollisionHandlerQueue
+      if self.myHandler.getNumEntries()>0:
+        #get closest object
+        self.myHandler.sortEntries()
+        
+        pickedObj = self.myHandler.getEntry(0).getIntoNodePath()
+        pickedObj = pickedObj.findNetTag('clickable')
+        if not pickedObj.isEmpty():
+          self.HandlePickedObject(pickedObj)
         
 if __name__ == "__main__":
     
-  InitClient()
+  client = SocketClient()
   app = cApp()
   app.run()
 
