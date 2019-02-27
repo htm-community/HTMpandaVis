@@ -23,6 +23,16 @@ class cNeuron():
       self.__node.setTag('clickable',str(idx))#to be able to click on it
       self.__node.setName('neuron')
       
+      
+      #COLLISION
+      box = CollisionBox(center,dx,dy,dz)
+      
+      cnodePath = self.__node.attachNewNode(CollisionNode('cnode'))
+      cnodePath.node().addSolid(box)
+      
+      
+      
+      
       self.UpdateState()
 
     def UpdateState(self):

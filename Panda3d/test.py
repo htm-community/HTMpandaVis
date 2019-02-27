@@ -140,7 +140,7 @@ class cApp(ShowBase):
       
       print("CLOSE app event")
       __import__('sys').exit(0)
-      client.terminateClientThread=True
+      self.client.terminateClientThread=True
       
     def onWindowEvent(self,window):
       
@@ -297,10 +297,11 @@ class cApp(ShowBase):
       thisId = int(obj.getTag('clickable'))
       print("TAG:"+str(thisId))
       
-      parent = obj.getParent().getParent()#skip LOD node
-      tag = parent.getTag('clickable')
+      parent = obj.getParent()#skip LOD node
+      tag = parent.getTag('id')
       if tag=="":
         print("Parent is not clickable!")
+        return
       else:
         parentId = int(tag)
         print("PARENT TAG:")
@@ -331,6 +332,7 @@ class cApp(ShowBase):
         self.myHandler.sortEntries()
         
         pickedObj = self.myHandler.getEntry(0).getIntoNodePath()
+        print("----------- "+str(self.myHandler.getNumEntries()))
         print(self.myHandler.getEntries())
         pickedObj = pickedObj.findNetTag('clickable')
         print(pickedObj)
