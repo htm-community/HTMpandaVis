@@ -6,7 +6,7 @@ Created on Sat Feb 23 11:37:36 2019
 @author: zz
 """
 
-from panda3d.core import LColor
+from panda3d.core import LColor,CollisionNode,CollisionBox
 #import random
 
 class cInputBit():
@@ -15,12 +15,20 @@ class cInputBit():
         self.state = False#False if random.randint(0,1)==0 else True
         
         
-    def CreateGfx(self,loader):
+    def CreateGfx(self,loader,idx):
         
         self.__node = loader.loadModel("cube")
         self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)
+        
+        self.__node.setTag('clickable',str(idx))#to be able to click on it
+        self.__node.setName('inputBit')
+        
+        #COLLISION
+        collBox = CollisionBox(self.__node.getPos(),1.0,1.0,1.0)
+        cnodePath = self.__node.attachNewNode(CollisionNode('cnode'))
+        cnodePath.node().addSolid(collBox)
         
         self.UpdateState()
 

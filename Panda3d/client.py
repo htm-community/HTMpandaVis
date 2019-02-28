@@ -8,34 +8,7 @@ Created on Tue Feb 26 02:56:29 2019
 import socket, pickle
 import _thread
 import time
-from enum import Enum
-
-class ClientData(object):
-  def __init__(self):
-    self.a = 0
-    self.b = 0
-
-class ServerData(object):
-  def __init__(self):
-    self.inputsValueString = [] #ordinary expressed value that is represented by SDRs
-    self.inputs = []
-    self.activeColumnIndices=[]
-    self.activeCells=[]
-    self.columnDimensions=0
-    self.cellsPerColumn=0
-    
-    
-class CLIENT_CMD(Enum):
-  QUIT = 0
-  REQ_DATA = 1
-  CMD_RUN = 2
-  CMD_STOP = 3
-  CMD_STEP_FWD = 4
-  
-class SERVER_CMD(Enum):
-  SEND_DATA = 0
-  NA = 1
-  
+from dataExchange import ClientData,ServerData,CLIENT_CMD,SERVER_CMD
   
 class SocketClient():
   def __init__(self):
@@ -46,7 +19,7 @@ class SocketClient():
     self.serverDataChange = False
     self.terminateClientThread = False
     
-    self.gui = None
+    self.__gui = None
     
   def setGui(self,gui):
     self.__gui = gui
@@ -81,24 +54,30 @@ class SocketClient():
     print("Connected to server:"+HOST+":"+str(PORT))
     
     while(not self.terminateClientThread):
+      #print("Sending REQ")
       s.send(SocketClient.PackData(CLIENT_CMD.REQ_DATA))
       
-      if self.gui.cmdRun:
+      if self.__gui.cmdRun:
         s.send(SocketClient.PackData(CLIENT_CMD.CMD_RUN))
-      elif self.gui.cmdStop:
+        print("RUN req")
+      elif self.__gui.cmdStop:
         s.send(SocketClient.PackData(CLIENT_CMD.CMD_STOP))
-      elif self.gui.cmdStepForward:
+        print("STOP req")
+      elif self.__gui.cmdStepForward:
         s.send(SocketClient.PackData(CLIENT_CMD.CMD_STEP_FWD))
+        print("STEP")
       
-      self.gui.ResetCommands()
+      self.__gui.ResetCommands()
       
-      #print("Requested data")
       self.ReceiveData(s)
-    
+      #print("data received")
     
     
     #send that we as a client are quitting
     s.send(SocketClient.PackData(CLIENT_CMD.QUIT))
+    
+    s.close()       
+    print("ClientThread terminated")   
     
   def ReceiveData(self,s):
     rxLen = 4096
@@ -130,6 +109,4 @@ class SocketClient():
       time.sleep(1)
     else:
       print("Unknown command:"+str(rxData[0]))
-      
-    s.close()       
-    print("ClientThread terminated")     
+        

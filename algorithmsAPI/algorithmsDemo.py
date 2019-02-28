@@ -15,10 +15,9 @@ import yaml
 #--------------HTMpandaVis
 import socket, pickle
 import thread
-from enum import Enum
-import time
 from socket import error as SocketError
 import sys
+from dataExchange import ClientData,ServerData,CLIENT_CMD,SERVER_CMD
 #-------------------------
 
 
@@ -31,20 +30,24 @@ from nupic.encoders.random_distributed_scalar import \
 
 _NUM_RECORDS = 3000
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
-_INPUT_FILE_PATH = "/media/Data/Data/HTM/nupic.py_Numenta/examples/gymdata.csv"
-_PARAMS_PATH = "/media/Data/Data/HTM/nupic.py_Numenta/examples/model.yaml"
+_INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR,"gymdata.csv")
+_PARAMS_PATH = os.path.join(_EXAMPLE_DIR,"model.yaml")
 
 
 timeOfDayBits=None
 weekendBits=None
 consumptionBits=None
-dataReadyForVis=False
+newDataReadyForVis=False
 activeColumnIndices=None
 activeCells=None
 modelParams=None
 
+runInLoop=False
+runOneStep=False
+
 def runHotgym(numRecords):
-  global timeOfDayBits,weekendBits,consumptionBits,dataReadyForVis,activeColumnIndices,activeCells,modelParams
+  global timeOfDayBits,weekendBits,consumptionBits,activeColumnIndices,activeCells,modelParams
+  global runInLoop,runOneStep,newDataReadyForVis
   
   with open(_PARAMS_PATH, "r") as f:
     modelParams = yaml.safe_load(f)["modelParams"]
@@ -98,6 +101,8 @@ def runHotgym(numRecords):
   classifier = SDRClassifierFactory.create()
   results = []
   
+  print("Experiment prepared")
+  
   with open(_INPUT_FILE_PATH, "r") as fin:
     reader = csv.reader(fin)
     headers = reader.next()
@@ -149,11 +154,6 @@ def runHotgym(numRecords):
       # Get the bucket info for this input value for classification.
       bucketIdx = scalarEncoder.getBucketIndices(consumption)[0]
 
-      if not dataReadyForVis:
-        print("DATA READY FOR VIS")
-        dataReadyForVis=True
-
-
       # Run classifier to translate active cells back to scalar value.
       classifierResult = classifier.compute(
         recordNum=count,
@@ -176,25 +176,20 @@ def runHotgym(numRecords):
       
       results.append([oneStep, oneStepConfidence * 100, None, None])
 
+      #------------------HTMpandaVis----------------------
+      if not newDataReadyForVis:
+        newDataReadyForVis=True
+        
+      print("One step finished")
+      while(not runInLoop and not runOneStep):
+        pass
+      runOneStep=False
+      print("Proceeding one step...")
+      
+      #------------------HTMpandaVis----------------------
+      
     return results
-
-
-
-class ClientData(object):
-  def __init__(self):
-    self.a = 0
-    self.b = 0
-
-class ServerData(object):
-  def __init__(self):
-    self.a = 0
-    self.inputs = []
-    self.activeColumnIndices=[]
-    self.activeCells=[]
-    self.columnDimensions=0
-    self.cellsPerColumn=0
-    
-    self.compensateSize=[]#to compensate size by dummy bytes
+ 
     
 def PackData(cmd,data):
   d = [cmd,data]
@@ -214,13 +209,6 @@ def PackData(cmd,data):
   
   return rawData
 
-class CLIENT_CMD(Enum):
-  QUIT = 0
-  REQ_DATA = 1
-  
-class SERVER_CMD(Enum):
-  SEND_DATA = 0
-  NA = 1
   
 def InitServer():
   thread.start_new_thread( RunServer, () )
@@ -228,6 +216,7 @@ def InitServer():
 mainThreadQuitted=False
 
 def RunServer():
+    global runInLoop,runOneStep,newDataReadyForVis
  
     HOST = 'localhost'
     PORT = 50007
@@ -265,8 +254,7 @@ def RunServer():
           
           if (rxData[0] == CLIENT_CMD.REQ_DATA):
             #print("Data requested")
-            
-            if dataReadyForVis:  
+            if newDataReadyForVis:  
               
               serverData = ServerData()
               serverData.inputs = [timeOfDayBits,weekendBits,consumptionBits]
@@ -278,9 +266,20 @@ def RunServer():
               #print("Data sent")
               
               conn.send(PackData(SERVER_CMD.SEND_DATA,serverData))
+              
+              newDataReadyForVis = False
             else:
-              conn.send(PackData(SERVER_CMD.NA,[]))
-            
+              conn.send(PackData(SERVER_CMD.NA,[]))#we dont have any new data for client
+              
+          elif (rxData[0] == CLIENT_CMD.CMD_RUN):
+            runInLoop = True
+            print("RUN")
+          elif (rxData[0] == CLIENT_CMD.CMD_STOP):
+            runInLoop = False
+            print("STOP")
+          elif (rxData[0] == CLIENT_CMD.CMD_STEP_FWD):
+            runOneStep = True
+            print("STEP")
           elif (rxData[0] == CLIENT_CMD.QUIT):
             print("Client quitted!")  
             #quitServer=True
@@ -297,6 +296,7 @@ def RunServer():
           break
         except Exception as e:
           print("Exception"+str(sys.exc_info()[0]))
+          print(str(e.message))
             
 
           #quitServer=True

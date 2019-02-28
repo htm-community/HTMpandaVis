@@ -6,7 +6,7 @@ Created on Wed Feb  6 05:46:38 2019
 @author: osboxes
 """
 import random
-from panda3d.core import LColor
+from panda3d.core import LColor,CollisionBox,CollisionNode
 
 class cNeuron():
     
@@ -25,10 +25,9 @@ class cNeuron():
       
       
       #COLLISION
-      box = CollisionBox(center,dx,dy,dz)
-      
+      collBox = CollisionBox(self.__node.getPos(),1.0,1.0,1.0)
       cnodePath = self.__node.attachNewNode(CollisionNode('cnode'))
-      cnodePath.node().addSolid(box)
+      cnodePath.node().addSolid(collBox)
       
       
       

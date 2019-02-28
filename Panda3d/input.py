@@ -46,13 +46,17 @@ class cInput():
       self.__node.setPos(0, 0, 0)
       self.__node.setScale(1, 1, 1)
       
+      
       y=0
       z=0
       cursor=0
+      idx=0
       for c in self.inputBits:
-          c.CreateGfx(loader)
+          c.CreateGfx(loader,idx)
           c.getNode().setPos(0,y,z)
           y+=3
+          
+          idx+=1
           cursor+=1
           if cursor>= self.rows:
             cursor=0

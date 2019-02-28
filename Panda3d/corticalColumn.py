@@ -45,13 +45,11 @@ class cCorticalColumn():
       self.__neuronsNodePath.setTag('id',str(idx))#to be able to retrieve index of column for mouse click
       
       
-      self.lod.addSwitch(5000.0,100.0)
       self.lod.addSwitch(100.0,0.0)
+      self.lod.addSwitch(5000.0,100.0)
       
       self.__neuronsNodePath.reparentTo(self.__node)
       self.__columnBox.reparentTo(self.__node)
-      
-      
       
       
       
@@ -69,6 +67,12 @@ class cCorticalColumn():
     def UpdateState(self,state):
       
       self.state = state
+      
+      #update column box color (for LOD in distance look)
+      if self.state:
+        self.__columnBox.setColor(1.0,0.0,0.0,1.0)#red
+      else:
+        self.__columnBox.setColor(1.0,1.0,1.0,1.0)#white
       
       for n in self.neurons:
         n.state = state

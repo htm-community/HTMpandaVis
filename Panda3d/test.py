@@ -57,7 +57,7 @@ class cApp(ShowBase):
         
         
         
-        self.CreateTestScene()
+        #self.CreateTestScene()
         
         self.SetupOnClick()
         
@@ -125,11 +125,13 @@ class cApp(ShowBase):
       
       pickerNode = CollisionNode('mouseRay')
       pickerNP = self.camera.attachNewNode(pickerNode)
-      pickerNode.setFromCollideMask(GeomNode.getDefaultCollideMask())
+      pickerNode.setFromCollideMask(CollisionNode.getDefaultCollideMask())#GeomNode.getDefaultCollideMask())
       self.pickerRay = CollisionRay()
       pickerNode.addSolid(self.pickerRay)
       
       self.myTraverser = CollisionTraverser('mouseCollisionTraverser')
+      
+      self.myTraverser.showCollisions(self.render)
       
       self.myHandler = CollisionHandlerQueue()
       
@@ -258,7 +260,7 @@ class cApp(ShowBase):
         # Apply scale and position transforms on the model.
         
         self.cube.setScale(10, 10, 10)
-        self.cube.setPos(-8, 42, 0)
+        self.cube.setPos(-8, -30, 0)
         
         self.cube.setColor(1.0,0,0,1.0)
         self.cube.setRenderModeThickness(5)
@@ -292,8 +294,8 @@ class cApp(ShowBase):
         self.htm.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfNeuronsPerColumn=10)
         
     def HandlePickedObject(self,obj):
-      print("PICKED OBJECT:")
-      print(obj)
+      print("PICKED OBJECT:"+str(obj))
+
       thisId = int(obj.getTag('clickable'))
       print("TAG:"+str(thisId))
       
@@ -304,14 +306,11 @@ class cApp(ShowBase):
         return
       else:
         parentId = int(tag)
-        print("PARENT TAG:")
-        print("TAG:"+str(parentId))
-        
-      
+        print("PARENT TAG:"+str(parentId))
       
       
       if obj.getName() == 'neuron':
-        print("We clicked neuron")
+        print("We clicked on neuron")
         
         newFocus = self.htm.layers[0].corticalColumns[parentId].neurons[thisId]
         if self.focusCursor!=None:
@@ -325,7 +324,7 @@ class cApp(ShowBase):
       mpos = self.mouseWatcherNode.getMouse()
       self.pickerRay.setFromLens(self.camNode,mpos.getX(),mpos.getY())
       
-      self.myTraverser.traverse(render)
+      self.myTraverser.traverse(self.render)
       #assume for simplicity's sake that myHandler is a CollisionHandlerQueue
       if self.myHandler.getNumEntries()>0:
         #get closest object
