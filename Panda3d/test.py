@@ -131,7 +131,7 @@ class cApp(ShowBase):
       
       self.myTraverser = CollisionTraverser('mouseCollisionTraverser')
       
-      self.myTraverser.showCollisions(self.render)
+      #self.myTraverser.showCollisions(self.render) #uncomment to see collision point
       
       self.myHandler = CollisionHandlerQueue()
       
@@ -239,7 +239,7 @@ class cApp(ShowBase):
           if len(self.htm.inputs)<=i:#if no input instances exists
             self.htm.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
           
-          self.htm.inputs[i].UpdateState(inputData[i],inputsValueString)
+          self.htm.inputs[i].UpdateState(inputData[i],inputsValueString[i])
         
         # UPDATES LAYERS
         if len(self.htm.layers)==0:#if no input instances exists

@@ -37,10 +37,10 @@ class cInput():
       textVal = TextNode('value text')
       textVal.setText("no value")
       
-      textValNodePath = self.__node.attachNewNode(textVal)
-      textValNodePath.setScale(2)
-      textValNodePath.setPos(0,-5+(self.rows*3)/2,3*self.count/self.rows)
-      textValNodePath.setHpr(90,0,0)
+      self.__textValNodePath = self.__node.attachNewNode(textVal)
+      self.__textValNodePath.setScale(2)
+      self.__textValNodePath.setPos(0,-5+(self.rows*3)/2,3*self.count/self.rows)
+      self.__textValNodePath.setHpr(90,0,0)
       
           
       self.__node.setPos(0, 0, 0)
@@ -73,6 +73,8 @@ class cInput():
       print("Given data for input does not match number of bits in input!")
       print("A:"+str(self.count)+" B:"+str(len(data)))
       return
+    
+    self.__textValNodePath.getNode(0).setText(text)
     
     for i in range(len(data)):
       self.inputBits[i].state = False if data[i]==0 else True

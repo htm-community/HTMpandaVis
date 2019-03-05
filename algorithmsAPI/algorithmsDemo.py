@@ -41,13 +41,18 @@ newDataReadyForVis=False
 activeColumnIndices=None
 activeCells=None
 modelParams=None
+timeOfDayString=None
+consumption=None
 
 runInLoop=False
 runOneStep=False
 
+sp=None
+
 def runHotgym(numRecords):
+  global sp
   global timeOfDayBits,weekendBits,consumptionBits,activeColumnIndices,activeCells,modelParams
-  global runInLoop,runOneStep,newDataReadyForVis
+  global runInLoop,runOneStep,newDataReadyForVis,timeOfDayString,consumption
   
   with open(_PARAMS_PATH, "r") as f:
     modelParams = yaml.safe_load(f)["modelParams"]
@@ -102,6 +107,7 @@ def runHotgym(numRecords):
   results = []
   
   print("Experiment prepared")
+   
   
   with open(_INPUT_FILE_PATH, "r") as fin:
     reader = csv.reader(fin)
@@ -115,6 +121,9 @@ def runHotgym(numRecords):
 
       # Convert data string into Python date object.
       dateString = datetime.datetime.strptime(record[0], "%m/%d/%y %H:%M")
+      
+      timeOfDayString = "time of day: {:02d}:{:02d}".format(dateString.hour,dateString.minute)
+      
       # Convert data value string into float.
       consumption = float(record[1])
 
@@ -262,6 +271,7 @@ def RunServer():
               serverData.activeCells=activeCells
               serverData.columnDimensions=modelParams["spParams"]["columnCount"]
               serverData.cellsPerColumn=modelParams["tmParams"]["cellsPerColumn"]
+              serverData.inputsValueString = [timeOfDayString,"Weekend?","consumption: {:.2f}".format(consumption)]
               
               #print("Data sent")
               
@@ -271,6 +281,12 @@ def RunServer():
             else:
               conn.send(PackData(SERVER_CMD.NA,[]))#we dont have any new data for client
               
+          elif (rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA):
+            connectedSynapses = numpy.zeros(len(serverData.inputs))
+            sp.getConnectedSynapses(1,connectedSynapses)
+            serverData.connectedSynapses = connectedSynapses
+            
+            
           elif (rxData[0] == CLIENT_CMD.CMD_RUN):
             runInLoop = True
             print("RUN")
