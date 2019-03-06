@@ -50,10 +50,12 @@ class cApp(ShowBase):
         width = self.win.getProperties().getXSize()
         height = self.win.getProperties().getYSize()
         
-        self.gui = cGUI(width,height)
+        self.gui = cGUI(width,height,self.loader,fWireframe=self.setWireFrame)
         
+        #self.gui.cBox.command = self.setWireFrame
                 
         self.htm = cHTM(self.loader)
+        
         
         
         
@@ -84,7 +86,9 @@ class cApp(ShowBase):
         
         self.htm.getNode().reparentTo(self.render)
         
-
+    def setWireFrame(self,status):
+      print("GGGGGGGGGGg")
+      
     def SetupCameraAndKeys(self):
         # Setup controls
         self.keys = {}
