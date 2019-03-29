@@ -244,7 +244,7 @@ def RunServer():
       try:
         conn, addr = s.accept()
         conn.settimeout(5)
-        print 'Connected by', addr
+        print('Connected by'+str(addr))
         clientConnected=True
       except socket.timeout:
         continue
@@ -282,9 +282,16 @@ def RunServer():
               conn.send(PackData(SERVER_CMD.NA,[]))#we dont have any new data for client
               
           elif (rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA):
-            connectedSynapses = numpy.zeros(len(serverData.inputs))
+            connectedSynapses = numpy.zeros(sum([len(x) for x in serverData.inputs]))#sum size of all inputs
             sp.getConnectedSynapses(1,connectedSynapses)
+            
+            
+            serverData = ServerData()
             serverData.connectedSynapses = connectedSynapses
+            conn.send(PackData(SERVER_CMD.SEND_COLUMN_DATA,serverData))
+            
+            print("GETTING COLUMN DATA:")
+            print(connectedSynapses)
             
             
           elif (rxData[0] == CLIENT_CMD.CMD_RUN):

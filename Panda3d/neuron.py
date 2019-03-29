@@ -10,9 +10,9 @@ from panda3d.core import LColor,CollisionBox,CollisionNode
 
 class cNeuron():
     
-    def __init__(self):
+    def __init__(self,column):
       self.state = False if random.randint(0,1)==0 else True
-        
+      self.column = column # to be able to track column that this neurons belongs to
         
     def CreateGfx(self,loader,idx):#idx is neccesary to be able to track it down for mouse picking
         

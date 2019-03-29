@@ -8,6 +8,7 @@ Created on Wed Feb  6 05:46:27 2019
 
 from neuron import cNeuron
 from panda3d.core import NodePath,PandaNode,LODNode,LColor
+from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode
 
 
 class cCorticalColumn():
@@ -15,7 +16,7 @@ class cCorticalColumn():
     def __init__(self,nOfNeuronsPerColumn):
       self.neurons = []
       for i in range(nOfNeuronsPerColumn):
-          n = cNeuron()
+          n = cNeuron(self)
           self.neurons.append(n)
         
       self.state = False
@@ -62,7 +63,6 @@ class cCorticalColumn():
           z+=1
           n.getNode().reparentTo(self.__neuronsNodePath)
       
-      return
       
     def UpdateState(self,state):
       
@@ -80,3 +80,44 @@ class cCorticalColumn():
 
     def getNode(self):
         return self.__node
+      
+    def CreateSynapses(self,inputs,synapses):
+      
+      print("Creating synapses")
+      #inputs are divided into separate items in list - [input1,input2,input3]
+      #synapses are one united array [1,0,0,1,0,1,0...]
+      #length is the same
+      synapsesDiv=[]
+      offset = 0
+      for i in range(len(inputs)):
+        synapsesDiv.append(synapses[offset:offset+inputs[i].count])
+        offset+=inputs[i].count
+        print(offset)
+      
+      for i in range(len(synapsesDiv)):
+      
+        for y in range(len(synapsesDiv[i])):
+          if synapsesDiv[i][y]==1:
+            
+            print(inputs[i].inputBits[y].getNode().getPos(self.__node))
+      
+            
+            form = GeomVertexFormat.getV3()
+            vdata = GeomVertexData('myLine',form,Geom.UHStatic)
+            vdata.setNumRows(1)
+            vertex = GeomVertexWriter(vdata,'vertex')
+            
+            vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
+            vertex.addData3f(60,0,50)
+            
+            prim = GeomLines(Geom.UHStatic)
+            prim.addVertices(0,1)
+            
+            geom = Geom(vdata)
+            geom.addPrimitive(prim)
+            
+            node = GeomNode('gnode')
+            node.addGeom(geom)
+            
+            self.__columnBox.attachNewNode(node)
+      

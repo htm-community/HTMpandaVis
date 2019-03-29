@@ -20,6 +20,7 @@ class ServerData(object):
     self.activeCells=[]
     self.columnDimensions=0
     self.cellsPerColumn=0
+    self.connectedSynapses=[]
     
     self.compensateSize=[]#to compensate size by dummy bytes
    
@@ -30,7 +31,9 @@ class CLIENT_CMD(Enum):
   CMD_RUN = 2
   CMD_STOP = 3
   CMD_STEP_FWD = 4
+  CMD_GET_COLUMN_DATA = 5
   
 class SERVER_CMD(Enum):
-  SEND_DATA = 0
-  NA = 1
+  NA = 0
+  SEND_DATA = 1
+  SEND_COLUMN_DATA = 2

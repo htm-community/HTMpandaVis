@@ -88,6 +88,30 @@ class cApp(ShowBase):
         
     def setWireFrame(self,status):
       print("GGGGGGGGGGg")
+      #print(len(self.client.serverData.connectedSynapses))
+      #print(self.client.serverData.connectedSynapses)
+      
+      
+      form = GeomVertexFormat.getV3()
+      vdata = GeomVertexData('myLine',form,Geom.UHStatic)
+      vdata.setNumRows(1)
+      vertex = GeomVertexWriter(vdata,'vertex')
+      
+      vertex.addData3f(0,0,0)
+      vertex.addData3f(60,0,50)
+      
+      prim = GeomLines(Geom.UHStatic)
+      prim.addVertices(0,1)
+      
+      geom = Geom(vdata)
+      geom.addPrimitive(prim)
+      
+      node = GeomNode('gnode')
+      node.addGeom(geom)
+      
+      #nodePath = NodePath(node)
+     # nodePath.reparentTo(self.__node)
+      nodePath = self.render.attachNewNode(node)
       
     def SetupCameraAndKeys(self):
         # Setup controls
@@ -250,7 +274,14 @@ class cApp(ShowBase):
           self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
         
         self.htm.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumnIndices,activeCells=self.client.serverData.activeCells)
-        
+      
+      if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
+        self.client.columnDataArrived=False
+      
+        #if self.focusCursor!=None:
+        self.focusCursor.column.CreateSynapses(self.htm.inputs,self.client.serverData.connectedSynapses)
+          
+      
       
       return task.cont
         
@@ -281,7 +312,7 @@ class cApp(ShowBase):
         vertex = GeomVertexWriter(vdata,'vertex')
         
         vertex.addData3f(0,0,0)
-        vertex.addData3f(0,0,10)
+        vertex.addData3f(60,0,50)
         
         prim = GeomLines(Geom.UHStatic)
         prim.addVertices(0,1)
@@ -321,7 +352,10 @@ class cApp(ShowBase):
           self.focusCursor.resetFocus()#reset previous
         self.focusCursor = newFocus
         self.focusCursor.setFocus()
-
+        
+      
+        self.gui.cmdGetColumnData=True
+        
       
         
     def onClickObject(self):
@@ -341,6 +375,7 @@ class cApp(ShowBase):
         print(pickedObj)
         if not pickedObj.isEmpty():
           self.HandlePickedObject(pickedObj)
+          
         
 if __name__ == "__main__":
     

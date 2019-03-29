@@ -18,6 +18,7 @@ class SocketClient():
     self.serverData = None
     self.serverDataChange = False
     self.terminateClientThread = False
+    self.columnDataArrived = False
     
     self.__gui = None
     
@@ -66,6 +67,9 @@ class SocketClient():
       elif self.__gui.cmdStepForward:
         s.send(SocketClient.PackData(CLIENT_CMD.CMD_STEP_FWD))
         print("STEP")
+      elif self.__gui.cmdGetColumnData:
+        s.send(SocketClient.PackData(CLIENT_CMD.CMD_GET_COLUMN_DATA))
+        print("GET COLUMN DATA")
       
       self.__gui.ResetCommands()
       
@@ -103,6 +107,9 @@ class SocketClient():
       self.serverData=rxData[1]
       self.serverDataChange=True
       #print("Data income")
+    elif rxData[0]==SERVER_CMD.SEND_COLUMN_DATA: 
+      self.serverData=rxData[1]
+      self.columnDataArrived=True
 
     elif rxData[0]==SERVER_CMD.NA:
       print("Server has data not available")

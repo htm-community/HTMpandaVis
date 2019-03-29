@@ -64,12 +64,14 @@ class cGUI:
     
     self.ResetCommands()
     
+
     
   def ResetCommands(self):
     self.cmdRun=False
     self.cmdStop=False
     self.cmdStepForward=False
-    
+    self.cmdGetColumnData=False
+
     
   def onWindowEvent(self,window): # to keep the same size of frame even after resizing
     #return

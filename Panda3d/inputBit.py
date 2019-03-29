@@ -13,7 +13,7 @@ class cInputBit():
     
     def __init__(self):
         self.state = False#False if random.randint(0,1)==0 else True
-        
+        self.__node = None
         
     def CreateGfx(self,loader,idx):
         
