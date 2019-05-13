@@ -5,7 +5,7 @@ This project aspires to create tool that helps **visualize HTM systems in 3D** b
 It should allow to see architecture of the system in 3D, e.g. connection of layers and inputs and to see input representation,
 activity of columns and even individual neurons in each simulation step.
 User can observe vast scalable space by moving as "ghost" and interact with objects.
-It is supposed as tool for educational prupose or as an inspect tool.
+It is supposed as tool for educational purpose or as an inspect tool.
 
 I was inspired by following:
 - [HTM school Episode 10 visualization - Topology](https://www.youtube.com/watch?v=HTW2Q_UrkAw&t=688s)
@@ -16,7 +16,7 @@ The visualization is application written in Python3 and strictly separated from 
 
 Currently the "computation script" is hotgym example using Algorithm API from Nupic extended by
 small amout of code to communicate with visualization.
-That is also main idea, anybody can take his current computation script, slightly modify it and use this vis tool.
+That is also main idea, anybody can take his own current computation script, slightly modify it and use this vis tool.
 
 ![Diagram](readmeDiagram.png)
 
