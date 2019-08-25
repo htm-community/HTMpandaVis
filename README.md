@@ -18,7 +18,7 @@ I was inspired by following:
 
 The visualization is application written in Python3 and strictly separated from "computation script" by TCP sockets.
 
-Currently the "computation script" is hotgym example using Algorithm API from Nupic extended by
+Currently the "computation script" is hotgym example using [htm.core](https://github.com/htm-community/htm.core) extended by
 small amout of code to communicate with visualization.
 That is also main idea, anybody can take his own current computation script, slightly modify it and use this vis tool.
 
