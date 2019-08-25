@@ -35,13 +35,18 @@ class cLayer():
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(1, 1, 1)
         
-        y=0
-        idx=0
+        y = 0
+        idx = 0
+        row = 0
         for c in self.corticalColumns:
             c.CreateGfx(loader,idx)
             idx+=1
-            c.getNode().setPos(0,y,0)
+            c.getNode().setPos(row*10,y,0)
             y+=3
+            
+            if y>150:
+                y=0
+                row+=1
             c.getNode().reparentTo(self.__node)
         
         return

@@ -1,5 +1,9 @@
 # HTMpandaVis
 
+Screenshots for visualization of the "hotgym" example
+![img1](img1.png)
+![img2](img2.png)
+
 This project aspires to create tool that helps **visualize HTM systems in 3D** by using opensource framework for 3D rendering https://www.panda3d.org/
 
 It should allow to see architecture of the system in 3D, e.g. connection of layers and inputs and to see input representation,

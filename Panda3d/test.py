@@ -17,7 +17,7 @@ from panda3d.core import CollisionTraverser,CollisionNode
 from panda3d.core import CollisionHandlerQueue,CollisionRay
 
     
-from htm import cHTM 
+from htmObject import cHTM 
 from gui import cGUI
 
 
@@ -54,7 +54,7 @@ class cApp(ShowBase):
         
         #self.gui.cBox.command = self.setWireFrame
                 
-        self.htm = cHTM(self.loader)
+        self.htmObject = cHTM(self.loader)
         
         
         
@@ -73,9 +73,9 @@ class cApp(ShowBase):
 #        self.logo.setScale(364, 1, 50)
 
 
-        #self.htm.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
+        #self.htmObject.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
-        #self.htm.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
+        #self.htmObject.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
         
         
@@ -84,7 +84,7 @@ class cApp(ShowBase):
         #self.pixel2d.reparentTo(self.render2d)
         
         
-        self.htm.getNode().reparentTo(self.render)
+        self.htmObject.getNode().reparentTo(self.render)
         
     def setWireFrame(self,status):
       print("GGGGGGGGGGg")
@@ -264,22 +264,22 @@ class cApp(ShowBase):
         
         #UPDATES INPUTS
         for i in range(len(inputData)):
-          if len(self.htm.inputs)<=i:#if no input instances exists
-            self.htm.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
+          if len(self.htmObject.inputs)<=i:#if no input instances exists
+            self.htmObject.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
           
-          self.htm.inputs[i].UpdateState(inputData[i],inputsValueString[i])
+          self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
         
         # UPDATES LAYERS
-        if len(self.htm.layers)==0:#if no input instances exists
-          self.htm.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
+        if len(self.htmObject.layers)==0:#if no input instances exists
+          self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
         
-        self.htm.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumnIndices,activeCells=self.client.serverData.activeCells)
+        self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumnIndices,activeCells=self.client.serverData.activeCells)
       
       if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
         self.client.columnDataArrived=False
       
         #if self.focusCursor!=None:
-        self.focusCursor.column.CreateSynapses(self.htm.inputs,self.client.serverData.connectedSynapses)
+        self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
           
       
       
@@ -325,8 +325,8 @@ class cApp(ShowBase):
         
         nodePath = self.render.attachNewNode(node)
         
-        self.htm.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
-        self.htm.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfNeuronsPerColumn=10)
+        self.htmObject.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
+        self.htmObject.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfNeuronsPerColumn=10)
         
     def HandlePickedObject(self,obj):
       print("PICKED OBJECT:"+str(obj))
@@ -347,7 +347,7 @@ class cApp(ShowBase):
       if obj.getName() == 'neuron':
         print("We clicked on neuron")
         
-        newFocus = self.htm.layers[0].corticalColumns[parentId].neurons[thisId]
+        newFocus = self.htmObject.layers[0].corticalColumns[parentId].neurons[thisId]
         if self.focusCursor!=None:
           self.focusCursor.resetFocus()#reset previous
         self.focusCursor = newFocus
