@@ -260,20 +260,21 @@ class cApp(ShowBase):
         
         
         inputData = self.client.serverData.inputs
+        inputDataSizes = self.client.serverData.inputDataSizes
         inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
         
         #UPDATES INPUTS
         for i in range(len(inputData)):
           if len(self.htmObject.inputs)<=i:#if no input instances exists
-            self.htmObject.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
+            self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
           
           self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
         
         # UPDATES LAYERS
         if len(self.htmObject.layers)==0:#if no input instances exists
           self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
-        
-        self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumnIndices,activeCells=self.client.serverData.activeCells)
+        print(self.client.serverData.activeColumns)
+        self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
       
       if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
         self.client.columnDataArrived=False

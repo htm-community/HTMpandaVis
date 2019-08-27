@@ -14,10 +14,11 @@ class ClientData(object):
 
 class ServerData(object):
   def __init__(self):
-    self.inputsValueString = [] #ordinary expressed value that is represented by SDRs
-    self.inputs = []
-    self.activeColumnIndices=[]
+    self.inputsValueString = [] #ordinary expressed value that is represented by input SDRs
+    self.inputs = [] # input SDRs (just indicies of active bits)
+    self.activeColumns=[] # activeColumns
     self.activeCells=[]
+    self.inputDataSizes=[]
     self.columnDimensions=0
     self.cellsPerColumn=0
     self.connectedSynapses=[]

@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 # Panda vis
-import pandaServer
+from pandaServer import PandaServer
 
 
 from htm.bindings.sdr import SDR, Metrics
@@ -18,6 +18,8 @@ from htm.bindings.algorithms import Predictor
 
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
+
+pandaServer = PandaServer()
 
 default_parameters = {
     # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
@@ -194,15 +196,15 @@ def main(parameters=default_parameters, argv=None, verbose=True):
          
         timeOfDayString = record[0]
         
-        pandaServer.serverData.inputs = [dateBits.dense, consumptionBits.dense] # TODO better use sparse
-        pandaServer.serverData.activeColumnIndices=activeColumns.sparse
+        pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
+        pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
+        pandaServer.serverData.inputDataSizes= [dateBits.size, consumptionBits.size]
+        pandaServer.serverData.activeColumns=activeColumns.sparse
         pandaServer.serverData.activeCells=activeCells
         pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
         pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
-        pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
 
-        if not pandaServer.newDataReadyForVis:
-            pandaServer.newDataReadyForVis=True
+        pandaServer.NewDataReady()
        
         print("One step finished")
         while(not pandaServer.runInLoop and not pandaServer.runOneStep):
@@ -298,17 +300,15 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
     return -accuracy[5]
 
-
-
-
     
 if __name__ == "__main__":    
     try:
-        pandaServer.InitServer()
+        pandaServer.Start()
     
         while(True): # run infinitely
           main()    
     
     except KeyboardInterrupt:
         print("Keyboard interrupt")
-        mainThreadQuitted=True
+        pandaServer.MainThreadQuitted()
+    print("Script finished")
