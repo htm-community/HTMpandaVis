@@ -28,9 +28,9 @@ class cHTM():
     self.__node = NodePath(PandaNode('HTM1'))
   
   
-  def CreateLayer(self,name,nOfColumnsPerLayer,nOfNeuronsPerColumn):
+  def CreateLayer(self,name,nOfColumnsPerLayer,nOfCellsPerColumn):
     
-    l = cLayer(name,nOfColumnsPerLayer,nOfNeuronsPerColumn)
+    l = cLayer(name,nOfColumnsPerLayer,nOfCellsPerColumn)
     self.layers.append(l)
     
     l.CreateGfx(self.__loader)

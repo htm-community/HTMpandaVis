@@ -108,6 +108,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         boostStrength=spParams["boostStrength"],
         wrapAround=True,
     )
+                        
     sp_info = Metrics(sp.getColumnDimensions(), 999999999)
 
     tmParams = parameters["tm"]
@@ -203,7 +204,9 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaServer.serverData.activeCells=activeCells
         pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
         pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
-
+        
+        pandaServer.sp = sp
+        pandaServer.tm = tm
         pandaServer.NewDataReady()
        
         print("One step finished")

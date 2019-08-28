@@ -272,7 +272,7 @@ class cApp(ShowBase):
         
         # UPDATES LAYERS
         if len(self.htmObject.layers)==0:#if no input instances exists
-          self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
+          self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
         print(self.client.serverData.activeColumns)
         self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
       
@@ -281,7 +281,8 @@ class cApp(ShowBase):
       
         #if self.focusCursor!=None:
         self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
-          
+         
+        print("columnDataArrived")
       
       
       return task.cont
@@ -327,7 +328,7 @@ class cApp(ShowBase):
         nodePath = self.render.attachNewNode(node)
         
         self.htmObject.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
-        self.htmObject.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfNeuronsPerColumn=10)
+        self.htmObject.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
         
     def HandlePickedObject(self,obj):
       print("PICKED OBJECT:"+str(obj))
@@ -345,10 +346,10 @@ class cApp(ShowBase):
         print("PARENT TAG:"+str(parentId))
       
       
-      if obj.getName() == 'neuron':
-        print("We clicked on neuron")
+      if obj.getName() == 'cell':
+        print("We clicked on cell")
         
-        newFocus = self.htmObject.layers[0].corticalColumns[parentId].neurons[thisId]
+        newFocus = self.htmObject.layers[0].corticalColumns[parentId].cells[thisId]
         if self.focusCursor!=None:
           self.focusCursor.resetFocus()#reset previous
         self.focusCursor = newFocus

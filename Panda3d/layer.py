@@ -11,13 +11,13 @@ from panda3d.core import NodePath,PandaNode,TextNode
 
 class cLayer():
         
-    def __init__(self,name,nOfColumns,nOfNeuronsPerColumn):
+    def __init__(self,name,nOfColumns,nOfCellsPerColumn):
         
         self.name=name
         
         self.corticalColumns = []
         for i in range(nOfColumns):
-            c = cCorticalColumn(nOfNeuronsPerColumn)
+            c = cCorticalColumn(nOfCellsPerColumn)
             self.corticalColumns.append(c)
             
     def CreateGfx(self,loader):

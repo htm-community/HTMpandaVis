@@ -12,7 +12,8 @@ import threading
 import sys
 from dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
 import numpy
-
+from htm.bindings.algorithms import SpatialPooler
+from htm.bindings.algorithms import TemporalMemory
 
 def PackData(cmd, data):
     d = [cmd, data]
@@ -43,6 +44,8 @@ class PandaServer:
         
         self.serverThread = ServerThread(self,1, "ServerThread-1")
         
+        self.sp = None
+        self.tm = None
         
     def Start(self):
         self.serverThread.start()
@@ -106,9 +109,9 @@ class PandaServer:
                     elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
                         print("column data")
                         connectedSynapses = numpy.zeros(
-                            sum([len(x) for x in self.serverData.inputs])
+                            sum([len(x) for x in self.serverData.inputs]), dtype=numpy.int32
                         )  # sum size of all inputs
-                        sp.getConnectedSynapses(1, connectedSynapses)
+                        self.sp.getConnectedSynapses(1, connectedSynapses)
     
                         serverData = ServerData()
                         serverData.connectedSynapses = connectedSynapses
