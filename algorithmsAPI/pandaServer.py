@@ -27,7 +27,7 @@ def PackData(cmd, data):
         if isinstance(data, ServerData):
             data.compensateSize.append(1)  # increase size by some dummy bytes
             d = [cmd, data]
-            rawData = pickle.dumps(d, protocol=2)
+            rawData = pickle.dumps(d)#, protocol=2)
         else:
             print("Packed data is multiple of chunck size, but not known instance")
 
@@ -107,18 +107,17 @@ class PandaServer:
                             )  # we dont have any new data for client
     
                     elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
-                        print("column data")
-                        connectedSynapses = numpy.zeros(
-                            sum([len(x) for x in self.serverData.inputs]), dtype=numpy.int32
-                        )  # sum size of all inputs
-                        self.sp.getConnectedSynapses(1, connectedSynapses)
+                        print("column data:"+str(len(self.serverData.connectedSynapses)))
+#                        connectedSynapses = numpy.zeros(
+#                            sum([len(x) for x in self.serverData.inputs]), dtype=numpy.int32
+#                        )  # sum size of all inputs
+#                        self.sp.getConnectedSynapses(1, connectedSynapses)
+#    
+                        
+                        conn.send(PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
     
-                        serverData = ServerData()
-                        serverData.connectedSynapses = connectedSynapses
-                        conn.send(PackData(SERVER_CMD.SEND_COLUMN_DATA, serverData))
-    
-                        print("GETTING COLUMN DATA:")
-                        print(connectedSynapses)
+                        #print("GETTING COLUMN DATA:")
+                        #print(self.serverData.connectedSynapses)
     
                     elif rxData[0] == CLIENT_CMD.CMD_RUN:
                         self.runInLoop = True

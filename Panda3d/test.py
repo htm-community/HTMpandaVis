@@ -6,9 +6,9 @@ This is a temporary script file.
 """
 
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import LColor
+from panda3d.core import LColor,CollisionBox
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode,PerspectiveLens
-
+from panda3d.bullet import BulletDebugNode
 
 from client import SocketClient
 import math
@@ -85,6 +85,8 @@ class cApp(ShowBase):
         
         
         self.htmObject.getNode().reparentTo(self.render)
+        
+        
         
     def setWireFrame(self,status):
       print("GGGGGGGGGGg")
@@ -303,8 +305,14 @@ class cApp(ShowBase):
         self.cube.setRenderModeThickness(5)
         
         self.cube.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+        #COLLISION
+        collBox = CollisionBox(self.cube.getPos(),10.0,10.0,10.0)
+        cnodePath = self.cube.attachNewNode(CollisionNode('cnode'))
+        cnodePath.node().addSolid(collBox)
         
         self.cube.setTag('clickable','1')
+        
+
         
     def CreateTestScene(self):
         
@@ -357,8 +365,28 @@ class cApp(ShowBase):
         
       
         self.gui.cmdGetColumnData=True
+      elif obj.getName() == 'basement':
+        self.testRoutine()
         
-      
+    def testRoutine(self):
+        form = GeomVertexFormat.getV3()
+        vdata = GeomVertexData('myLine',form,Geom.UHStatic)
+        vdata.setNumRows(1)
+        vertex = GeomVertexWriter(vdata,'vertex')
+        
+        vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
+        vertex.addData3f(-8,-30,0)
+        
+        prim = GeomLines(Geom.UHStatic)
+        prim.addVertices(0,1)
+        
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        node = GeomNode('gnode')
+        node.addGeom(geom)
+        
+        self.__columnBox.attachNewNode(node)
         
     def onClickObject(self):
       mpos = self.mouseWatcherNode.getMouse()

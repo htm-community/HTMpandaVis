@@ -27,12 +27,21 @@ class SocketClient():
     
   @staticmethod
   def PackData(cmd,data=[]):
-    # Create an instance of ProcessData() to send to server.
-    d = [cmd,data]
+    d = [cmd, data]
     # Pickle the object and send it to the server
-    #protocol must be specified to be able to work with py2 on server side
-    rawData = pickle.dumps(d,protocol=2)
-   
+    # protocol must be specified to be able to work with py2 on server side
+    rawData = pickle.dumps(d, protocol=2)
+
+    if len(rawData) % 4096 == 0:  # if length of data is multiple of chunck size
+        # increase the data by 1 byte to prevent it - it causes problems in recv function
+        # on the client side - because client doesn't know how long data to expect
+        if isinstance(data, ServerData):
+            data.compensateSize.append(1)  # increase size by some dummy bytes
+            d = [cmd, data]
+            rawData = pickle.dumps(d)#, protocol=2)
+        else:
+            print("Packed data is multiple of chunck size, but not known instance")
+
     return rawData
     
   
@@ -98,6 +107,9 @@ class SocketClient():
       
     #print(rxRawData)
     #print(type(rxRawData))
+    if len(rxRawData)==0:
+        print("Received data are empty!")
+        return
     rxData = pickle.loads(rxRawData,encoding='latin1')
     
         
@@ -110,9 +122,10 @@ class SocketClient():
     elif rxData[0]==SERVER_CMD.SEND_COLUMN_DATA: 
       self.serverData=rxData[1]
       self.columnDataArrived=True
+      print("Column data arrived")
 
     elif rxData[0]==SERVER_CMD.NA:
-      print("Server has data not available")
+      #print("Server has data not available")
       time.sleep(1)
     else:
       print("Unknown command:"+str(rxData[0]))

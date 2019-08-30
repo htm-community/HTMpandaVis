@@ -83,7 +83,15 @@ class cCorticalColumn():
       
     def CreateSynapses(self,inputs,synapses):
       
+    
+      for child in self.__cellsNodePath.getChildren():
+          print(child.getName())
+          if child.getName() == "myLine":
+              child.removeNode()
+        
       print("Creating synapses")
+      print("len:"+str(len(synapses)))
+      print("active:"+str(sum([i for i in synapses])))
       #inputs are divided into separate items in list - [input1,input2,input3]
       #synapses are one united array [1,0,0,1,0,1,0...]
       #length is the same
@@ -92,23 +100,21 @@ class cCorticalColumn():
       for i in range(len(inputs)):
         synapsesDiv.append(synapses[offset:offset+inputs[i].count])
         offset+=inputs[i].count
-        print(offset)
+        #print(offset)
       
       for i in range(len(synapsesDiv)):
       
         for y in range(len(synapsesDiv[i])):
           if synapsesDiv[i][y]==1:
             
-            print(inputs[i].inputBits[y].getNode().getPos(self.__node))
-      
-            
             form = GeomVertexFormat.getV3()
             vdata = GeomVertexData('myLine',form,Geom.UHStatic)
             vdata.setNumRows(1)
             vertex = GeomVertexWriter(vdata,'vertex')
             
-            vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
-            vertex.addData3f(60,0,50)
+            #vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
+            vertex.addData3f(0,100,0)
+            vertex.addData3f(self.__node.getPos())
             
             prim = GeomLines(Geom.UHStatic)
             prim.addVertices(0,1)
@@ -119,5 +125,5 @@ class cCorticalColumn():
             node = GeomNode('gnode')
             node.addGeom(geom)
             
-            self.__columnBox.attachNewNode(node)
+            self.__cellsNodePath.attachNewNode(node)
       

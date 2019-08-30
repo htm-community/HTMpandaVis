@@ -24,13 +24,13 @@ pandaServer = PandaServer()
 default_parameters = {
     # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
     "enc": {
-        "value": {"resolution": 0.88, "size": 700, "sparsity": 0.02},
+        "value": {"resolution": 0.88, "size": 200, "sparsity": 0.02},
         "time": {"timeOfDay": (30, 1), "weekend": 21},
     },
     "predictor": {"sdrc_alpha": 0.1},
     "sp": {
-        "boostStrength": 3.0,
-        "columnCount": 1638,
+        "boostStrength": 0.5,
+        "columnCount": 200,
         "localAreaDensity": 0.04395604395604396,
         "potentialPct": 0.85,
         "synPermActiveInc": 0.04,
@@ -39,7 +39,7 @@ default_parameters = {
     },
     "tm": {
         "activationThreshold": 17,
-        "cellsPerColumn": 13,
+        "cellsPerColumn": 5,
         "initialPerm": 0.21,
         "maxSegmentsPerCell": 128,
         "maxSynapsesPerSegment": 64,
@@ -56,6 +56,7 @@ default_parameters = {
         }  # These settings are copied from NAB
     },
 }
+        
 
 
 def main(parameters=default_parameters, argv=None, verbose=True):
@@ -208,6 +209,16 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaServer.sp = sp
         pandaServer.tm = tm
         pandaServer.NewDataReady()
+        
+        connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
+        sp.getConnectedSynapses(1, connectedSynapses)
+        
+        pandaServer.serverData.connectedSynapses = connectedSynapses
+        
+        #print("CONNECTED:")
+       # print("len:"+str(len(connectedSynapses)))
+        #print(connectedSynapses)
+        #print("active:"+str(sum([i for i in connectedSynapses])))
        
         print("One step finished")
         while(not pandaServer.runInLoop and not pandaServer.runOneStep):
