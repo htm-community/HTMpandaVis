@@ -6,7 +6,7 @@ Created on Mon Aug 26 09:22:19 2019
 @author: osboxes
 """
 
-import socket, pickle
+import socket, pickle, struct
 from socket import error as SocketError
 import threading
 import sys
@@ -33,6 +33,15 @@ def PackData(cmd, data):
 
     return rawData
 
+def send_one_message(sock, data):
+    length = len(data)
+    sock.sendall(struct.pack('!I', length))
+    sock.sendall(data)
+    
+def recv_one_message(sock):
+    lengthbuf = sock.recv(4)
+    length, = struct.unpack('!I', lengthbuf)
+    return sock.recv(length)
 
 class PandaServer:
     def __init__(self):
@@ -90,7 +99,8 @@ class PandaServer:
     
             while not quitServer and not self.mainThreadQuitted:
                 try:
-                    rxRawData = conn.recv(4096)
+                    rxRawData = recv_one_message(conn)
+                    #rxRawData = conn.recv(4096)
     
                     rxData = pickle.loads(rxRawData)
     
@@ -98,11 +108,11 @@ class PandaServer:
                         #print("Data requested")
                         if self.newDataReadyForVis:
     
-                            conn.send(PackData(SERVER_CMD.SEND_DATA, self.serverData))
+                            send_one_message(conn,PackData(SERVER_CMD.SEND_DATA, self.serverData))
     
                             self.newDataReadyForVis = False
                         else:
-                            conn.send(
+                           send_one_message(conn,
                                 PackData(SERVER_CMD.NA, [])
                             )  # we dont have any new data for client
     
@@ -114,8 +124,9 @@ class PandaServer:
 #                        self.sp.getConnectedSynapses(1, connectedSynapses)
 #    
                         
-                        conn.send(PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
-    
+                        i = send_one_message(conn,PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
+                        
+                        print("ret value:"+str(i))
                         #print("GETTING COLUMN DATA:")
                         #print(self.serverData.connectedSynapses)
     
@@ -132,6 +143,7 @@ class PandaServer:
                         print("Client quitted!")
                         # quitServer=True
                 except socket.timeout:
+                    print("SocketTimeout")
                     continue
                 except SocketError as e:
                     print("SocketError")
