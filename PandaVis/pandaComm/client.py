@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 26 02:56:29 2019
 
-@author: osboxes
-"""
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))))#adds parent directory to path
+
 import socket, pickle, struct
 import _thread
 import time
-from dataExchange import ClientData,ServerData,CLIENT_CMD,SERVER_CMD
+from pandaComm.dataExchange import ServerData,CLIENT_CMD,SERVER_CMD
 
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = verbosityLow # change this to change printing verbosity of this file
+SLOW_DEBUG = False
+
+def printLog(txt, verbosity=verbosityLow):
+  if FILE_VERBOSITY>=verbosity:
+    print(txt)
+        
 def PackData(cmd,data=[]):
     d = [cmd, data]
     # Pickle the object and send it to the server
@@ -25,7 +35,7 @@ def PackData(cmd,data=[]):
             d = [cmd, data]
             rawData = pickle.dumps(d)#, protocol=2)
         else:
-            print("Packed data is multiple of chunck size, but not known instance")
+            printLog("Packed data is multiple of chunck size, but not known instance")
 
     return rawData
 
@@ -73,38 +83,38 @@ class SocketClient():
         time.sleep(1)
         continue
     
-    print("Connected to server:"+HOST+":"+str(PORT))
+    printLog("Connected to server:"+HOST+":"+str(PORT),verbosityLow)
     
     #s.send(SocketClient.PackData(CLIENT_CMD.REQ_DATA))
     while(not self.terminateClientThread):
-      #print("Sending REQ")
+      printLog("Sending REQ",verbosityHigh)
       send_one_message(s,PackData(CLIENT_CMD.REQ_DATA))
       
       if self.__gui.cmdRun:
         send_one_message(s,PackData(CLIENT_CMD.CMD_RUN))
-        print("RUN req")
+        printLog("RUN req",verbosityHigh)
       elif self.__gui.cmdStop:
         send_one_message(s,PackData(CLIENT_CMD.CMD_STOP))
-        print("STOP req")
+        printLog("STOP req",verbosityHigh)
       elif self.__gui.cmdStepForward:
         send_one_message(s,PackData(CLIENT_CMD.CMD_STEP_FWD))
-        print("STEP")
+        printLog("STEP",verbosityHigh)
       elif self.__gui.cmdGetColumnData:
         send_one_message(s,PackData(CLIENT_CMD.CMD_GET_COLUMN_DATA))
-        print("GET COLUMN DATA")
+        printLog("GET COLUMN DATA",verbosityHigh)
       
       self.__gui.ResetCommands()
       
-      print("data begin receiving")
+      printLog("Data begin receiving",verbosityHigh)
       self.ReceiveData(s)
-      print("data received")
+      printLog("Data received",verbosityHigh)
     
     
     #send that we as a client are quitting
     send_one_message(s,PackData(CLIENT_CMD.QUIT))
     
     s.close()       
-    print("ClientThread terminated")   
+    printLog("ClientThread terminated")   
 
   def ReceiveData(self,s):
     rxRawData=b''
@@ -118,39 +128,40 @@ class SocketClient():
 #          
 #          rxRawData = b''.join([rxRawData,partData])
           
-        print("lenRaw:"+str(len(rxRawData))) 
-        print(rxRawData)
+        printLog("lenRaw:"+str(len(rxRawData)),verbosityHigh) 
+        printLog(rxRawData,verbosityHigh)
         
         #print(type(rxRawData))
         if len(rxRawData)==0:
-            print("Received data are empty!")
+            printLog("Received data are empty!",verbosityHigh)
             return
         rxData = pickle.loads(rxRawData,encoding='latin1')
         
-        print("lenRx:"+str(len(rxData))) 
+        printLog("lenRx:"+str(len(rxData)),verbosityHigh) 
             
-        print("RCV ID:"+str(rxData[0]))
+        printLog("RCV ID:"+str(rxData[0]),verbosityHigh)
         if len(rxData)>1:
-            print("RCV data:"+str(rxData[1]))
+            printLog("RCV data:"+str(rxData[1]),verbosityHigh)
             
         if rxData[0]==SERVER_CMD.SEND_DATA:          
           #print(rxData[1].input)
           #print(type(rxData[1].input))
           self.serverData=rxData[1]
           self.serverDataChange=True
-          print("Data income")
+          printLog("Data income",verbosityHigh)
         elif rxData[0]==SERVER_CMD.SEND_COLUMN_DATA: 
           self.serverData=rxData[1]
           self.columnDataArrived=True
-          print("Column data arrived")
+          printLog("Column data arrived",verbosityHigh)
     
         elif rxData[0]==SERVER_CMD.NA:
-          print("Server has data not available")
-          time.sleep(1)
+          printLog("Server has data not available",verbosityHigh)
+          if SLOW_DEBUG:
+              time.sleep(1)
         else:
-          print("Unknown command:"+str(rxData[0]))
+          printLog("Unknown command:"+str(rxData[0]))
           
     except socket.timeout:
-        print("SocketTimeout")
+        printLog("SocketTimeout",verbosityHigh)
         return
         

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Feb  6 05:45:18 2019
 
-@author: osboxes
-"""
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))))#adds parent directory to path
 
-from layer import cLayer
-from input import cInput
+from objects.layer import cLayer
+from objects.input import cInput
 from panda3d.core import NodePath,PandaNode
 
 class cHTM():

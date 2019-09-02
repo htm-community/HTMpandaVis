@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Feb  6 05:46:01 2019
 
-@author: osboxes
-"""
-
-from corticalColumn import cCorticalColumn
+from objects.corticalColumn import cCorticalColumn
 from panda3d.core import NodePath,PandaNode,TextNode
 
 class cLayer():

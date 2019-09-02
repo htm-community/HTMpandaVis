@@ -9,12 +9,17 @@ Created on Mon Aug 26 09:22:19 2019
 import socket, pickle, struct
 from socket import error as SocketError
 import threading
-import sys
-from dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
-import numpy
-from htm.bindings.algorithms import SpatialPooler
-from htm.bindings.algorithms import TemporalMemory
+from pandaComm.dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = verbosityHigh # change this to change printing verbosity of this file
+
+def printLog(txt, verbosity=verbosityLow):
+  if FILE_VERBOSITY>=verbosity:
+    print(txt)
+    
 def PackData(cmd, data):
     d = [cmd, data]
     # Pickle the object and send it to the server
@@ -29,7 +34,7 @@ def PackData(cmd, data):
             d = [cmd, data]
             rawData = pickle.dumps(d)#, protocol=2)
         else:
-            print("Packed data is multiple of chunck size, but not known instance")
+            printLog("Packed data is multiple of chunck size, but not known instance")
 
     return rawData
 
@@ -78,7 +83,7 @@ class PandaServer:
         s.bind((HOST, PORT))
         s.listen(1)
     
-        print("Server listening")
+        printLog("Server listening")
     
         clientConnected = False
     
@@ -86,13 +91,13 @@ class PandaServer:
             try:
                 conn, addr = s.accept()
                 conn.settimeout(5)
-                print("Connected by" + str(addr))
+                printLog("Connected by" + str(addr))
                 clientConnected = True
             except socket.timeout:
                 continue
     
             if not clientConnected:
-                print("Client is not connected anymore")
+                printLog("Client is not connected anymore")
                 return
     
             quitServer = False
@@ -105,7 +110,7 @@ class PandaServer:
                     rxData = pickle.loads(rxRawData)
     
                     if rxData[0] == CLIENT_CMD.REQ_DATA:
-                        #print("Data requested")
+                        #printLog("Data requested")
                         if self.newDataReadyForVis:
     
                             send_one_message(conn,PackData(SERVER_CMD.SEND_DATA, self.serverData))
@@ -117,7 +122,7 @@ class PandaServer:
                             )  # we dont have any new data for client
     
                     elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
-                        print("column data:"+str(len(self.serverData.connectedSynapses)))
+                        printLog("Column req by client:"+str(len(self.serverData.connectedSynapses)),verbosityHigh)
 #                        connectedSynapses = numpy.zeros(
 #                            sum([len(x) for x in self.serverData.inputs]), dtype=numpy.int32
 #                        )  # sum size of all inputs
@@ -126,41 +131,41 @@ class PandaServer:
                         
                         i = send_one_message(conn,PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
                         
-                        print("ret value:"+str(i))
-                        #print("GETTING COLUMN DATA:")
-                        #print(self.serverData.connectedSynapses)
+                        printLog("Sent",verbosityHigh)
+                        #printLog("GETTING COLUMN DATA:")
+                        #printLog(self.serverData.connectedSynapses)
     
                     elif rxData[0] == CLIENT_CMD.CMD_RUN:
                         self.runInLoop = True
-                        print("RUN")
+                        printLog("RUN",verbosityHigh)
                     elif rxData[0] == CLIENT_CMD.CMD_STOP:
                         self.runInLoop = False
-                        print("STOP")
+                        printLog("STOP",verbosityHigh)
                     elif rxData[0] == CLIENT_CMD.CMD_STEP_FWD:
                         self.runOneStep = True
-                        print("STEP")
+                        printLog("STEP",verbosityHigh)
                     elif rxData[0] == CLIENT_CMD.QUIT:
-                        print("Client quitted!")
+                        printLog("Client quitted!")
                         # quitServer=True
                 except socket.timeout:
-                    print("SocketTimeout")
+                    printLog("SocketTimeout")
                     continue
                 except SocketError as e:
-                    print("SocketError")
-                    print(e)
+                    printLog("SocketError")
+                    printLog(e)
                     clientConnected = False
                     break
                 except EOFError:
-                    print("EOFError")
+                    printLog("EOFError")
                     clientConnected = False
                     break
-                except Exception as e:
-                    print("Exception" + str(sys.exc_info()[0]))
-                    print(str(e))
+                #except Exception as e:
+                #    printLog("Exception" + str(sys.exc_info()[0]))
+                #    printLog(str(e))
     
                     # quitServer=True
     
-        print("Server quit")
+        printLog("Server quit")
         conn.close()
 
 class ServerThread(threading.Thread):
@@ -171,9 +176,9 @@ class ServerThread(threading.Thread):
         self.serverInstance = serverInstance
 		
     def run(self):
-        print("Starting " + self.name)
+        printLog("Starting " + self.name)
         self.serverInstance.RunServer()
-        print("Exiting " + self.name)
+        printLog("Exiting " + self.name)
 
 
 

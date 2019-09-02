@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Feb 23 11:32:40 2019
-
-@author: zz
-"""
 from panda3d.core import NodePath,PandaNode,TextNode
-from inputBit import cInputBit
+from objects.inputBit import cInputBit
 
 class cInput():
   
@@ -73,8 +68,7 @@ class cInput():
 #      print("Given data for input does not match number of bits in input!")
 #      print("A:"+str(self.count)+" B:"+str(len(data)))
 #      return
-    print(data)
-    print(len(self.inputBits))
+
     self.__textValNodePath.getNode(0).setText(text)
     
     for i in range(len(self.inputBits)):

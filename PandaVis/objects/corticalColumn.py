@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Feb  6 05:46:27 2019
 
-@author: osboxes
-"""
-
-from cell import cCell
+from objects.cell import cCell
 from panda3d.core import NodePath,PandaNode,LODNode,LColor
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode
 
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = verbosityHigh # change this to change printing verbosity of this file
+
+def printLog(txt, verbosity=verbosityLow):
+  if FILE_VERBOSITY>=verbosity:
+    print(txt)
+    
 class cCorticalColumn():
     
     def __init__(self,nOfCellsPerColumn):
@@ -34,7 +38,7 @@ class cCorticalColumn():
       #self.__node.setTag('clickable',str(idx))#to be able to click on it
            
       
-      self.__columnBox = loader.loadModel("cube")      
+      self.__columnBox = loader.loadModel("models/cube")      
       self.__columnBox.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
       self.__columnBox.setPos(0, 0, -0.5+ (0 if len(self.cells)==0 else len(self.cells)/2))
       self.__columnBox.setScale(0.5, 0.5, 0.5*(1 if len(self.cells)==0 else len(self.cells)))
@@ -85,13 +89,12 @@ class cCorticalColumn():
       
     
       for child in self.__cellsNodePath.getChildren():
-          print(child.getName())
           if child.getName() == "myLine":
               child.removeNode()
         
-      print("Creating synapses")
-      print("len:"+str(len(synapses)))
-      print("active:"+str(sum([i for i in synapses])))
+      printLog("Creating synapses",verbosityHigh)
+      printLog("len:"+str(len(synapses)),verbosityHigh)
+      printLog("active:"+str(sum([i for i in synapses])),verbosityHigh)
       #inputs are divided into separate items in list - [input1,input2,input3]
       #synapses are one united array [1,0,0,1,0,1,0...]
       #length is the same
@@ -100,7 +103,6 @@ class cCorticalColumn():
       for i in range(len(inputs)):
         synapsesDiv.append(synapses[offset:offset+inputs[i].count])
         offset+=inputs[i].count
-        #print(offset)
       
       for i in range(len(synapsesDiv)):
       
@@ -115,8 +117,8 @@ class cCorticalColumn():
             vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
             vertex.addData3f(0,0,0)
             #vertex.addData3f(self.__node.getPos())
-            #print("Inputs:"+str(i)+"bits:"+str(y))
-            #print(inputs[i].inputBits[y].getNode().getPos(self.__node))
+            #printLog("Inputs:"+str(i)+"bits:"+str(y))
+            #printLog(inputs[i].inputBits[y].getNode().getPos(self.__node))
             
             prim = GeomLines(Geom.UHStatic)
             prim.addVertices(0,1)

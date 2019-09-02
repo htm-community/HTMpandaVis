@@ -1,27 +1,29 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
 
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import LColor,CollisionBox
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode,PerspectiveLens
-from panda3d.bullet import BulletDebugNode
 
-from client import SocketClient
+from pandaComm.client import SocketClient
 import math
 
 from panda3d.core import CollisionTraverser,CollisionNode
 from panda3d.core import CollisionHandlerQueue,CollisionRay
-
     
-from htmObject import cHTM 
+from objects.htmObject import cHTM 
 from gui import cGUI
 
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = verbosityLow # change this to change printing verbosity of this file
 
+def printLog(txt, verbosity=verbosityLow):
+  if FILE_VERBOSITY>=verbosity:
+    print(txt)
+    
 class cApp(ShowBase):
  
     FOCAL_LENGTH = 500
@@ -37,11 +39,8 @@ class cApp(ShowBase):
         self.rotateCamera=False
         self.move_z=50
         
-    
         self.CreateBasement()#to not be lost if there is nothing around
         
-         
-
         self.SetupCameraAndKeys()
         self.taskMgr.add(self.update, 'main loop')
         self.accept(self.win.getWindowEvent(),self.onWindowEvent)
@@ -56,9 +55,6 @@ class cApp(ShowBase):
                 
         self.htmObject = cHTM(self.loader)
         
-        
-        
-        
         #self.CreateTestScene()
         
         self.SetupOnClick()
@@ -66,17 +62,11 @@ class cApp(ShowBase):
         self.client = SocketClient()
         self.client.setGui(self.gui)
         
-        
-#        self.logo = OnscreenImage(image = 'Logo.png') # Image size is 728x100
-#        self.logo.reparentTo(pixel2d)
-#        self.logo.setPos(0, 0, 0)
-#        self.logo.setScale(364, 1, 50)
-
+    
 
         #self.htmObject.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
         #self.htmObject.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
-        
         
         
         #nOfLayers=3,nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3
@@ -89,7 +79,6 @@ class cApp(ShowBase):
         
         
     def setWireFrame(self,status):
-      print("GGGGGGGGGGg")
       #print(len(self.client.serverData.connectedSynapses))
       #print(self.client.serverData.connectedSynapses)
       
@@ -170,7 +159,7 @@ class cApp(ShowBase):
     
     def CloseApp(self):
       
-      print("CLOSE app event")
+      printLog("CLOSE app event")
       __import__('sys').exit(0)
       self.client.terminateClientThread=True
       
@@ -198,7 +187,7 @@ class cApp(ShowBase):
         self.keys[key] = value
         
     def onMouseEvent(self, event,press):
-        #print(event)
+        printLog("Mouse event:"+str(event),verbosityHigh)
         if event=='right':
             self.rotateCamera=press
             
@@ -275,7 +264,7 @@ class cApp(ShowBase):
         # UPDATES LAYERS
         if len(self.htmObject.layers)==0:#if no input instances exists
           self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
-        print(self.client.serverData.activeColumns)
+        printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
         self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
       
       if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
@@ -286,7 +275,7 @@ class cApp(ShowBase):
         
         self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
          
-        print("columnDataArrived")
+        printLog("columnDataArrived",verbosityHigh)
       
       
       return task.cont
@@ -294,7 +283,7 @@ class cApp(ShowBase):
     def CreateBasement(self):#it will create basement object, just for case that nothing is drawn to be not lost
         
         # Load the environment model.
-        self.cube = self.loader.loadModel("cube")#/media/Data/Data/Panda3d/
+        self.cube = self.loader.loadModel("models/cube")#/media/Data/Data/Panda3d/
         
         # Reparent the model to render.
         self.cube.reparentTo(self.render)
@@ -341,23 +330,23 @@ class cApp(ShowBase):
         self.htmObject.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
         
     def HandlePickedObject(self,obj):
-      print("PICKED OBJECT:"+str(obj))
+      printLog("PICKED OBJECT:"+str(obj),verbosityMedium)
 
       thisId = int(obj.getTag('clickable'))
-      print("TAG:"+str(thisId))
+      printLog("TAG:"+str(thisId),verbosityHigh)
       
       parent = obj.getParent()#skip LOD node
       tag = parent.getTag('id')
       if tag=="":
-        print("Parent is not clickable!")
+        printLog("Parent is not clickable!",verbosityHigh)
         return
       else:
         parentId = int(tag)
-        print("PARENT TAG:"+str(parentId))
+        printLog("PARENT TAG:"+str(parentId),verbosityHigh)
       
       
       if obj.getName() == 'cell':
-        print("We clicked on cell")
+        printLog("We clicked on cell",verbosityHigh)
         
         newFocus = self.htmObject.layers[0].corticalColumns[parentId].cells[thisId]
         if self.focusCursor!=None:
@@ -401,7 +390,7 @@ class cApp(ShowBase):
         self.myHandler.sortEntries()
         
         pickedObj = self.myHandler.getEntry(0).getIntoNodePath()
-        print("----------- "+str(self.myHandler.getNumEntries()))
+        #printLog("----------- "+str(self.myHandler.getNumEntries()))
         print(self.myHandler.getEntries())
         pickedObj = pickedObj.findNetTag('clickable')
         print(pickedObj)

@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 # Panda vis
-from pandaServer import PandaServer
+from pandaComm.pandaServer import PandaServer
 
 
 from htm.bindings.sdr import SDR, Metrics
