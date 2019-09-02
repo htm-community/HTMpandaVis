@@ -112,9 +112,11 @@ class cCorticalColumn():
             vdata.setNumRows(1)
             vertex = GeomVertexWriter(vdata,'vertex')
             
-            #vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
-            vertex.addData3f(0,100,0)
-            vertex.addData3f(self.__node.getPos())
+            vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
+            vertex.addData3f(0,0,0)
+            #vertex.addData3f(self.__node.getPos())
+            #print("Inputs:"+str(i)+"bits:"+str(y))
+            #print(inputs[i].inputBits[y].getNode().getPos(self.__node))
             
             prim = GeomLines(Geom.UHStatic)
             prim.addVertices(0,1)
@@ -122,8 +124,11 @@ class cCorticalColumn():
             geom = Geom(vdata)
             geom.addPrimitive(prim)
             
-            node = GeomNode('gnode')
+            node = GeomNode('synapse')
             node.addGeom(geom)
             
             self.__cellsNodePath.attachNewNode(node)
       
+    def DestroySynapses(self):
+        for syn in self.__cellsNodePath.findAllMatches("synapse"):
+            syn.removeNode()

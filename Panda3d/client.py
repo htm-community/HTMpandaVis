@@ -107,9 +107,7 @@ class SocketClient():
     print("ClientThread terminated")   
 
   def ReceiveData(self,s):
-    rxLen = 4096
     rxRawData=b''
-    
     try:
         rxRawData = recv_one_message(s)
 #        while(rxLen>=4096):

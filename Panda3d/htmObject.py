@@ -56,4 +56,8 @@ class cHTM():
       
   def getNode(self):
       return self.__node
+  
+  def DestroySynapses(self):
+      for ly in self.layers:
+          ly.DestroySynapses()
         

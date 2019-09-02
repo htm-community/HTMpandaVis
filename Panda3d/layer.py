@@ -66,3 +66,7 @@ class cLayer():
 
     def getNode(self):
         return self.__node
+    
+    def DestroySynapses(self):
+        for col in self.corticalColumns:
+            col.DestroySynapses()

@@ -282,6 +282,8 @@ class cApp(ShowBase):
         self.client.columnDataArrived=False
       
         #if self.focusCursor!=None:
+        self.htmObject.DestroySynapses()
+        
         self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
          
         print("columnDataArrived")
