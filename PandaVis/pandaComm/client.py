@@ -100,8 +100,8 @@ class SocketClient():
         send_one_message(s,PackData(CLIENT_CMD.CMD_STEP_FWD))
         printLog("STEP",verbosityHigh)
       elif self.__gui.cmdGetColumnData:
-        send_one_message(s,PackData(CLIENT_CMD.CMD_GET_COLUMN_DATA))
-        printLog("GET COLUMN DATA",verbosityHigh)
+        send_one_message(s,PackData(CLIENT_CMD.CMD_GET_COLUMN_DATA,self.__gui.focusCursor.column))
+        printLog("GET COLUMN DATA for col:"+str(self.__gui.focusCursor.column),verbosityHigh)
       
       self.__gui.ResetCommands()
       
@@ -120,18 +120,10 @@ class SocketClient():
     rxRawData=b''
     try:
         rxRawData = recv_one_message(s)
-#        while(rxLen>=4096):
-#          partData = s.recv(4096)
-#          rxLen=len(partData)
-#          #print(rxLen)
-#          #print(type(partData))
-#          
-#          rxRawData = b''.join([rxRawData,partData])
           
         printLog("lenRaw:"+str(len(rxRawData)),verbosityHigh) 
         printLog(rxRawData,verbosityHigh)
         
-        #print(type(rxRawData))
         if len(rxRawData)==0:
             printLog("Received data are empty!",verbosityHigh)
             return
@@ -144,8 +136,6 @@ class SocketClient():
             printLog("RCV data:"+str(rxData[1]),verbosityHigh)
             
         if rxData[0]==SERVER_CMD.SEND_DATA:          
-          #print(rxData[1].input)
-          #print(type(rxData[1].input))
           self.serverData=rxData[1]
           self.serverDataChange=True
           printLog("Data income",verbosityHigh)

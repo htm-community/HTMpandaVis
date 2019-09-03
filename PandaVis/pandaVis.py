@@ -23,6 +23,7 @@ FILE_VERBOSITY = verbosityLow # change this to change printing verbosity of this
 def printLog(txt, verbosity=verbosityLow):
   if FILE_VERBOSITY>=verbosity:
     print(txt)
+        
     
 class cApp(ShowBase):
  
@@ -205,6 +206,41 @@ class cApp(ShowBase):
         elif event == 'left' and press:
           self.onClickObject()
         
+    
+    def updateHTMstate():
+        if self.client.serverDataChange and len(self.client.serverData.inputs)!=0:
+            self.client.serverDataChange=False
+            
+            
+            inputData = self.client.serverData.inputs
+            inputDataSizes = self.client.serverData.inputDataSizes
+            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
+            
+            #UPDATES INPUTS
+            for i in range(len(inputData)):
+              if len(self.htmObject.inputs)<=i:#if no input instances exists
+                self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
+              
+              self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
+            
+            # UPDATES LAYERS
+            if len(self.htmObject.layers)==0:#if no input instances exists
+              self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
+            printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
+            self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
+          
+          if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
+            self.client.columnDataArrived=False
+          
+            #if self.focusCursor!=None:
+            self.htmObject.DestroySynapses()
+            
+            self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
+             
+            printLog("columnDataArrived",verbosityHigh)
+        
+        
+        
     def update(self, task):
       
       """Updates the camera based on the keyboard input. Once this is
@@ -246,36 +282,7 @@ class cApp(ShowBase):
       self.camera.setHpr(self.heading, self.pitch, 0)
       
       
-      if self.client.serverDataChange and len(self.client.serverData.inputs)!=0:
-        self.client.serverDataChange=False
-        
-        
-        inputData = self.client.serverData.inputs
-        inputDataSizes = self.client.serverData.inputDataSizes
-        inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
-        
-        #UPDATES INPUTS
-        for i in range(len(inputData)):
-          if len(self.htmObject.inputs)<=i:#if no input instances exists
-            self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
-          
-          self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
-        
-        # UPDATES LAYERS
-        if len(self.htmObject.layers)==0:#if no input instances exists
-          self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
-        printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
-        self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
-      
-      if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
-        self.client.columnDataArrived=False
-      
-        #if self.focusCursor!=None:
-        self.htmObject.DestroySynapses()
-        
-        self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
-         
-        printLog("columnDataArrived",verbosityHigh)
+      updateHTMstate()
       
       
       return task.cont
@@ -354,7 +361,9 @@ class cApp(ShowBase):
         self.focusCursor = newFocus
         self.focusCursor.setFocus()
         
-      
+        
+        self.gui.focusCursor = self.focusCursor
+        
         self.gui.cmdGetColumnData=True
       elif obj.getName() == 'basement':
         self.testRoutine()

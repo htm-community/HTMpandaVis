@@ -24,9 +24,6 @@ class cGUI:
         self.btnRunStop.setText("Run")
         self.cmdStop=True
     
-  def pp(self,status):
-    print("HHHHHHHHh")
-
   def __init__(self,defaultWidth,defaultHeight,loader,fWireframe):
     
     #self.setWireframe = None
@@ -63,6 +60,8 @@ class cGUI:
     self.CheckBoxStyle1(self.cBox2)
     
     self.ResetCommands()
+    
+    self.focusCursor = None
     
 
     

@@ -12,20 +12,42 @@ class ClientData(object):
     self.a = 0
     self.b = 0
 
+
+
 class ServerData(object):
   def __init__(self):
-    self.inputsValueString = [] #ordinary expressed value that is represented by input SDRs
-    self.inputs = [] # input SDRs (just indicies of active bits)
-    self.activeColumns=[] # activeColumns
-    self.activeCells=[]
-    self.inputDataSizes=[]
-    self.columnDimensions=0
-    self.cellsPerColumn=0
-    self.connectedSynapses=[]
+      
+    self.HTMObjects = {} # dataHTMObject
     
-    self.compensateSize=[]#to compensate size by dummy bytes
-   
+    self.compensateSize=[]#to compensate size by dummy bytes 
     
+
+# -------------------DATA OBJECTS ---------------------------------------------
+# these data objects can be part of the serverData instance that is sent through
+# the socket to the client
+# client will determine what he can read by commands
+    
+class dataHTMObject(object):
+    def __init__(self):
+        self.layers = {} # dataLayer
+        self.inputs = {} # dataInput
+        
+class dataLayer(object):
+    def __init__(self,columnCount,cellsPerColumn):
+        
+        self.columnCount = columnCount
+        self.cellsPerColumn = cellsPerColumn
+        
+        self.activeColumns=[] # currently active columns (sparse) in this layer
+        self.activeCells=[]
+        
+class dataInput(object):
+    def __init__(self):
+        self.bits = [] # input SDRs (just indicies of active bits)
+        self.stringValue = [] # ordinary expressed value that is represented by input SDRs
+           
+        
+        
 class CLIENT_CMD(Enum):
   QUIT = 0
   REQ_DATA = 1

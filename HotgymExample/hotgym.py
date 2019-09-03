@@ -6,7 +6,7 @@ import math
 
 # Panda vis
 from pandaComm.pandaServer import PandaServer
-
+from pandaComm.dataExchange import ServerData,dataHTMObject,dataLayer,dataInput
 
 from htm.bindings.sdr import SDR, Metrics
 from htm.encoders.rdse import RDSE, RDSE_Parameters
@@ -198,22 +198,40 @@ def main(parameters=default_parameters, argv=None, verbose=True):
          
         timeOfDayString = record[0]
         
-        pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
-        pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
-        pandaServer.serverData.inputDataSizes= [dateBits.size, consumptionBits.size]
-        pandaServer.serverData.activeColumns=activeColumns.sparse
-        pandaServer.serverData.activeCells=activeCells
-        pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
-        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
+        serverData = ServerData()
+        serverData.HTMObjects["HTM1"] = dataHTMObject()
+        serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(modelParams["sp"]["columnCount"],modelParams["tm"]["cellsPerColumn"])
+        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
+        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
+
+        SL = serverData.HTMObjects["HTM1"].layers["SensoryLayer"]
+        ConsumInp = serverData.HTMObjects["HTM1"].inputs["SL_Consumption"]
+        TimeOfDayInp = serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"]
+        
+        ConsumInp.stringValue = "consumption: {:.2f}".format(consumption)
+        TimeOfDayInp.stringValue = timeOfDayString
+        
+        ConsumInp.bits = consumptionBits.sparse
+        TimeOfDayInp.bits = dateBits.sparse
+        SL.activeColumns = activeColumns.sparse
+        SL.activeCells = activeCells
+        
+        #pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
+        #pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
+#        pandaServer.serverData.inputDataSizes= [dateBits.size, consumptionBits.size]
+#        pandaServer.serverData.activeColumns=activeColumns.sparse
+#        pandaServer.serverData.activeCells=activeCells
+#        pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
+#        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
         
         pandaServer.sp = sp
         pandaServer.tm = tm
         pandaServer.NewDataReady()
         
-        connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
-        sp.getConnectedSynapses(1, connectedSynapses)
+        #connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
+        #sp.getConnectedSynapses(1, connectedSynapses)
         
-        pandaServer.serverData.connectedSynapses = connectedSynapses
+        #pandaServer.serverData.connectedSynapses = connectedSynapses
         
         #print("CONNECTED:")
        # print("len:"+str(len(connectedSynapses)))
