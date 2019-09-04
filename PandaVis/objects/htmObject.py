@@ -15,7 +15,7 @@ class cHTM():
   inputOffset=0
   
   
-  def __init__(self,loader):
+  def __init__(self,loader,name):
       
     self.__loader = loader
     self.layers = []
@@ -23,8 +23,9 @@ class cHTM():
 
     self.__gfx=None
     self.__node=None
+    self.name = name
     
-    self.__node = NodePath(PandaNode('HTM1'))
+    self.__node = NodePath(PandaNode(name))
   
   
   def CreateLayer(self,name,nOfColumnsPerLayer,nOfCellsPerColumn):
@@ -59,4 +60,9 @@ class cHTM():
   def DestroySynapses(self):
       for ly in self.layers:
           ly.DestroySynapses()
-        
+
+  @staticmethod
+  def getObjByName(arr,name):
+      for i in arr:
+          if i.name == name:
+              return i

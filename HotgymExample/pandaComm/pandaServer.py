@@ -110,7 +110,7 @@ class PandaServer:
                     rxData = pickle.loads(rxRawData)
     
                     if rxData[0] == CLIENT_CMD.REQ_DATA:
-                        #printLog("Data requested")
+                        printLog("Data requested",verbosityHigh)
                         if self.newDataReadyForVis:
     
                             send_one_message(conn,PackData(SERVER_CMD.SEND_DATA, self.serverData))
@@ -120,6 +120,7 @@ class PandaServer:
                            send_one_message(conn,
                                 PackData(SERVER_CMD.NA, [])
                             )  # we dont have any new data for client
+                           printLog("But no new data available",verbosityHigh)
     
                     elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
                         printLog("Column req by client:"+str(len(self.serverData.connectedSynapses)),verbosityHigh)
@@ -129,7 +130,7 @@ class PandaServer:
 #                        self.sp.getConnectedSynapses(1, connectedSynapses)
 #    
                         
-                        i = send_one_message(conn,PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
+                        send_one_message(conn,PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
                         
                         printLog("Sent",verbosityHigh)
                         #printLog("GETTING COLUMN DATA:")

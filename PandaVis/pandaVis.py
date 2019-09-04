@@ -18,7 +18,7 @@ from gui import cGUI
 verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
-FILE_VERBOSITY = verbosityLow # change this to change printing verbosity of this file
+FILE_VERBOSITY = verbosityHigh # change this to change printing verbosity of this file
 
 def printLog(txt, verbosity=verbosityLow):
   if FILE_VERBOSITY>=verbosity:
@@ -54,7 +54,7 @@ class cApp(ShowBase):
         
         #self.gui.cBox.command = self.setWireFrame
                 
-        self.htmObject = cHTM(self.loader)
+        
         
         #self.CreateTestScene()
         
@@ -64,6 +64,7 @@ class cApp(ShowBase):
         self.client.setGui(self.gui)
         
     
+        self.HTMObjects = []
 
         #self.htmObject.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
@@ -75,7 +76,6 @@ class cApp(ShowBase):
         #self.pixel2d.reparentTo(self.render2d)
         
         
-        self.htmObject.getNode().reparentTo(self.render)
         
         
         
@@ -207,37 +207,80 @@ class cApp(ShowBase):
           self.onClickObject()
         
     
-    def updateHTMstate():
-        if self.client.serverDataChange and len(self.client.serverData.inputs)!=0:
+    
+    def updateHTMstate(self):
+        if self.client.serverDataChange:
             self.client.serverDataChange=False
+            printLog("Data change! Updating HTM state",verbosityMedium)
             
+            serverObjs = self.client.serverData.HTMObjects
             
-            inputData = self.client.serverData.inputs
-            inputDataSizes = self.client.serverData.inputDataSizes
-            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
+            # if we get HTM data objects, find if we have them by name
+            for obj in serverObjs:
+                searchList = [o for o in self.HTMObjects if obj == o.name]
+
+                if len(searchList)>1:
+                    printLog("Multiple HTM objects with same name!")
+                    return
+                if len(searchList)<1:# its new HTM object
+                    printLog("New HTM object arrived! Name:"+str(obj))
+                    # create HTM object
+                    newObj = cHTM(self.loader,obj)
+                    newObj.getNode().reparentTo(self.render)
+                    
+                    #create inputs
+                    for inp in serverObjs[obj].inputs:
+                        newObj.CreateInput(name=inp,count=serverObjs[obj].inputs[inp].count,rows=int(math.sqrt(serverObjs[obj].inputs[inp].count)))
+                   #create layers
+                    for lay in serverObjs[obj].layers:
+                        newObj.CreateLayer(name=lay,nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,nOfCellsPerColumn=serverObjs[obj].layers[lay].cellsPerColumn)
+                        
+                    self.HTMObjects += [newObj]
+                # update HTM object
+                
+                # go through all incoming inputs
+                for i in serverObjs[obj].inputs:#dict
+                    #find matching input in local structure
+                    for ii in cHTM.getObjByName(self.HTMObjects,obj).inputs:#array
+                        if ii.name == i:
+                            ii.UpdateState(serverObjs[obj].inputs[i].bits,serverObjs[obj].inputs[i].stringValue)
+                            break
             
-            #UPDATES INPUTS
-            for i in range(len(inputData)):
-              if len(self.htmObject.inputs)<=i:#if no input instances exists
-                self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
-              
-              self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
+                # go through all incoming layers
+                for l in serverObjs[obj].layers:#dict
+                    #find matching layer in local structure
+                    for ll in cHTM.getObjByName(self.HTMObjects,obj).layers:#array
+                        if ll.name == l:
+                            ll.UpdateState(serverObjs[obj].layers[l].activeColumns,serverObjs[obj].layers[l].activeCells)
+                            break
+                
             
-            # UPDATES LAYERS
-            if len(self.htmObject.layers)==0:#if no input instances exists
-              self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
-            printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
-            self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
-          
-          if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
-            self.client.columnDataArrived=False
-          
-            #if self.focusCursor!=None:
-            self.htmObject.DestroySynapses()
-            
-            self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
-             
-            printLog("columnDataArrived",verbosityHigh)
+#            inputData = self.client.serverData.inputs
+#            inputDataSizes = self.client.serverData.inputDataSizes
+#            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
+#            
+#            #UPDATES INPUTS
+#            for i in range(len(inputData)):
+#              if len(self.htmObject.inputs)<=i:#if no input instances exists
+#                self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
+#              
+#              self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
+#            
+#            # UPDATES LAYERS
+#            if len(self.htmObject.layers)==0:#if no input instances exists
+#              self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
+#            printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
+#            self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
+#          
+#          if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
+#            self.client.columnDataArrived=False
+#          
+#            #if self.focusCursor!=None:
+#            self.htmObject.DestroySynapses()
+#            
+#            self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
+#             
+#            printLog("columnDataArrived",verbosityHigh)
         
         
         
@@ -282,7 +325,7 @@ class cApp(ShowBase):
       self.camera.setHpr(self.heading, self.pitch, 0)
       
       
-      updateHTMstate()
+      self.updateHTMstate()
       
       
       return task.cont
@@ -333,8 +376,8 @@ class cApp(ShowBase):
         
         nodePath = self.render.attachNewNode(node)
         
-        self.htmObject.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
-        self.htmObject.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
+        self.HTMObjects.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
+        self.HTMObjects.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
         
     def HandlePickedObject(self,obj):
       printLog("PICKED OBJECT:"+str(obj),verbosityMedium)
@@ -355,7 +398,7 @@ class cApp(ShowBase):
       if obj.getName() == 'cell':
         printLog("We clicked on cell",verbosityHigh)
         
-        newFocus = self.htmObject.layers[0].corticalColumns[parentId].cells[thisId]
+        newFocus = self.HTMObjects.layers[0].corticalColumns[parentId].cells[thisId]
         if self.focusCursor!=None:
           self.focusCursor.resetFocus()#reset previous
         self.focusCursor = newFocus

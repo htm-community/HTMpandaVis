@@ -14,8 +14,8 @@ from pandaComm.dataExchange import ServerData,CLIENT_CMD,SERVER_CMD
 verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
-FILE_VERBOSITY = verbosityLow # change this to change printing verbosity of this file
-SLOW_DEBUG = False
+FILE_VERBOSITY = verbosityHigh # change this to change printing verbosity of this file
+SLOW_DEBUG = True
 
 def printLog(txt, verbosity=verbosityLow):
   if FILE_VERBOSITY>=verbosity:

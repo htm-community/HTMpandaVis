@@ -43,6 +43,7 @@ class dataLayer(object):
         
 class dataInput(object):
     def __init__(self):
+        self.count = 0
         self.bits = [] # input SDRs (just indicies of active bits)
         self.stringValue = [] # ordinary expressed value that is represented by input SDRs
            

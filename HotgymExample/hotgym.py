@@ -212,7 +212,10 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         TimeOfDayInp.stringValue = timeOfDayString
         
         ConsumInp.bits = consumptionBits.sparse
+        ConsumInp.count = consumptionBits.size
+        
         TimeOfDayInp.bits = dateBits.sparse
+        TimeOfDayInp.count = dateBits.size
         SL.activeColumns = activeColumns.sparse
         SL.activeCells = activeCells
         
@@ -224,6 +227,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 #        pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
 #        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
         
+        pandaServer.serverData = serverData
         pandaServer.sp = sp
         pandaServer.tm = tm
         pandaServer.NewDataReady()
