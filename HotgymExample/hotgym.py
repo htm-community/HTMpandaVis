@@ -198,16 +198,13 @@ def main(parameters=default_parameters, argv=None, verbose=True):
          
         timeOfDayString = record[0]
         
-        serverData = ServerData()
-        serverData.HTMObjects["HTM1"] = dataHTMObject()
-        serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(modelParams["sp"]["columnCount"],modelParams["tm"]["cellsPerColumn"])
-        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
-        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
-
+        
+        # just shortcuts to shorten names
         SL = serverData.HTMObjects["HTM1"].layers["SensoryLayer"]
         ConsumInp = serverData.HTMObjects["HTM1"].inputs["SL_Consumption"]
         TimeOfDayInp = serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"]
         
+        # fill up values
         ConsumInp.stringValue = "consumption: {:.2f}".format(consumption)
         TimeOfDayInp.stringValue = timeOfDayString
         
@@ -228,8 +225,9 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 #        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
         
         pandaServer.serverData = serverData
-        pandaServer.sp = sp
-        pandaServer.tm = tm
+        
+        pandaServer.spatialPoolers["HTM1"] = sp
+        pandaServer.temporalMemories["HTM1"] = tm
         pandaServer.NewDataReady()
         
         #connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
@@ -336,11 +334,19 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
     return -accuracy[5]
 
+def BuildPandaSystem():
+    global serverData
+    serverData = ServerData()
+    serverData.HTMObjects["HTM1"] = dataHTMObject()
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(default_parameters["sp"]["columnCount"],default_parameters["tm"]["cellsPerColumn"])
+    serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
+    serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
     
 if __name__ == "__main__":    
     try:
         pandaServer.Start()
-    
+        BuildPandaSystem();
+        
         while(True): # run infinitely
           main()    
     

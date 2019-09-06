@@ -100,9 +100,9 @@ class SocketClient():
         send_one_message(s,PackData(CLIENT_CMD.CMD_STEP_FWD))
         printLog("STEP",verbosityHigh)
       elif self.__gui.cmdGetColumnData:
-        send_one_message(s,PackData(CLIENT_CMD.CMD_GET_COLUMN_DATA,self.__gui.focusCursor.column))
-        printLog("GET COLUMN DATA for col:"+str(self.__gui.focusCursor.column),verbosityHigh)
-      
+        send_one_message(s,PackData(CLIENT_CMD.CMD_GET_COLUMN_DATA,[self.__gui.focusedPath,self.__gui.columnID]))
+        printLog("GET COLUMN DATA for col:"+str(self.__gui.focusedCell.column),verbosityHigh)
+        
       self.__gui.ResetCommands()
       
       printLog("Data begin receiving",verbosityHigh)

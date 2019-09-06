@@ -18,8 +18,8 @@ class cHTM():
   def __init__(self,loader,name):
       
     self.__loader = loader
-    self.layers = []
-    self.inputs = []
+    self.layers = {}
+    self.inputs = {}
 
     self.__gfx=None
     self.__node=None
@@ -31,7 +31,7 @@ class cHTM():
   def CreateLayer(self,name,nOfColumnsPerLayer,nOfCellsPerColumn):
     
     l = cLayer(name,nOfColumnsPerLayer,nOfCellsPerColumn)
-    self.layers.append(l)
+    self.layers[name] = l
     
     l.CreateGfx(self.__loader)
     l.getNode().setPos(cHTM.layerOffset, 0, 0)
@@ -43,13 +43,13 @@ class cHTM():
     
   def CreateInput(self,name,count,rows):
     
-    l = cInput(name,count,rows)
-    self.inputs.append(l)
+    i = cInput(name,count,rows)
+    self.inputs[name] = i
     
-    l.CreateGfx(self.__loader)
-    l.getNode().setPos(-40, cHTM.inputOffset, 0)
+    i.CreateGfx(self.__loader)
+    i.getNode().setPos(-40, cHTM.inputOffset, 0)
     
-    l.getNode().reparentTo(self.__node)
+    i.getNode().reparentTo(self.__node)
     
     cHTM.inputOffset+=5+rows*3
       
@@ -58,11 +58,5 @@ class cHTM():
       return self.__node
   
   def DestroySynapses(self):
-      for ly in self.layers:
+      for ly in self.layers.values():
           ly.DestroySynapses()
-
-  @staticmethod
-  def getObjByName(arr,name):
-      for i in arr:
-          if i.name == name:
-              return i

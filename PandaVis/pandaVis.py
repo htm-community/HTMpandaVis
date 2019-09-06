@@ -12,6 +12,7 @@ from panda3d.core import CollisionTraverser,CollisionNode
 from panda3d.core import CollisionHandlerQueue,CollisionRay
     
 from objects.htmObject import cHTM 
+from objects.layer import cLayer
 from gui import cGUI
 
 
@@ -64,7 +65,10 @@ class cApp(ShowBase):
         self.client.setGui(self.gui)
         
     
-        self.HTMObjects = []
+        self.HTMObjects = {}
+        
+        self.focusedCell = None
+        self.focusedPath = None
 
         #self.htmObject.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
         
@@ -215,14 +219,10 @@ class cApp(ShowBase):
             
             serverObjs = self.client.serverData.HTMObjects
             
-            # if we get HTM data objects, find if we have them by name
+            # if we get HTM data objects, iterate over received data
             for obj in serverObjs:
-                searchList = [o for o in self.HTMObjects if obj == o.name]
-
-                if len(searchList)>1:
-                    printLog("Multiple HTM objects with same name!")
-                    return
-                if len(searchList)<1:# its new HTM object
+                
+                if not obj in self.HTMObjects:# its new HTM object
                     printLog("New HTM object arrived! Name:"+str(obj))
                     # create HTM object
                     newObj = cHTM(self.loader,obj)
@@ -235,25 +235,46 @@ class cApp(ShowBase):
                     for lay in serverObjs[obj].layers:
                         newObj.CreateLayer(name=lay,nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,nOfCellsPerColumn=serverObjs[obj].layers[lay].cellsPerColumn)
                         
-                    self.HTMObjects += [newObj]
+                    self.HTMObjects[obj] = newObj
                 # update HTM object
                 
                 # go through all incoming inputs
                 for i in serverObjs[obj].inputs:#dict
                     #find matching input in local structure
-                    for ii in cHTM.getObjByName(self.HTMObjects,obj).inputs:#array
-                        if ii.name == i:
-                            ii.UpdateState(serverObjs[obj].inputs[i].bits,serverObjs[obj].inputs[i].stringValue)
-                            break
+                    
+                    self.HTMObjects[obj].inputs[i].UpdateState(serverObjs[obj].inputs[i].bits,serverObjs[obj].inputs[i].stringValue)
             
                 # go through all incoming layers
                 for l in serverObjs[obj].layers:#dict
                     #find matching layer in local structure
-                    for ll in cHTM.getObjByName(self.HTMObjects,obj).layers:#array
-                        if ll.name == l:
-                            ll.UpdateState(serverObjs[obj].layers[l].activeColumns,serverObjs[obj].layers[l].activeCells)
-                            break
+                    self.HTMObjects[obj].layers[l].UpdateState(serverObjs[obj].layers[l].activeColumns,serverObjs[obj].layers[l].activeCells)
                 
+        if self.client.columnDataArrived:
+            printLog("Column data arrived, updating synapses!",verbosityMedium)
+            self.client.columnDataArrived=False
+            serverObjs = self.client.serverData.HTMObjects
+            
+            for obj in serverObjs:
+                
+                self.HTMObjects[obj].DestroySynapses()
+            
+                for l in serverObjs[obj].layers:#dict
+                    
+                    printLog(serverObjs[obj].layers[l].proximalSynapses,verbosityHigh)
+                    for syn in serverObjs[obj].layers[l].proximalSynapses:# array
+                        
+                        printLog("Layer:"+str(l)+" proximalSynapses:"+str(syn),verbosityMedium)
+                        
+                        columnID = syn[0]
+                        proximalSynapses = syn[1]
+                        
+                        #update columns with proximal Synapses
+                        
+                        self.HTMObjects[obj].layers[l].corticalColumns[columnID].CreateSynapses(self.HTMObjects[obj].inputs,proximalSynapses)
+                    
+                    
+         
+            
             
 #            inputData = self.client.serverData.inputs
 #            inputDataSizes = self.client.serverData.inputDataSizes
@@ -376,8 +397,8 @@ class cApp(ShowBase):
         
         nodePath = self.render.attachNewNode(node)
         
-        self.HTMObjects.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
-        self.HTMObjects.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
+        #self.HTMObjects.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
+        #self.HTMObjects.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
         
     def HandlePickedObject(self,obj):
       printLog("PICKED OBJECT:"+str(obj),verbosityMedium)
@@ -398,14 +419,25 @@ class cApp(ShowBase):
       if obj.getName() == 'cell':
         printLog("We clicked on cell",verbosityHigh)
         
-        newFocus = self.HTMObjects.layers[0].corticalColumns[parentId].cells[thisId]
-        if self.focusCursor!=None:
-          self.focusCursor.resetFocus()#reset previous
-        self.focusCursor = newFocus
-        self.focusCursor.setFocus()
+        focusedHTMObject = str(obj).split('/')[1]
+        focusedLayer = str(obj).split('/')[2]
         
         
-        self.gui.focusCursor = self.focusCursor
+        HTMObj = self.HTMObjects[focusedHTMObject]
+        Layer = HTMObj.layers[focusedLayer]
+        newCellFocus = Layer.corticalColumns[parentId].cells[thisId]
+        self.focusedPath = [focusedHTMObject,focusedLayer];
+        
+        if self.focusedCell!=None:
+          self.focusedCell.resetFocus()#reset previous
+        self.focusedCell = newCellFocus
+        self.focusedCell.setFocus()
+        
+        
+        self.gui.focusedCell = self.focusedCell
+        
+        self.gui.focusedPath = self.focusedPath
+        self.gui.columnID = Layer.corticalColumns.index(self.gui.focusedCell.column)
         
         self.gui.cmdGetColumnData=True
       elif obj.getName() == 'basement':

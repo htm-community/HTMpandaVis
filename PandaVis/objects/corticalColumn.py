@@ -17,13 +17,14 @@ def printLog(txt, verbosity=verbosityLow):
     
 class cCorticalColumn():
     
-    def __init__(self,nOfCellsPerColumn):
+    def __init__(self,nameOfLayer,nOfCellsPerColumn):
       self.cells = []
       for i in range(nOfCellsPerColumn):
           n = cCell(self)
           self.cells.append(n)
         
       self.state = False
+      self.parentLayer = nameOfLayer
             
     def CreateGfx(self,loader,idx):
       #                __node 

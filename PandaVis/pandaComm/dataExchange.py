@@ -32,6 +32,7 @@ class dataHTMObject(object):
         self.layers = {} # dataLayer
         self.inputs = {} # dataInput
         
+        
 class dataLayer(object):
     def __init__(self,columnCount,cellsPerColumn):
         
@@ -40,6 +41,16 @@ class dataLayer(object):
         
         self.activeColumns=[] # currently active columns (sparse) in this layer
         self.activeCells=[]
+        
+        # two dims, [columnID,[destinationID1,...]]
+        self.proximalSynapses = []  # first item in array is for what column, second is list of destination input bits
+        
+        # two dims, [columnID,[destinationID1,...]]
+        self.distalSynapses = []  # first item in array is for what column, second is list of destination cells in this layer
+        
+        # three dims, [columnID,destinationLayerID, [destination_id1,...]]
+        self.distalSynapses_external = []  # first item in array is for what column, second is list of destination cells in other layer
+        
         
 class dataInput(object):
     def __init__(self):

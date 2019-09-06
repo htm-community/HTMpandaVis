@@ -12,12 +12,12 @@ class cLayer():
         
         self.corticalColumns = []
         for i in range(nOfColumns):
-            c = cCorticalColumn(nOfCellsPerColumn)
+            c = cCorticalColumn(name,nOfCellsPerColumn)
             self.corticalColumns.append(c)
             
     def CreateGfx(self,loader):
         
-        self.__node = NodePath(PandaNode('Layer_'+self.name))#TextNode('layerText')#loader.loadModel("models/teapot")
+        self.__node = NodePath(PandaNode(self.name))#TextNode('layerText')#loader.loadModel("models/teapot")
         
         text = TextNode('Layer text node')
         text.setText(self.name)
@@ -65,3 +65,4 @@ class cLayer():
     def DestroySynapses(self):
         for col in self.corticalColumns:
             col.DestroySynapses()
+            

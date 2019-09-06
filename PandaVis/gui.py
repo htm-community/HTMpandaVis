@@ -61,8 +61,9 @@ class cGUI:
     
     self.ResetCommands()
     
-    self.focusCursor = None
-    
+    self.focusedCell = None
+    self.focusedPath = None
+    self.columnID = 0
 
     
   def ResetCommands(self):

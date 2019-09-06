@@ -10,6 +10,7 @@ import socket, pickle, struct
 from socket import error as SocketError
 import threading
 from pandaComm.dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
+import numpy
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -58,8 +59,9 @@ class PandaServer:
         
         self.serverThread = ServerThread(self,1, "ServerThread-1")
         
-        self.sp = None
-        self.tm = None
+        self.spatialPoolers = {} # dict of pairs layer:spatialPooler
+        self.temporalMemories = {} # dict of pairs layer:temporalMemory
+                
         
     def Start(self):
         self.serverThread.start()
@@ -123,16 +125,24 @@ class PandaServer:
                            printLog("But no new data available",verbosityHigh)
     
                     elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
-                        printLog("Column req by client:"+str(len(self.serverData.connectedSynapses)),verbosityHigh)
-#                        connectedSynapses = numpy.zeros(
-#                            sum([len(x) for x in self.serverData.inputs]), dtype=numpy.int32
-#                        )  # sum size of all inputs
-#                        self.sp.getConnectedSynapses(1, connectedSynapses)
-#    
+                        printLog("Column req by client",verbosityMedium)
+                        print(rxData)
+                        HTMObjectName = rxData[1][0][0]
+                        layerName = rxData[1][0][1]
+                        requestedCol = int(rxData[1][1])
                         
+                        printLog("HTM object:"+str(HTMObjectName)+" layerName:"+str(layerName)+ " reqCol:"+str(requestedCol),verbosityMedium)
+                        
+                        sp = self.spatialPoolers[HTMObjectName]
+                        connectedSynapses = numpy.zeros(sp.getNumInputs(), dtype=numpy.int32)
+                        sp.getConnectedSynapses(requestedCol, connectedSynapses)
+        
+                        self.serverData.HTMObjects[HTMObjectName].layers[layerName].proximalSynapses = [[requestedCol,[120,50]]];
+                        
+                        printLog("Sending:"+str(self.serverData.HTMObjects[HTMObjectName].layers[layerName].proximalSynapses),verbosityHigh)
                         send_one_message(conn,PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))
                         
-                        printLog("Sent",verbosityHigh)
+                        printLog("Sent synapses of len:"+str(len(connectedSynapses)),verbosityHigh)
                         #printLog("GETTING COLUMN DATA:")
                         #printLog(self.serverData.connectedSynapses)
     
