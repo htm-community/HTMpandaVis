@@ -8,20 +8,20 @@ Created on Wed Feb  6 05:46:38 2019
 import random
 from panda3d.core import LColor,CollisionBox,CollisionNode
 
-class cNeuron():
+class cCell():
     
     def __init__(self,column):
       self.state = False if random.randint(0,1)==0 else True
-      self.column = column # to be able to track column that this neurons belongs to
+      self.column = column # to be able to track column that this cell belongs to
         
     def CreateGfx(self,loader,idx):#idx is neccesary to be able to track it down for mouse picking
         
-      self.__node = loader.loadModel("cube")
-      self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+      self.__node = loader.loadModel("models/cube")
+      #self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
       self.__node.setPos(0, 0, 0)
       self.__node.setScale(0.5, 0.5, 0.5)
       self.__node.setTag('clickable',str(idx))#to be able to click on it
-      self.__node.setName('neuron')
+      self.__node.setName('cell')
       
       
       #COLLISION

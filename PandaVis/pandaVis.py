@@ -1,27 +1,30 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
 
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import LColor
+from panda3d.core import LColor,CollisionBox
 from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter,Geom,GeomLines,GeomNode,PerspectiveLens
 
-
-from client import SocketClient
+from pandaComm.client import SocketClient
 import math
 
 from panda3d.core import CollisionTraverser,CollisionNode
 from panda3d.core import CollisionHandlerQueue,CollisionRay
-
     
-from htmObject import cHTM 
+from objects.htmObject import cHTM 
 from gui import cGUI
 
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = verbosityMedium # change this to change printing verbosity of this file
 
+def printLog(txt, verbosity=verbosityLow):
+  if FILE_VERBOSITY>=verbosity:
+    print(txt)
+        
+    
 class cApp(ShowBase):
  
     FOCAL_LENGTH = 500
@@ -37,11 +40,8 @@ class cApp(ShowBase):
         self.rotateCamera=False
         self.move_z=50
         
-    
         self.CreateBasement()#to not be lost if there is nothing around
         
-         
-
         self.SetupCameraAndKeys()
         self.taskMgr.add(self.update, 'main loop')
         self.accept(self.win.getWindowEvent(),self.onWindowEvent)
@@ -54,11 +54,6 @@ class cApp(ShowBase):
         
         #self.gui.cBox.command = self.setWireFrame
                 
-        self.htmObject = cHTM(self.loader)
-        
-        
-        
-        
         #self.CreateTestScene()
         
         self.SetupOnClick()
@@ -66,32 +61,22 @@ class cApp(ShowBase):
         self.client = SocketClient()
         self.client.setGui(self.gui)
         
+    
+        self.HTMObjects = {}
         
-#        self.logo = OnscreenImage(image = 'Logo.png') # Image size is 728x100
-#        self.logo.reparentTo(pixel2d)
-#        self.logo.setPos(0, 0, 0)
-#        self.logo.setScale(364, 1, 50)
-
-
-        #self.htmObject.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
-        
-        #self.htmObject.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
-        
-        
-        
-        #nOfLayers=3,nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3
+        self.focusedCell = None
+        self.focusedPath = None
         
         #self.pixel2d.reparentTo(self.render2d)
         
         
-        self.htmObject.getNode().reparentTo(self.render)
+        
+        
         
     def setWireFrame(self,status):
-      print("GGGGGGGGGGg")
       #print(len(self.client.serverData.connectedSynapses))
       #print(self.client.serverData.connectedSynapses)
-      
-      
+     
       form = GeomVertexFormat.getV3()
       vdata = GeomVertexData('myLine',form,Geom.UHStatic)
       vdata.setNumRows(1)
@@ -119,11 +104,11 @@ class cApp(ShowBase):
         for key in ['arrow_left', 'arrow_right', 'arrow_up', 'arrow_down',
                     'a', 'd', 'w', 's','shift','control']:
             self.keys[key] = 0
-            self.accept(key, self.push_key, [key, 1])
-            self.accept('shift-%s' % key, self.push_key, [key, 1])
-            self.accept('%s-up' % key, self.push_key, [key, 0])
+            self.accept(key, self.onKey, [key, 1])
+            self.accept('shift-%s' % key, self.onKey, [key, 1])
+            self.accept('%s-up' % key, self.onKey, [key, 0])
         
-        self.accept('escape', self.CloseApp, [])
+        self.accept('escape', self.onEscape, [])
         self.disableMouse()
 
         # Setup camera
@@ -168,7 +153,7 @@ class cApp(ShowBase):
     
     def CloseApp(self):
       
-      print("CLOSE app event")
+      printLog("CLOSE app event")
       __import__('sys').exit(0)
       self.client.terminateClientThread=True
       
@@ -191,12 +176,20 @@ class cApp(ShowBase):
       
       self.gui.onWindowEvent(window)
         
-    def push_key(self, key, value):
+    def onKey(self, key, value):
         """Stores a value associated with a key."""
         self.keys[key] = value
         
+    def onEscape(self):
+        """Event when escape button is pressed."""
+        
+        # unfocus all
+        for obj in self.HTMObjects.values():
+            obj.DestroySynapses()
+        
+        
     def onMouseEvent(self, event,press):
-        #print(event)
+        printLog("Mouse event:"+str(event),verbosityHigh)
         if event=='right':
             self.rotateCamera=press
             
@@ -213,6 +206,101 @@ class cApp(ShowBase):
                 self.win.requestProperties(props)"""
         elif event == 'left' and press:
           self.onClickObject()
+        
+    
+    
+    def updateHTMstate(self):
+        if self.client.serverDataChange:
+            self.client.serverDataChange=False
+            printLog("Data change! Updating HTM state",verbosityMedium)
+            
+            serverObjs = self.client.serverData.HTMObjects
+            
+            # if we get HTM data objects, iterate over received data
+            for obj in serverObjs:
+                
+                if not obj in self.HTMObjects:# its new HTM object
+                    printLog("New HTM object arrived! Name:"+str(obj))
+                    # create HTM object
+                    newObj = cHTM(self.loader,obj)
+                    newObj.getNode().reparentTo(self.render)
+                    
+                    #create inputs
+                    for inp in serverObjs[obj].inputs:
+                        newObj.CreateInput(name=inp,count=serverObjs[obj].inputs[inp].count,rows=int(math.sqrt(serverObjs[obj].inputs[inp].count)))
+                   #create layers
+                    for lay in serverObjs[obj].layers:
+                        newObj.CreateLayer(name=lay,nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,nOfCellsPerColumn=serverObjs[obj].layers[lay].cellsPerColumn)
+                        
+                    self.HTMObjects[obj] = newObj
+                # update HTM object
+                
+                # go through all incoming inputs
+                for i in serverObjs[obj].inputs:#dict
+                    #find matching input in local structure
+                    
+                    self.HTMObjects[obj].inputs[i].UpdateState(serverObjs[obj].inputs[i].bits,serverObjs[obj].inputs[i].stringValue)
+            
+                # go through all incoming layers
+                for l in serverObjs[obj].layers:#dict
+                    #find matching layer in local structure
+                    self.HTMObjects[obj].layers[l].UpdateState(serverObjs[obj].layers[l].activeColumns,serverObjs[obj].layers[l].activeCells)
+                
+        if self.client.columnDataArrived:
+            printLog("Column data arrived, updating synapses!",verbosityMedium)
+            self.client.columnDataArrived=False
+            serverObjs = self.client.serverData.HTMObjects
+            
+            for obj in serverObjs:
+                
+                self.HTMObjects[obj].DestroySynapses()
+            
+                for l in serverObjs[obj].layers:#dict
+                    
+                    printLog(serverObjs[obj].layers[l].proximalSynapses,verbosityHigh)
+                    for syn in serverObjs[obj].layers[l].proximalSynapses:# array
+                        
+                        printLog("Layer:"+str(l),verbosityMedium)
+                        printLog("proximalSynapses:"+str(syn),verbosityHigh)
+                        
+                        columnID = syn[0]
+                        proximalSynapses = syn[1]
+                        
+                        #update columns with proximal Synapses
+                        self.HTMObjects[obj].layers[l].corticalColumns[columnID].CreateProximalSynapses(serverObjs[obj].layers[l].proximalInputs,self.HTMObjects[obj].inputs,proximalSynapses)
+                    
+                    
+         
+            
+            
+#            inputData = self.client.serverData.inputs
+#            inputDataSizes = self.client.serverData.inputDataSizes
+#            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
+#            
+#            #UPDATES INPUTS
+#            for i in range(len(inputData)):
+#              if len(self.htmObject.inputs)<=i:#if no input instances exists
+#                self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
+#              
+#              self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
+#            
+#            # UPDATES LAYERS
+#            if len(self.htmObject.layers)==0:#if no input instances exists
+#              self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
+#            printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
+#            self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
+#          
+#          if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
+#            self.client.columnDataArrived=False
+#          
+#            #if self.focusCursor!=None:
+#            self.htmObject.DestroySynapses()
+#            
+#            self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
+#             
+#            printLog("columnDataArrived",verbosityHigh)
+        
+        
         
     def update(self, task):
       
@@ -255,32 +343,7 @@ class cApp(ShowBase):
       self.camera.setHpr(self.heading, self.pitch, 0)
       
       
-      if self.client.serverDataChange and len(self.client.serverData.inputs)!=0:
-        self.client.serverDataChange=False
-        
-        
-        inputData = self.client.serverData.inputs
-        inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
-        
-        #UPDATES INPUTS
-        for i in range(len(inputData)):
-          if len(self.htmObject.inputs)<=i:#if no input instances exists
-            self.htmObject.CreateInput("IN"+str(i),count=len(inputData[i]),rows=int(math.sqrt(len(inputData[i]))))
-          
-          self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
-        
-        # UPDATES LAYERS
-        if len(self.htmObject.layers)==0:#if no input instances exists
-          self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfNeuronsPerColumn=self.client.serverData.cellsPerColumn)
-        
-        self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumnIndices,activeCells=self.client.serverData.activeCells)
-      
-      if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
-        self.client.columnDataArrived=False
-      
-        #if self.focusCursor!=None:
-        self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
-          
+      self.updateHTMstate()
       
       
       return task.cont
@@ -288,7 +351,7 @@ class cApp(ShowBase):
     def CreateBasement(self):#it will create basement object, just for case that nothing is drawn to be not lost
         
         # Load the environment model.
-        self.cube = self.loader.loadModel("cube")#/media/Data/Data/Panda3d/
+        self.cube = self.loader.loadModel("models/cube")#/media/Data/Data/Panda3d/
         
         # Reparent the model to render.
         self.cube.reparentTo(self.render)
@@ -301,8 +364,14 @@ class cApp(ShowBase):
         self.cube.setRenderModeThickness(5)
         
         self.cube.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+        #COLLISION
+        collBox = CollisionBox(self.cube.getPos(),10.0,10.0,10.0)
+        cnodePath = self.cube.attachNewNode(CollisionNode('cnode'))
+        cnodePath.node().addSolid(collBox)
         
         self.cube.setTag('clickable','1')
+        
+
         
     def CreateTestScene(self):
         
@@ -325,38 +394,71 @@ class cApp(ShowBase):
         
         nodePath = self.render.attachNewNode(node)
         
-        self.htmObject.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
-        self.htmObject.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfNeuronsPerColumn=10)
+        #self.HTMObjects.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
+        #self.HTMObjects.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
         
     def HandlePickedObject(self,obj):
-      print("PICKED OBJECT:"+str(obj))
+      printLog("PICKED OBJECT:"+str(obj),verbosityMedium)
 
       thisId = int(obj.getTag('clickable'))
-      print("TAG:"+str(thisId))
+      printLog("TAG:"+str(thisId),verbosityHigh)
       
       parent = obj.getParent()#skip LOD node
       tag = parent.getTag('id')
       if tag=="":
-        print("Parent is not clickable!")
+        printLog("Parent is not clickable!",verbosityHigh)
         return
       else:
         parentId = int(tag)
-        print("PARENT TAG:"+str(parentId))
+        printLog("PARENT TAG:"+str(parentId),verbosityHigh)
       
       
-      if obj.getName() == 'neuron':
-        print("We clicked on neuron")
+      if obj.getName() == 'cell':
+        printLog("We clicked on cell",verbosityHigh)
         
-        newFocus = self.htmObject.layers[0].corticalColumns[parentId].neurons[thisId]
-        if self.focusCursor!=None:
-          self.focusCursor.resetFocus()#reset previous
-        self.focusCursor = newFocus
-        self.focusCursor.setFocus()
+        focusedHTMObject = str(obj).split('/')[1]
+        focusedLayer = str(obj).split('/')[2]
         
-      
+        
+        HTMObj = self.HTMObjects[focusedHTMObject]
+        Layer = HTMObj.layers[focusedLayer]
+        newCellFocus = Layer.corticalColumns[parentId].cells[thisId]
+        self.focusedPath = [focusedHTMObject,focusedLayer];
+        
+        if self.focusedCell!=None:
+          self.focusedCell.resetFocus()#reset previous
+        self.focusedCell = newCellFocus
+        self.focusedCell.setFocus()
+        
+        
+        self.gui.focusedCell = self.focusedCell
+        
+        self.gui.focusedPath = self.focusedPath
+        self.gui.columnID = Layer.corticalColumns.index(self.gui.focusedCell.column)
+        
         self.gui.cmdGetColumnData=True
+      elif obj.getName() == 'basement':
+        self.testRoutine()
         
-      
+    def testRoutine(self):
+        form = GeomVertexFormat.getV3()
+        vdata = GeomVertexData('myLine',form,Geom.UHStatic)
+        vdata.setNumRows(1)
+        vertex = GeomVertexWriter(vdata,'vertex')
+        
+        vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
+        vertex.addData3f(-8,-30,0)
+        
+        prim = GeomLines(Geom.UHStatic)
+        prim.addVertices(0,1)
+        
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        node = GeomNode('gnode')
+        node.addGeom(geom)
+        
+        self.__columnBox.attachNewNode(node)
         
     def onClickObject(self):
       mpos = self.mouseWatcherNode.getMouse()
@@ -369,7 +471,7 @@ class cApp(ShowBase):
         self.myHandler.sortEntries()
         
         pickedObj = self.myHandler.getEntry(0).getIntoNodePath()
-        print("----------- "+str(self.myHandler.getNumEntries()))
+        #printLog("----------- "+str(self.myHandler.getNumEntries()))
         print(self.myHandler.getEntries())
         pickedObj = pickedObj.findNetTag('clickable')
         print(pickedObj)

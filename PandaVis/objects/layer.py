@@ -1,28 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Feb  6 05:46:01 2019
 
-@author: osboxes
-"""
-
-from corticalColumn import cCorticalColumn
+from objects.corticalColumn import cCorticalColumn
 from panda3d.core import NodePath,PandaNode,TextNode
 
 class cLayer():
         
-    def __init__(self,name,nOfColumns,nOfNeuronsPerColumn):
+    def __init__(self,name,nOfColumns,nOfCellsPerColumn):
         
         self.name=name
         
         self.corticalColumns = []
         for i in range(nOfColumns):
-            c = cCorticalColumn(nOfNeuronsPerColumn)
+            c = cCorticalColumn(name,nOfCellsPerColumn)
             self.corticalColumns.append(c)
             
     def CreateGfx(self,loader):
         
-        self.__node = NodePath(PandaNode('Layer_'+self.name))#TextNode('layerText')#loader.loadModel("models/teapot")
+        self.__node = NodePath(PandaNode(self.name))#TextNode('layerText')#loader.loadModel("models/teapot")
         
         text = TextNode('Layer text node')
         text.setText(self.name)
@@ -66,3 +61,8 @@ class cLayer():
 
     def getNode(self):
         return self.__node
+    
+    def DestroySynapses(self):
+        for col in self.corticalColumns:
+            col.DestroySynapses()
+            

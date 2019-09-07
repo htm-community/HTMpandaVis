@@ -3,12 +3,10 @@ import datetime
 import os
 import numpy as np
 import math
-import threading
-import sys
 
-import socket, pickle
-from socket import error as SocketError
-from dataExchange import ClientData,ServerData,CLIENT_CMD,SERVER_CMD
+# Panda vis
+from pandaComm.pandaServer import PandaServer
+from pandaComm.dataExchange import ServerData,dataHTMObject,dataLayer,dataInput
 
 from htm.bindings.sdr import SDR, Metrics
 from htm.encoders.rdse import RDSE, RDSE_Parameters
@@ -21,16 +19,18 @@ from htm.bindings.algorithms import Predictor
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
 
+pandaServer = PandaServer()
+
 default_parameters = {
     # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
     "enc": {
-        "value": {"resolution": 0.88, "size": 700, "sparsity": 0.02},
+        "value": {"resolution": 0.88, "size": 200, "sparsity": 0.02},
         "time": {"timeOfDay": (30, 1), "weekend": 21},
     },
     "predictor": {"sdrc_alpha": 0.1},
     "sp": {
-        "boostStrength": 3.0,
-        "columnCount": 1638,
+        "boostStrength": 0.5,
+        "columnCount": 200,
         "localAreaDensity": 0.04395604395604396,
         "potentialPct": 0.85,
         "synPermActiveInc": 0.04,
@@ -39,7 +39,7 @@ default_parameters = {
     },
     "tm": {
         "activationThreshold": 17,
-        "cellsPerColumn": 13,
+        "cellsPerColumn": 5,
         "initialPerm": 0.21,
         "maxSegmentsPerCell": 128,
         "maxSynapsesPerSegment": 64,
@@ -56,27 +56,11 @@ default_parameters = {
         }  # These settings are copied from NAB
     },
 }
+        
 
-
-dateBits=None
-consumptionBits=None
-newDataReadyForVis=False
-activeColumns=None
-activeCells=None
-modelParams=None
-timeOfDayString=None
-consumption=None
-
-runInLoop=False
-runOneStep=False
-
-sp=None
 
 def main(parameters=default_parameters, argv=None, verbose=True):
-    global sp
-    global dateBits,consumptionBits,activeColumns,activeCells,modelParams
-    global runInLoop,runOneStep,newDataReadyForVis,timeOfDayString,consumption
- 
+
     modelParams = parameters
     
     if verbose:
@@ -125,6 +109,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         boostStrength=spParams["boostStrength"],
         wrapAround=True,
     )
+                        
     sp_info = Metrics(sp.getColumnDimensions(), 999999999)
 
     tmParams = parameters["tm"]
@@ -213,14 +198,55 @@ def main(parameters=default_parameters, argv=None, verbose=True):
          
         timeOfDayString = record[0]
         
-        if not newDataReadyForVis:
-            newDataReadyForVis=True
         
+        # just shortcuts to shorten names
+        SL = serverData.HTMObjects["HTM1"].layers["SensoryLayer"]
+        ConsumInp = serverData.HTMObjects["HTM1"].inputs["SL_Consumption"]
+        TimeOfDayInp = serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"]
+        
+        # fill up values
+        ConsumInp.stringValue = "consumption: {:.2f}".format(consumption)
+        TimeOfDayInp.stringValue = timeOfDayString
+        
+        ConsumInp.bits = consumptionBits.sparse
+        ConsumInp.count = consumptionBits.size
+        
+        TimeOfDayInp.bits = dateBits.sparse
+        TimeOfDayInp.count = dateBits.size
+        SL.activeColumns = activeColumns.sparse
+        SL.activeCells = activeCells
+        
+        #pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
+        #pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
+#        pandaServer.serverData.inputDataSizes= [dateBits.size, consumptionBits.size]
+#        pandaServer.serverData.activeColumns=activeColumns.sparse
+#        pandaServer.serverData.activeCells=activeCells
+#        pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
+#        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
+        
+        pandaServer.serverData = serverData
+        
+        pandaServer.spatialPoolers["HTM1"] = sp
+        pandaServer.temporalMemories["HTM1"] = tm
+        pandaServer.NewDataReady()
+        
+        #connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
+        #sp.getConnectedSynapses(1, connectedSynapses)
+        
+        #pandaServer.serverData.connectedSynapses = connectedSynapses
+        
+        #print("CONNECTED:")
+       # print("len:"+str(len(connectedSynapses)))
+        #print(connectedSynapses)
+        #print("active:"+str(sum([i for i in connectedSynapses])))
+       
         print("One step finished")
-        while(not runInLoop and not runOneStep):
+        while(not pandaServer.runInLoop and not pandaServer.runOneStep):
             pass
-        runOneStep=False
+        pandaServer.runOneStep=False
         print("Proceeding one step...")
+        
+        
       
       #------------------HTMpandaVis----------------------
 
@@ -308,154 +334,26 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
     return -accuracy[5]
 
-def PackData(cmd,data):
-  d = [cmd,data]
-  # Pickle the object and send it to the server
-  #protocol must be specified to be able to work with py2 on server side
-  rawData = pickle.dumps(d,protocol=2)
-  
-  if len(rawData)%4096==0:#if length of data is multiple of chunck size
-    #increase the data by 1 byte to prevent it - it causes problems in recv function
-    #on the client side - because client doesn't know how long data to expect
-    if isinstance(data,ServerData):
-      data.compensateSize.append(1)#increase size by some dummy bytes
-      d = [cmd,data]
-      rawData = pickle.dumps(d,protocol=2)
-    else:
-      print("Packed data is multiple of chunck size, but not known instance")
-  
-  return rawData
-
-  
-def InitServer():
-  serverThread = ServerThread(1, "ServerThread-1")
-  
-  serverThread.start()
-
-mainThreadQuitted=False
-
-class ServerThread (threading.Thread):
-   def __init__(self, threadID, name):
-      threading.Thread.__init__(self)
-      self.threadID = threadID
-      self.name = name
-      
-   def run(self):
-      print ("Starting " + self.name)
-      RunServer()
-      print ("Exiting " + self.name)
-      
-def RunServer():
-    global runInLoop,runOneStep,newDataReadyForVis
- 
-    HOST = 'localhost'
-    PORT = 50007
+def BuildPandaSystem():
+    global serverData
+    serverData = ServerData()
+    serverData.HTMObjects["HTM1"] = dataHTMObject()
+    serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
+    serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
     
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)#prevent "adress in use" exception
-    s.settimeout(5)
-    s.bind((HOST, PORT))
-    s.listen(1)
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(default_parameters["sp"]["columnCount"],default_parameters["tm"]["cellsPerColumn"])
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = ["SL_Consumption","SL_TimeOfDay"]
     
-    print("Server listening")
-    
-    clientConnected=False
-    
-    while(not clientConnected and not mainThreadQuitted):
-      try:
-        conn, addr = s.accept()
-        conn.settimeout(5)
-        print('Connected by'+str(addr))
-        clientConnected=True
-      except socket.timeout:
-        continue
-    
-      if not clientConnected:
-        print("Main thread quitted")
-        return
-    
-      quitServer=False
-      
-      while(not quitServer and not mainThreadQuitted):
-        try:
-          rxRawData = conn.recv(4096)
-          
-          rxData = pickle.loads(rxRawData)
-          
-          if (rxData[0] == CLIENT_CMD.REQ_DATA):
-            #print("Data requested")
-            if newDataReadyForVis:  
-              
-              serverData = ServerData()
-              serverData.inputs = [dateBits.dense, consumptionBits.dense] # TODO better use sparse
-              serverData.activeColumnIndices=activeColumns.sparse
-              serverData.activeCells=activeCells
-              serverData.columnDimensions=modelParams["sp"]["columnCount"]
-              serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
-              serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
-              
-              #print("Data sent")
-              
-              conn.send(PackData(SERVER_CMD.SEND_DATA,serverData))
-              
-              newDataReadyForVis = False
-            else:
-              conn.send(PackData(SERVER_CMD.NA,[]))#we dont have any new data for client
-              
-          elif (rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA):
-            connectedSynapses = numpy.zeros(sum([len(x) for x in serverData.inputs]))#sum size of all inputs
-            sp.getConnectedSynapses(1,connectedSynapses)
-            
-            
-            serverData = ServerData()
-            serverData.connectedSynapses = connectedSynapses
-            conn.send(PackData(SERVER_CMD.SEND_COLUMN_DATA,serverData))
-            
-            print("GETTING COLUMN DATA:")
-            print(connectedSynapses)
-            
-            
-          elif (rxData[0] == CLIENT_CMD.CMD_RUN):
-            runInLoop = True
-            print("RUN")
-          elif (rxData[0] == CLIENT_CMD.CMD_STOP):
-            runInLoop = False
-            print("STOP")
-          elif (rxData[0] == CLIENT_CMD.CMD_STEP_FWD):
-            runOneStep = True
-            print("STEP")
-          elif (rxData[0] == CLIENT_CMD.QUIT):
-            print("Client quitted!")  
-            #quitServer=True
-        except socket.timeout:
-          continue
-        except SocketError as e:
-          print("SocketError")
-          print(e)
-          clientConnected=False
-          break
-        except EOFError:
-          print("EOFError")
-          clientConnected=False
-          break
-        except Exception as e:
-          print("Exception"+str(sys.exc_info()[0]))
-          print(str(e))
-            
-
-          #quitServer=True
-        
-      
-    print("Server quit")
-    conn.close()
     
 if __name__ == "__main__":    
     try:
-        InitServer()
-    
+        pandaServer.Start()
+        BuildPandaSystem();
+        
         while(True): # run infinitely
           main()    
     
     except KeyboardInterrupt:
         print("Keyboard interrupt")
-        mainThreadQuitted=True
+        pandaServer.MainThreadQuitted()
+    print("Script finished")

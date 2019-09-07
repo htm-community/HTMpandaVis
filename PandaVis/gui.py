@@ -24,9 +24,6 @@ class cGUI:
         self.btnRunStop.setText("Run")
         self.cmdStop=True
     
-  def pp(self,status):
-    print("HHHHHHHHh")
-
   def __init__(self,defaultWidth,defaultHeight,loader,fWireframe):
     
     #self.setWireframe = None
@@ -64,6 +61,9 @@ class cGUI:
     
     self.ResetCommands()
     
+    self.focusedCell = None
+    self.focusedPath = None
+    self.columnID = 0
 
     
   def ResetCommands(self):
