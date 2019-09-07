@@ -34,6 +34,11 @@ class cApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         
+        self.speed = 20
+        
+        
+        
+        
         # Mouse and camera movement init
         self.mouseX_last=0
         self.mouseY_last=0
@@ -50,7 +55,9 @@ class cApp(ShowBase):
         width = self.win.getProperties().getXSize()
         height = self.win.getProperties().getYSize()
         
-        self.gui = cGUI(width,height,self.loader,fWireframe=self.setWireFrame)
+        self.gui = cGUI(width,height,self.loader,
+                        fWireframe=self.setWireFrame,fSpeedChange=self.onSpeedChange,defaultSpeed=self.speed,
+                        )
         
         #self.gui.cBox.command = self.setWireFrame
                 
@@ -66,12 +73,16 @@ class cApp(ShowBase):
         
         self.focusedCell = None
         self.focusedPath = None
+        self.speedBoost = False
         
         #self.pixel2d.reparentTo(self.render2d)
         
         
-        
-        
+    def onSpeedChange(self,value):
+        try:
+            self.speed = int(value)
+        except:
+            return
         
     def setWireFrame(self,status):
       #print(len(self.client.serverData.connectedSynapses))
@@ -102,7 +113,7 @@ class cApp(ShowBase):
         # Setup controls
         self.keys = {}
         for key in ['arrow_left', 'arrow_right', 'arrow_up', 'arrow_down',
-                    'a', 'd', 'w', 's','shift','control']:
+                    'a', 'd', 'w', 's','shift','control','space']:
             self.keys[key] = 0
             self.accept(key, self.onKey, [key, 1])
             self.accept('shift-%s' % key, self.onKey, [key, 1])
@@ -179,6 +190,10 @@ class cApp(ShowBase):
     def onKey(self, key, value):
         """Stores a value associated with a key."""
         self.keys[key] = value
+        
+        if self.keys['space']:
+            self.speedBoost = not self.speedBoost
+            self.gui.onSpeedBoostChanged(self.speedBoost)
         
     def onEscape(self):
         """Event when escape button is pressed."""
@@ -308,7 +323,10 @@ class cApp(ShowBase):
       done, then the CellManager's update function is called."""
       deltaT = globalClock.getDt()
       
-      speed=20
+      speed=self.speed
+      
+      if self.speedBoost:
+          speed *=4
       
       """Rotation with mouse while right-click"""
       mw = self.mouseWatcherNode

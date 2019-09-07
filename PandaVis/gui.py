@@ -7,7 +7,8 @@ Created on Thu Feb  7 08:46:04 2019
 """
 
 from direct.gui.DirectGuiGlobals import RAISED,SUNKEN,GROOVE,RIDGE
-from direct.gui.DirectGui import DirectFrame,DirectButton,DirectCheckButton
+from direct.gui.DirectGui import DirectFrame,DirectButton,DirectCheckButton,DirectLabel,DirectEntry,OnscreenText
+from pandac.PandaModules import TextNode
 
 class cGUI:
     
@@ -24,7 +25,7 @@ class cGUI:
         self.btnRunStop.setText("Run")
         self.cmdStop=True
     
-  def __init__(self,defaultWidth,defaultHeight,loader,fWireframe):
+  def __init__(self,defaultWidth,defaultHeight,loader,fWireframe,fSpeedChange,defaultSpeed):
     
     #self.setWireframe = None
     
@@ -53,11 +54,19 @@ class cGUI:
     self.cBox = DirectCheckButton(text = "wireframe",scale=14,parent=self.myFrame,command=fWireframe,
                                 pos=(100,0,-200))
     
-    self.cBox2 = DirectCheckButton(text = "some option",scale=14,parent=self.myFrame,
-                                pos=(100,0,-220))
+    #self.cBox2 = DirectCheckButton(text = "speed boost [space]",scale=14,parent=self.myFrame,
+    #                            pos=(100,0,-220))
+    
+    self.speedText = OnscreenText(text = "Speed",scale=14, parent=self.myFrame,
+                                  pos=(20,-220,0), fg=(1,1.0,1.0,1),align=TextNode.ALeft,mayChange=1)
+    
+    self.speedEntry = DirectEntry(text = "", scale=14, parent=self.myFrame,
+                                  command=fSpeedChange,pos=(40,0,-240),
+                                  initialText=str(defaultSpeed), numLines = 1, focus=0)
+    
     
     self.CheckBoxStyle1(self.cBox)
-    self.CheckBoxStyle1(self.cBox2)
+    #self.CheckBoxStyle1(self.cBox2)
     
     self.ResetCommands()
     
@@ -72,6 +81,13 @@ class cGUI:
     self.cmdStepForward=False
     self.cmdGetColumnData=False
 
+  def onSpeedBoostChanged(self,value):
+      if not value:
+          self.speedText.text = "Speed"
+          self.speedText.fg=(1,1.0,1.0,1)
+      else:
+          self.speedText.text = "Speed [BOOST]"
+          self.speedText.fg=(1,0.5,0.5,1)
     
   def onWindowEvent(self,window): # to keep the same size of frame even after resizing
     #return
