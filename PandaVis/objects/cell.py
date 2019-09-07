@@ -17,7 +17,7 @@ class cCell():
     def CreateGfx(self,loader,idx):#idx is neccesary to be able to track it down for mouse picking
         
       self.__node = loader.loadModel("models/cube")
-      self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+      #self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
       self.__node.setPos(0, 0, 0)
       self.__node.setScale(0.5, 0.5, 0.5)
       self.__node.setTag('clickable',str(idx))#to be able to click on it

@@ -15,7 +15,7 @@ import numpy
 verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
-FILE_VERBOSITY = verbosityHigh # change this to change printing verbosity of this file
+FILE_VERBOSITY = verbosityMedium # change this to change printing verbosity of this file
 
 def printLog(txt, verbosity=verbosityLow):
   if FILE_VERBOSITY>=verbosity:
@@ -95,6 +95,7 @@ class PandaServer:
                 conn.settimeout(5)
                 printLog("Connected by" + str(addr))
                 clientConnected = True
+                self.newDataReadyForVis = True
             except socket.timeout:
                 continue
     
@@ -126,7 +127,8 @@ class PandaServer:
     
                     elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
                         printLog("Column req by client",verbosityMedium)
-                        print(rxData)
+                        printLog(rxData,verbosityHigh)
+                        
                         HTMObjectName = rxData[1][0][0]
                         layerName = rxData[1][0][1]
                         requestedCol = int(rxData[1][1])
@@ -137,7 +139,7 @@ class PandaServer:
                         connectedSynapses = numpy.zeros(sp.getNumInputs(), dtype=numpy.int32)
                         sp.getConnectedSynapses(requestedCol, connectedSynapses)
         
-                        self.serverData.HTMObjects[HTMObjectName].layers[layerName].proximalSynapses = [[requestedCol,[120,50]]];
+                        self.serverData.HTMObjects[HTMObjectName].layers[layerName].proximalSynapses = [[requestedCol,connectedSynapses]];
                         
                         printLog("Sending:"+str(self.serverData.HTMObjects[HTMObjectName].layers[layerName].proximalSynapses),verbosityHigh)
                         send_one_message(conn,PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData))

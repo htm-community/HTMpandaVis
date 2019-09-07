@@ -86,28 +86,40 @@ class cCorticalColumn():
     def getNode(self):
         return self.__node
       
-    def CreateSynapses(self,inputs,synapses):
+    # -- Create proximal synapses
+    # inputObjects - list of names of inputs(areas)
+    # inputs - panda vis input object
+    # synapses - list of the second points of synapses (first point is this cortical column)
+    # NOTE: synapses are now DENSE
+    def CreateProximalSynapses(self,inputObjects,inputs,synapses):
       
-    
       for child in self.__cellsNodePath.getChildren():
           if child.getName() == "myLine":
               child.removeNode()
         
-      printLog("Creating synapses",verbosityHigh)
-      printLog("len:"+str(len(synapses)),verbosityHigh)
+      printLog("Creating synapses",verbosityMedium)
+      printLog("To inputs called:"+str(inputObjects),verbosityMedium)
+      printLog("Synapses count:"+str(len(synapses)),verbosityMedium)
       printLog("active:"+str(sum([i for i in synapses])),verbosityHigh)
+      
       #inputs are divided into separate items in list - [input1,input2,input3]
       #synapses are one united array [1,0,0,1,0,1,0...]
       #length is the same
-      synapsesDiv=[]
-      offset = 0
-      for i in range(len(inputs)):
-        synapsesDiv.append(synapses[offset:offset+inputs[i].count])
-        offset+=inputs[i].count
       
-      for i in range(len(synapsesDiv)):
+      # synapses can be connected to one input or to several inputs
+      # if to more than one - split synapses array
+      if len(inputObjects)>1:
+          synapsesDiv = []
+          offset = 0
+          for inputObj in inputObjects:
+              synapsesDiv.append(synapses[offset:offset+inputs[inputObj].count])
+              offset+=inputs[inputObj].count
       
-        for y in range(len(synapsesDiv[i])):
+      for i in range(len(synapsesDiv)):# for each input object
+      
+        inputs[inputObjects[i]].resetHighlight()# clear color highlight
+        
+        for y in range(len(synapsesDiv[i])):# go through every synapse and check activity
           if synapsesDiv[i][y]==1:
             
             form = GeomVertexFormat.getV3()
@@ -115,11 +127,14 @@ class cCorticalColumn():
             vdata.setNumRows(1)
             vertex = GeomVertexWriter(vdata,'vertex')
             
-            vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
+            vertex.addData3f(inputs[inputObjects[i]].inputBits[y].getNode().getPos(self.__node))
             vertex.addData3f(0,0,0)
             #vertex.addData3f(self.__node.getPos())
             #printLog("Inputs:"+str(i)+"bits:"+str(y))
             #printLog(inputs[i].inputBits[y].getNode().getPos(self.__node))
+            
+            # highlight
+            inputs[inputObjects[i]].inputBits[y].setHighlight() # highlight connected bits
             
             prim = GeomLines(Geom.UHStatic)
             prim.addVertices(0,1)

@@ -338,9 +338,12 @@ def BuildPandaSystem():
     global serverData
     serverData = ServerData()
     serverData.HTMObjects["HTM1"] = dataHTMObject()
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(default_parameters["sp"]["columnCount"],default_parameters["tm"]["cellsPerColumn"])
     serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
     serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
+    
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(default_parameters["sp"]["columnCount"],default_parameters["tm"]["cellsPerColumn"])
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = ["SL_Consumption","SL_TimeOfDay"]
+    
     
 if __name__ == "__main__":    
     try:

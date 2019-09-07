@@ -42,10 +42,13 @@ class dataLayer(object):
         self.activeColumns=[] # currently active columns (sparse) in this layer
         self.activeCells=[]
         
-        # two dims, [columnID,[destinationID1,...]]
+        # array - [columnID,[destinationID1,destinationID2,...]]
         self.proximalSynapses = []  # first item in array is for what column, second is list of destination input bits
         
-        # two dims, [columnID,[destinationID1,...]]
+        # to what inputs are the synapses connected
+        self.proximalInputs = [] # [inputName1,inputName2,...]
+        
+        # array - [columnID,[destinationID1,destinationID2,...]]
         self.distalSynapses = []  # first item in array is for what column, second is list of destination cells in this layer
         
         # three dims, [columnID,destinationLayerID, [destination_id1,...]]

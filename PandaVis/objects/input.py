@@ -83,3 +83,7 @@ class cInput():
 
   def getNode(self):
       return self.__node
+  
+  def resetHighlight(self):
+      for i in self.inputBits:
+          i.resetHighLight()

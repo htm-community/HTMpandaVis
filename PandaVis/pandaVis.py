@@ -12,14 +12,13 @@ from panda3d.core import CollisionTraverser,CollisionNode
 from panda3d.core import CollisionHandlerQueue,CollisionRay
     
 from objects.htmObject import cHTM 
-from objects.layer import cLayer
 from gui import cGUI
 
 
 verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
-FILE_VERBOSITY = verbosityHigh # change this to change printing verbosity of this file
+FILE_VERBOSITY = verbosityMedium # change this to change printing verbosity of this file
 
 def printLog(txt, verbosity=verbosityLow):
   if FILE_VERBOSITY>=verbosity:
@@ -55,8 +54,6 @@ class cApp(ShowBase):
         
         #self.gui.cBox.command = self.setWireFrame
                 
-        
-        
         #self.CreateTestScene()
         
         self.SetupOnClick()
@@ -69,13 +66,6 @@ class cApp(ShowBase):
         
         self.focusedCell = None
         self.focusedPath = None
-
-        #self.htmObject.CreateLayer("L1",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
-        
-        #self.htmObject.CreateLayer("L2",nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3)
-        
-        
-        #nOfLayers=3,nOfColumnsPerLayer=20,nOfNeuronsPerColumn=3
         
         #self.pixel2d.reparentTo(self.render2d)
         
@@ -86,8 +76,7 @@ class cApp(ShowBase):
     def setWireFrame(self,status):
       #print(len(self.client.serverData.connectedSynapses))
       #print(self.client.serverData.connectedSynapses)
-      
-      
+     
       form = GeomVertexFormat.getV3()
       vdata = GeomVertexData('myLine',form,Geom.UHStatic)
       vdata.setNumRows(1)
@@ -115,11 +104,11 @@ class cApp(ShowBase):
         for key in ['arrow_left', 'arrow_right', 'arrow_up', 'arrow_down',
                     'a', 'd', 'w', 's','shift','control']:
             self.keys[key] = 0
-            self.accept(key, self.push_key, [key, 1])
-            self.accept('shift-%s' % key, self.push_key, [key, 1])
-            self.accept('%s-up' % key, self.push_key, [key, 0])
+            self.accept(key, self.onKey, [key, 1])
+            self.accept('shift-%s' % key, self.onKey, [key, 1])
+            self.accept('%s-up' % key, self.onKey, [key, 0])
         
-        self.accept('escape', self.CloseApp, [])
+        self.accept('escape', self.onEscape, [])
         self.disableMouse()
 
         # Setup camera
@@ -187,9 +176,17 @@ class cApp(ShowBase):
       
       self.gui.onWindowEvent(window)
         
-    def push_key(self, key, value):
+    def onKey(self, key, value):
         """Stores a value associated with a key."""
         self.keys[key] = value
+        
+    def onEscape(self):
+        """Event when escape button is pressed."""
+        
+        # unfocus all
+        for obj in self.HTMObjects.values():
+            obj.DestroySynapses()
+        
         
     def onMouseEvent(self, event,press):
         printLog("Mouse event:"+str(event),verbosityHigh)
@@ -263,14 +260,14 @@ class cApp(ShowBase):
                     printLog(serverObjs[obj].layers[l].proximalSynapses,verbosityHigh)
                     for syn in serverObjs[obj].layers[l].proximalSynapses:# array
                         
-                        printLog("Layer:"+str(l)+" proximalSynapses:"+str(syn),verbosityMedium)
+                        printLog("Layer:"+str(l),verbosityMedium)
+                        printLog("proximalSynapses:"+str(syn),verbosityHigh)
                         
                         columnID = syn[0]
                         proximalSynapses = syn[1]
                         
                         #update columns with proximal Synapses
-                        
-                        self.HTMObjects[obj].layers[l].corticalColumns[columnID].CreateSynapses(self.HTMObjects[obj].inputs,proximalSynapses)
+                        self.HTMObjects[obj].layers[l].corticalColumns[columnID].CreateProximalSynapses(serverObjs[obj].layers[l].proximalInputs,self.HTMObjects[obj].inputs,proximalSynapses)
                     
                     
          
