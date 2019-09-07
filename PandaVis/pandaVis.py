@@ -36,9 +36,6 @@ class cApp(ShowBase):
         
         self.speed = 20
         
-        
-        
-        
         # Mouse and camera movement init
         self.mouseX_last=0
         self.mouseY_last=0
@@ -55,9 +52,7 @@ class cApp(ShowBase):
         width = self.win.getProperties().getXSize()
         height = self.win.getProperties().getYSize()
         
-        self.gui = cGUI(width,height,self.loader,
-                        fWireframe=self.setWireFrame,fSpeedChange=self.onSpeedChange,defaultSpeed=self.speed,
-                        )
+        self.gui = cGUI(width,height,self.loader,fSpeedChange=self.onSpeedChange,defaultSpeed=self.speed)
         
         #self.gui.cBox.command = self.setWireFrame
                 
@@ -83,31 +78,6 @@ class cApp(ShowBase):
             self.speed = int(value)
         except:
             return
-        
-    def setWireFrame(self,status):
-      #print(len(self.client.serverData.connectedSynapses))
-      #print(self.client.serverData.connectedSynapses)
-     
-      form = GeomVertexFormat.getV3()
-      vdata = GeomVertexData('myLine',form,Geom.UHStatic)
-      vdata.setNumRows(1)
-      vertex = GeomVertexWriter(vdata,'vertex')
-      
-      vertex.addData3f(0,0,0)
-      vertex.addData3f(60,0,50)
-      
-      prim = GeomLines(Geom.UHStatic)
-      prim.addVertices(0,1)
-      
-      geom = Geom(vdata)
-      geom.addPrimitive(prim)
-      
-      node = GeomNode('gnode')
-      node.addGeom(geom)
-      
-      #nodePath = NodePath(node)
-     # nodePath.reparentTo(self.__node)
-      nodePath = self.render.attachNewNode(node)
       
     def SetupCameraAndKeys(self):
         # Setup controls

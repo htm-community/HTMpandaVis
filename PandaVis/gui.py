@@ -25,7 +25,7 @@ class cGUI:
         self.btnRunStop.setText("Run")
         self.cmdStop=True
     
-  def __init__(self,defaultWidth,defaultHeight,loader,fWireframe,fSpeedChange,defaultSpeed):
+  def __init__(self,defaultWidth,defaultHeight,loader,fSpeedChange,defaultSpeed):
     
     #self.setWireframe = None
     
@@ -51,12 +51,9 @@ class cGUI:
     self.ButtonStyle1(self.btnFwd)
     self.ButtonStyle1(self.btnRunStop)
     
-    self.cBox = DirectCheckButton(text = "wireframe",scale=14,parent=self.myFrame,command=fWireframe,
-                                pos=(100,0,-200))
-    
-    #self.cBox2 = DirectCheckButton(text = "speed boost [space]",scale=14,parent=self.myFrame,
-    #                            pos=(100,0,-220))
-    
+    #self.cBox = DirectCheckButton(text = "highlightConnected",scale=14,parent=self.myFrame,command=fWireframe,
+                               # pos=(100,0,-200))
+
     self.speedText = OnscreenText(text = "Speed",scale=14, parent=self.myFrame,
                                   pos=(20,-220,0), fg=(1,1.0,1.0,1),align=TextNode.ALeft,mayChange=1)
     
@@ -65,8 +62,7 @@ class cGUI:
                                   initialText=str(defaultSpeed), numLines = 1, focus=0)
     
     
-    self.CheckBoxStyle1(self.cBox)
-    #self.CheckBoxStyle1(self.cBox2)
+    #self.CheckBoxStyle1(self.cBox)
     
     self.ResetCommands()
     
