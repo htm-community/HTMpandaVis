@@ -31,7 +31,8 @@ class cCorticalColumn:
             n = cCell(self)
             self.cells.append(n)
 
-        self.state = False
+        self.oneOfCellActive = False
+        self.bursting = False
         self.parentLayer = nameOfLayer
 
     def CreateGfx(self, loader, idx):
@@ -81,19 +82,20 @@ class cCorticalColumn:
             z += 1
             n.getNode().reparentTo(self.__cellsNodePath)
 
-    def UpdateState(self, state):
+    def UpdateState(self, bursting, oneOfCellActive):
 
-        self.state = state
+        self.bursting = bursting
+        self.oneOfCellActive = oneOfCellActive
 
         # update column box color (for LOD in distance look)
-        if self.state:
+        if self.oneOfCellActive:
             self.__columnBox.setColor(1.0, 0.0, 0.0, 1.0)  # red
         else:
             self.__columnBox.setColor(1.0, 1.0, 1.0, 1.0)  # white
 
-        for n in self.cells:
-            n.state = state
-            n.UpdateState()
+#        for n in self.cells:
+#            n.active = active
+#            n.UpdateState()
 
     def getNode(self):
         return self.__node

@@ -65,15 +65,25 @@ class SocketClient:
         _thread.start_new_thread(self.RunThread, ())
 
         self.serverData = None
-        self.serverDataChange = False
         self.terminateClientThread = False
-        self.columnDataArrived = False
+        
+        self.stateDataArrived = False
+        self.proximalDataArrived = False
+        self.distalDataArrived = False
+        
+        self._reqProximalData = False
+        self._reqDistalData = False
 
-        self.__gui = None
+        self._gui = None
 
     def setGui(self, gui):
-        self.__gui = gui
+        self._gui = gui
 
+    def reqProximalData(self):
+        self._reqProximalData=True
+    def reqDistalData(self):
+        self._reqDistalData=True
+            
     def RunThread(self):
 
         HOST = "localhost"
@@ -96,31 +106,45 @@ class SocketClient:
         # s.send(SocketClient.PackData(CLIENT_CMD.REQ_DATA))
         while not self.terminateClientThread:
             printLog("Sending REQ", verbosityHigh)
-            send_one_message(s, PackData(CLIENT_CMD.REQ_DATA))
+            send_one_message(s, PackData(CLIENT_CMD.CMD_GET_STATE_DATA))
 
-            if self.__gui.cmdRun:
+            if self._gui.cmdRun:
                 send_one_message(s, PackData(CLIENT_CMD.CMD_RUN))
                 printLog("RUN req", verbosityHigh)
-            elif self.__gui.cmdStop:
+            elif self._gui.cmdStop:
                 send_one_message(s, PackData(CLIENT_CMD.CMD_STOP))
                 printLog("STOP req", verbosityHigh)
-            elif self.__gui.cmdStepForward:
+            elif self._gui.cmdStepForward:
                 send_one_message(s, PackData(CLIENT_CMD.CMD_STEP_FWD))
                 printLog("STEP", verbosityHigh)
-            elif self.__gui.cmdGetColumnData:
+            elif self._reqProximalData:
+                self._reqProximalData=False
                 send_one_message(
                     s,
                     PackData(
-                        CLIENT_CMD.CMD_GET_COLUMN_DATA,
-                        [self.__gui.focusedPath, self.__gui.columnID],
+                        CLIENT_CMD.CMD_GET_PROXIMAL_DATA,
+                        [self._gui.focusedPath, self._gui.columnID, self._gui.cellID],
                     ),
                 )
                 printLog(
-                    "GET COLUMN DATA for col:" + str(self.__gui.focusedCell.column),
+                    "GET proximal data for col:" + str(self._gui.focusedCell.column),
+                    verbosityHigh,
+                )
+            elif self._reqDistalData:
+                self._reqDistalData=False
+                send_one_message(
+                    s,
+                    PackData(
+                        CLIENT_CMD.CMD_GET_DISTAL_DATA,
+                        [self._gui.focusedPath, self._gui.columnID, self._gui.cellID],
+                    ),
+                )
+                printLog(
+                    "GET distal for cell:" + str(self._gui.focusedCell),
                     verbosityHigh,
                 )
 
-            self.__gui.ResetCommands()
+            self._gui.ResetCommands()
 
             printLog("Data begin receiving", verbosityHigh)
             self.ReceiveData(s)
@@ -151,14 +175,20 @@ class SocketClient:
             if len(rxData) > 1:
                 printLog("RCV data:" + str(rxData[1]), verbosityHigh)
 
-            if rxData[0] == SERVER_CMD.SEND_DATA:
+            if rxData[0] == SERVER_CMD.SEND_STATE_DATA:
                 self.serverData = rxData[1]
-                self.serverDataChange = True
+                self.stateDataArrived = True
                 printLog("Data income", verbosityHigh)
-            elif rxData[0] == SERVER_CMD.SEND_COLUMN_DATA:
+            elif rxData[0] == SERVER_CMD.SEND_PROXIMAL_DATA:
                 self.serverData = rxData[1]
-                self.columnDataArrived = True
-                printLog("Column data arrived", verbosityHigh)
+                self.proximalDataArrived = True
+                printLog("proximal data arrived", verbosityHigh)
+
+            elif rxData[0] == SERVER_CMD.SEND_DISTAL_DATA:
+                self.serverData = rxData[1]
+                self.distalDataArrived = True
+                printLog("distal data arrived", verbosityHigh)
+            
 
             elif rxData[0] == SERVER_CMD.NA:
                 printLog("Server has data not available", verbosityHigh)
