@@ -41,9 +41,10 @@ class dataLayer(object):
         self.cellsPerColumn = cellsPerColumn
 
         self.activeColumns = []  # currently active columns (sparse) in this layer
-        self.activeCells = []
+        self.winnerCells = []
+        self.predictiveCells = []
 
-        # array - [columnID,[destinationID1,destinationID2,...]]
+        # array - [[columnID_a,[destinationID_a1,destinationID_a2,...]],[columnID_b,[destinationID_b1,destinationID_b2,...]]]
         self.proximalSynapses = (
             []
         )  # first item in array is for what column, second is list of destination input bits
@@ -51,7 +52,7 @@ class dataLayer(object):
         # to what inputs are the synapses connected
         self.proximalInputs = []  # [inputName1,inputName2,...]
 
-        # array - [columnID,[destinationID1,destinationID2,...]]
+        # array - [cellID,[destinationID1,destinationID2,...]]
         self.distalSynapses = (
             []
         )  # first item in array is for what column, second is list of destination cells in this layer
@@ -73,14 +74,16 @@ class dataInput(object):
 
 class CLIENT_CMD(Enum):
     QUIT = 0
-    REQ_DATA = 1
-    CMD_RUN = 2
-    CMD_STOP = 3
-    CMD_STEP_FWD = 4
-    CMD_GET_COLUMN_DATA = 5
+    CMD_RUN = 1
+    CMD_STOP = 2
+    CMD_STEP_FWD = 3
+    CMD_GET_STATE_DATA = 4
+    CMD_GET_PROXIMAL_DATA = 5
+    CMD_GET_DISTAL_DATA = 6
 
 
 class SERVER_CMD(Enum):
     NA = 0
-    SEND_DATA = 1
-    SEND_COLUMN_DATA = 2
+    SEND_STATE_DATA = 1
+    SEND_PROXIMAL_DATA = 2
+    SEND_DISTAL_DATA = 3

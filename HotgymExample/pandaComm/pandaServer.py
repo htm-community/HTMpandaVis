@@ -61,7 +61,7 @@ class PandaServer:
         self.serverData = ServerData()
         self.runOneStep = False
         self.runInLoop = False
-        self.newDataReadyForVis = False
+        self.newStateDataReadyForVis = False
         self.mainThreadQuitted = False
 
         self.serverThread = ServerThread(self, 1, "ServerThread-1")
@@ -76,8 +76,8 @@ class PandaServer:
         self.mainThreadQuitted = True
         self.serverThread.join()
 
-    def NewDataReady(self):
-        self.newDataReadyForVis = True
+    def NewStateDataReady(self):
+        self.newStateDataReadyForVis = True
 
     def RunServer(self):
         HOST = "localhost"
@@ -101,7 +101,7 @@ class PandaServer:
                 conn.settimeout(5)
                 printLog("Connected by" + str(addr))
                 clientConnected = True
-                self.newDataReadyForVis = True
+                self.newStateDataReadyForVis = True
             except socket.timeout:
                 continue
 
@@ -118,28 +118,29 @@ class PandaServer:
 
                     rxData = pickle.loads(rxRawData)
 
-                    if rxData[0] == CLIENT_CMD.REQ_DATA:
-                        printLog("Data requested", verbosityHigh)
-                        if self.newDataReadyForVis:
-
+                    if rxData[0] == CLIENT_CMD.CMD_GET_STATE_DATA:
+                        printLog("State data requested", verbosityHigh)
+                        if self.newStateDataReadyForVis:
+                        
                             send_one_message(
-                                conn, PackData(SERVER_CMD.SEND_DATA, self.serverData)
+                                conn, PackData(SERVER_CMD.SEND_STATE_DATA, self.serverData)
                             )
 
-                            self.newDataReadyForVis = False
+                            self.newStateDataReadyForVis = False
                         else:
                             send_one_message(
                                 conn, PackData(SERVER_CMD.NA, [])
                             )  # we dont have any new data for client
                             printLog("But no new data available", verbosityHigh)
 
-                    elif rxData[0] == CLIENT_CMD.CMD_GET_COLUMN_DATA:
-                        printLog("Column req by client", verbosityMedium)
+                    elif rxData[0] == CLIENT_CMD.CMD_GET_PROXIMAL_DATA:
+                        printLog("Proximal data req by client", verbosityMedium)
                         printLog(rxData, verbosityHigh)
 
                         HTMObjectName = rxData[1][0][0]
                         layerName = rxData[1][0][1]
                         requestedCol = int(rxData[1][1])
+                        requestedCell = int(rxData[1][2])
 
                         printLog(
                             "HTM object:"
@@ -150,7 +151,7 @@ class PandaServer:
                             + str(requestedCol),
                             verbosityMedium,
                         )
-
+                        # SP - proximal synapses
                         sp = self.spatialPoolers[HTMObjectName]
                         connectedSynapses = numpy.zeros(
                             sp.getNumInputs(), dtype=numpy.int32
@@ -170,17 +171,37 @@ class PandaServer:
                             ),
                             verbosityHigh,
                         )
+                            
                         send_one_message(
-                            conn, PackData(SERVER_CMD.SEND_COLUMN_DATA, self.serverData)
+                            conn, PackData(SERVER_CMD.SEND_PROXIMAL_DATA, self.serverData)
                         )
 
                         printLog(
                             "Sent synapses of len:" + str(len(connectedSynapses)),
                             verbosityHigh,
                         )
-                        # printLog("GETTING COLUMN DATA:")
+                        # printLog("GETTING CELL DATA:")
                         # printLog(self.serverData.connectedSynapses)
+                    elif rxData[0] == CLIENT_CMD.CMD_GET_DISTAL_DATA:
+                        printLog("Distal data req by client", verbosityMedium)
+                        printLog(rxData, verbosityHigh)
 
+                        HTMObjectName = rxData[1][0][0]
+                        layerName = rxData[1][0][1]
+                        
+                        # TODO winner cells
+                        tm = self.temporalMemories[HTMObjectName]
+                        
+                        winners = tm.getWinnerCells()
+                        
+                        print(winners)
+                    
+                        send_one_message(
+                            conn, PackData(SERVER_CMD.SEND_DISTAL_DATA, self.serverData)
+                        )
+                        
+                        # TODO predictive cells
+                        
                     elif rxData[0] == CLIENT_CMD.CMD_RUN:
                         self.runInLoop = True
                         printLog("RUN", verbosityHigh)

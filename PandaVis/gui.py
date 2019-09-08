@@ -32,10 +32,18 @@ class cGUI:
             self.btnRunStop.setText("Run")
             self.cmdStop = True
 
-    def __init__(self, defaultWidth, defaultHeight, loader, fSpeedChange, defaultSpeed):
+    def __init__(self, defaultWidth, defaultHeight, loader, visApp):
 
+        self.focusedCell = None
+        self.focusedPath = None
+        self.columnID = 0
+        
+        self.showProximalSynapses=True
+        self.showDistalSynapses=True
+        
+        
         # self.setWireframe = None
-
+        self.visApp = visApp
         self.loader = loader
         FRAME_WIDTH = 200
         FRAME_HEIGHT = 600
@@ -68,8 +76,15 @@ class cGUI:
         self.ButtonStyle1(self.btnFwd)
         self.ButtonStyle1(self.btnRunStop)
 
-        # self.cBox = DirectCheckButton(text = "highlightConnected",scale=14,parent=self.myFrame,command=fWireframe,
-        # pos=(100,0,-200))
+        self.cBoxProxSyn = DirectCheckButton(text = "Show proximal syn.",scale=12,parent=self.myFrame,command=self.onShowProxSynapses,
+        pos=(100,0,-160))
+        self.cBoxProxSyn["indicatorValue"] = self.showProximalSynapses
+        self.cBoxProxSyn.setIndicatorValue()
+
+        self.cBoxDistSyn = DirectCheckButton(text = "Show distal syn.",scale=12,parent=self.myFrame,command=self.onShowDistSynapses,
+        pos=(100,0,-180))
+        self.cBoxDistSyn["indicatorValue"] = self.showDistalSynapses
+        self.cBoxDistSyn.setIndicatorValue()
 
         self.speedText = OnscreenText(
             text="Speed",
@@ -85,26 +100,34 @@ class cGUI:
             text="",
             scale=14,
             parent=self.myFrame,
-            command=fSpeedChange,
+            command=self.onSpeedChange,
             pos=(40, 0, -240),
-            initialText=str(defaultSpeed),
+            initialText=str(visApp.speed),
             numLines=1,
             focus=0,
         )
+        
+        self.hints = OnscreenText(
+            text="hints:\nPress spacebar for boost",
+            scale=14,
+            parent=self.myFrame,
+            pos=(20, -280, 0),
+            fg=(1, 1.0, 1.0, 1),
+            align=TextNode.ALeft,
+            mayChange=1,
+        )
 
-        # self.CheckBoxStyle1(self.cBox)
+        self.CheckBoxStyle1(self.cBoxProxSyn)
+        self.CheckBoxStyle1(self.cBoxDistSyn)
 
         self.ResetCommands()
 
-        self.focusedCell = None
-        self.focusedPath = None
-        self.columnID = 0
+ 
 
     def ResetCommands(self):
         self.cmdRun = False
         self.cmdStop = False
         self.cmdStepForward = False
-        self.cmdGetColumnData = False
 
     def onSpeedBoostChanged(self, value):
         if not value:
@@ -114,6 +137,20 @@ class cGUI:
             self.speedText.text = "Speed [BOOST]"
             self.speedText.fg = (1, 0.5, 0.5, 1)
 
+    def onShowProxSynapses(self,value):
+        print(value)
+        self.showProximalSynapses=value
+        #showProximalSynapses
+    def onShowDistSynapses(self,value):
+        print(value)
+        self.showDistalSynapses=value
+        
+    def onSpeedChange(self, value):
+        try:
+            self.speed = int(value)
+        except:
+            return
+        
     def onWindowEvent(
         self, window
     ):  # to keep the same size of frame even after resizing
@@ -136,6 +173,7 @@ class cGUI:
     def CheckBoxStyle1(self, box):
         box["frameColor"] = Color(0, 0, 0, 0)
         box["text_fg"] = (255, 255, 255, 255)
+        box["text_pos"]=(2,0)
         box["frameSize"] = (-5, 5, -0.5, 1)  # left,right,bottom,top
         box["text_font"] = self.loader.loadFont("Ubuntu-B.ttf")
 

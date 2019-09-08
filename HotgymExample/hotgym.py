@@ -22,39 +22,37 @@ _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
 pandaServer = PandaServer()
 
 default_parameters = {
-    # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
-    "enc": {
-        "value": {"resolution": 0.88, "size": 200, "sparsity": 0.02},
-        "time": {"timeOfDay": (30, 1), "weekend": 21},
-    },
-    "predictor": {"sdrc_alpha": 0.1},
-    "sp": {
-        "boostStrength": 0.5,
-        "columnCount": 200,
-        "localAreaDensity": 0.04395604395604396,
-        "potentialPct": 0.85,
-        "synPermActiveInc": 0.04,
-        "synPermConnected": 0.13999999999999999,
-        "synPermInactiveDec": 0.006,
-    },
-    "tm": {
-        "activationThreshold": 17,
-        "cellsPerColumn": 5,
-        "initialPerm": 0.21,
-        "maxSegmentsPerCell": 128,
-        "maxSynapsesPerSegment": 64,
-        "minThreshold": 10,
-        "newSynapseCount": 32,
-        "permanenceDec": 0.1,
-        "permanenceInc": 0.1,
-    },
-    "anomaly": {
-        "likelihood": {  #'learningPeriod': int(math.floor(self.probationaryPeriod / 2.0)),
-            #'probationaryPeriod': self.probationaryPeriod-default_parameters["anomaly"]["likelihood"]["learningPeriod"],
-            "probationaryPct": 0.1,
-            "reestimationPeriod": 100,
-        }  # These settings are copied from NAB
-    },
+  # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
+ 'enc': {
+      "value" :
+         {'resolution': 0.88, 'size': 700, 'sparsity': 0.02},
+      "time": 
+         {'timeOfDay': (30, 1), 'weekend': 21}
+ },
+ 'predictor': {'sdrc_alpha': 0.1},
+ 'sp': {'boostStrength': 3.0,
+        'columnCount': 1638,
+        'localAreaDensity': 0.04395604395604396,
+        'potentialPct': 0.85,
+        'synPermActiveInc': 0.04,
+        'synPermConnected': 0.13999999999999999,
+        'synPermInactiveDec': 0.006},
+ 'tm': {'activationThreshold': 17,
+        'cellsPerColumn': 13,
+        'initialPerm': 0.21,
+        'maxSegmentsPerCell': 128,
+        'maxSynapsesPerSegment': 64,
+        'minThreshold': 10,
+        'newSynapseCount': 32,
+        'permanenceDec': 0.1,
+        'permanenceInc': 0.1},
+ 'anomaly': {
+   'likelihood': 
+       {#'learningPeriod': int(math.floor(self.probationaryPeriod / 2.0)),
+        #'probationaryPeriod': self.probationaryPeriod-default_parameters["anomaly"]["likelihood"]["learningPeriod"],
+        'probationaryPct': 0.1,
+        'reestimationPeriod': 100} #These settings are copied from NAB
+ }
 }
 
 
@@ -173,7 +171,13 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         sp_info.addData(activeColumns)
 
         # Execute Temporal Memory algorithm over active mini-columns.
-        tm.compute(activeColumns, learn=True)
+        #tm.compute(activeColumns, learn=True)
+        tm.activateDendrites(True)
+        predictiveCellsSDR = tm.getPredictiveCells()
+        print("QQ")
+        print(predictiveCellsSDR.dense)
+        tm.activateCells(activeColumns,True)
+        
         tm_info.addData(tm.getActiveCells().flatten())
 
         activeCells = tm.getActiveCells()
@@ -212,7 +216,10 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         TimeOfDayInp.bits = dateBits.sparse
         TimeOfDayInp.count = dateBits.size
         SL.activeColumns = activeColumns.sparse
-        SL.activeCells = activeCells
+        
+        SL.winnerCells = tm.getWinnerCells().sparse
+        SL.predictiveCells = predictiveCellsSDR.sparse
+        print("PREDICTIVE:"+str(SL.predictiveCells))
 
         # pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
         # pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
@@ -226,7 +233,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
         pandaServer.spatialPoolers["HTM1"] = sp
         pandaServer.temporalMemories["HTM1"] = tm
-        pandaServer.NewDataReady()
+        pandaServer.NewStateDataReady()
 
         # connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
         # sp.getConnectedSynapses(1, connectedSynapses)
@@ -353,8 +360,8 @@ if __name__ == "__main__":
         pandaServer.Start()
         BuildPandaSystem()
 
-        while True:  # run infinitely
-            main()
+        #while True:  # run infinitely
+        main()
 
     except KeyboardInterrupt:
         print("Keyboard interrupt")

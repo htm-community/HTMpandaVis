@@ -27,7 +27,7 @@ verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = (
-    verbosityMedium
+    verbosityHigh
 )  # change this to change printing verbosity of this file
 
 
@@ -41,7 +41,7 @@ class cApp(ShowBase):
     FOCAL_LENGTH = 500
 
     focusCursor = None
-
+        
     def __init__(self):
         ShowBase.__init__(self)
 
@@ -66,8 +66,7 @@ class cApp(ShowBase):
             width,
             height,
             self.loader,
-            fSpeedChange=self.onSpeedChange,
-            defaultSpeed=self.speed,
+            visApp = self
         )
 
         # self.gui.cBox.command = self.setWireFrame
@@ -86,12 +85,6 @@ class cApp(ShowBase):
         self.speedBoost = False
 
         # self.pixel2d.reparentTo(self.render2d)
-
-    def onSpeedChange(self, value):
-        try:
-            self.speed = int(value)
-        except:
-            return
 
     def SetupCameraAndKeys(self):
         # Setup controls
@@ -216,8 +209,8 @@ class cApp(ShowBase):
             self.onClickObject()
 
     def updateHTMstate(self):
-        if self.client.serverDataChange:
-            self.client.serverDataChange = False
+        if self.client.stateDataArrived:
+            self.client.stateDataArrived = False
             printLog("Data change! Updating HTM state", verbosityMedium)
 
             serverObjs = self.client.serverData.HTMObjects
@@ -265,12 +258,13 @@ class cApp(ShowBase):
                     # find matching layer in local structure
                     self.HTMObjects[obj].layers[l].UpdateState(
                         serverObjs[obj].layers[l].activeColumns,
-                        serverObjs[obj].layers[l].activeCells,
+                        serverObjs[obj].layers[l].winnerCells,
+                        serverObjs[obj].layers[l].predictiveCells
                     )
 
-        if self.client.columnDataArrived:
-            printLog("Column data arrived, updating synapses!", verbosityMedium)
-            self.client.columnDataArrived = False
+        if self.client.proximalDataArrived:
+            printLog("Proximal data arrived, updating synapses!", verbosityMedium)
+            self.client.proximalDataArrived = False
             serverObjs = self.client.serverData.HTMObjects
 
             for obj in serverObjs:
@@ -278,7 +272,6 @@ class cApp(ShowBase):
                 self.HTMObjects[obj].DestroySynapses()
 
                 for l in serverObjs[obj].layers:  # dict
-
                     printLog(serverObjs[obj].layers[l].proximalSynapses, verbosityHigh)
                     for syn in serverObjs[obj].layers[l].proximalSynapses:  # array
 
@@ -296,7 +289,34 @@ class cApp(ShowBase):
                             self.HTMObjects[obj].inputs,
                             proximalSynapses,
                         )
+        if self.client.distalDataArrived:
+            printLog("Distal data arrived, updating synapses!", verbosityMedium)
+            self.client.distalDataArrived = False
+            serverObjs = self.client.serverData.HTMObjects
 
+            for obj in serverObjs:
+
+                self.HTMObjects[obj].DestroySynapses()
+
+                for l in serverObjs[obj].layers:  # dict
+                    printLog(serverObjs[obj].layers[l].distalSynapses, verbosityHigh)
+                    for syn in serverObjs[obj].layers[l].distalSynapses:  # array
+
+                        printLog("Layer:" + str(l), verbosityMedium)
+                        printLog("distalSynapses:" + str(syn), verbosityHigh)
+
+                        columnID = syn[0]
+                        distalSynapses = syn[1]
+
+                        # update columns with proximal Synapses
+                        self.HTMObjects[obj].layers[l].corticalColumns[
+                            columnID
+                        ].CreateDistalSynapses(
+                            serverObjs[obj].layers[l].distallInputs,
+                            self.HTMObjects[obj].inputs,
+                            proximalSynapses,
+                        )
+                        
     #            inputData = self.client.serverData.inputs
     #            inputDataSizes = self.client.serverData.inputDataSizes
     #            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
@@ -457,11 +477,16 @@ class cApp(ShowBase):
             self.focusedCell.setFocus()
 
             self.gui.focusedCell = self.focusedCell
-
             self.gui.focusedPath = self.focusedPath
+            
             self.gui.columnID = Layer.corticalColumns.index(self.gui.focusedCell.column)
+            self.gui.cellID = Layer.corticalColumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
-            self.gui.cmdGetColumnData = True
+            if self.gui.showProximalSynapses:
+                self.client.reqProximalData()
+            if self.gui.showDistalSynapses:
+                self.client.reqDistalData()
+            
         elif obj.getName() == "basement":
             self.testRoutine()
 
