@@ -3,6 +3,7 @@
 Screenshots for visualization of the "hotgym" example
 ![img1](img1.png)
 ![img2](img2.png)
+![img2](img3.png)
 
 This project aspires to create tool that helps **visualize HTM systems in 3D** by using opensource framework for 3D rendering https://www.panda3d.org/
 
