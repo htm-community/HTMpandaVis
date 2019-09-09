@@ -40,6 +40,8 @@ class cGUI:
         
         self.showProximalSynapses=True
         self.showDistalSynapses=True
+        self.wireframeChanged = False
+        self.wireframe = False
         
         
         # self.setWireframe = None
@@ -86,6 +88,9 @@ class cGUI:
         self.cBoxDistSyn["indicatorValue"] = self.showDistalSynapses
         self.cBoxDistSyn.setIndicatorValue()
 
+        self.cBoxWireframe = DirectCheckButton(text = "Wireframe",scale=12,parent=self.myFrame,command=self.onChangeWireframe,
+        pos=(100,0,-200))
+        
         self.speedText = OnscreenText(
             text="Speed",
             scale=14,
@@ -138,12 +143,14 @@ class cGUI:
             self.speedText.fg = (1, 0.5, 0.5, 1)
 
     def onShowProxSynapses(self,value):
-        print(value)
         self.showProximalSynapses=value
         #showProximalSynapses
     def onShowDistSynapses(self,value):
-        print(value)
         self.showDistalSynapses=value
+        
+    def onChangeWireframe(self, value):
+        self.wireframe = value
+        self.wireframeChanged = True
         
     def onSpeedChange(self, value):
         try:

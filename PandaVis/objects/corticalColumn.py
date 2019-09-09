@@ -18,6 +18,7 @@ verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = verbosityHigh  # change this to change printing verbosity of this file
 
+CELL_OFFSET = 0.3
 
 def printLog(txt, verbosity=verbosityLow):
     if FILE_VERBOSITY >= verbosity:
@@ -50,12 +51,11 @@ class cCorticalColumn:
         # self.__node.setTag('clickable',str(idx))#to be able to click on it
 
         self.__columnBox = loader.loadModel("models/cube")
-        self.__columnBox.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
         self.__columnBox.setPos(
-            0, 0, -0.5 + (0 if len(self.cells) == 0 else len(self.cells) / 2)
+            0, 0, -0.5 + (0 if len(self.cells) == 0 else len(self.cells)*(1+CELL_OFFSET) / 2)
         )
         self.__columnBox.setScale(
-            0.5, 0.5, 0.5 * (1 if len(self.cells) == 0 else len(self.cells))
+            0.5, 0.5, 0.5 * (1 if len(self.cells) == 0 else len(self.cells)*(1+CELL_OFFSET))
         )
         self.__columnBox.setName("columnBox")
 
@@ -79,16 +79,21 @@ class cCorticalColumn:
             n.CreateGfx(loader, idx)
             idx += 1
             n.getNode().setPos(0, 0, z)
-            z += 1
+            z += 1+CELL_OFFSET
             n.getNode().reparentTo(self.__cellsNodePath)
 
-    def UpdateState(self, bursting, oneOfCellActive):
+    def UpdateState(self, bursting, oneOfCellActive,oneOfCellPredictive):
 
         self.bursting = bursting
         self.oneOfCellActive = oneOfCellActive
+        self.oneOfCellPredictive = oneOfCellPredictive
 
         # update column box color (for LOD in distance look)
-        if self.oneOfCellActive:
+        if self.oneOfCellActive and self.oneOfCellPredictive:
+            self.__columnBox.setColor(0.0, 1.0, 0.0, 1.0)  # green
+        elif self.oneOfCellActive:
+            self.__columnBox.setColor(1.0, 1.0, 0.0, 1.0)  # yellow
+        elif self.oneOfCellPredictive:
             self.__columnBox.setColor(1.0, 0.0, 0.0, 1.0)  # red
         else:
             self.__columnBox.setColor(1.0, 1.0, 1.0, 1.0)  # white
@@ -100,6 +105,14 @@ class cCorticalColumn:
     def getNode(self):
         return self.__node
 
+    def updateWireframe(self, value):
+        for cell in self.cells:
+            cell.updateWireframe(value)
+        if value:
+            self.__columnBox.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
+        else:
+            self.__columnBox.setRenderModeFilled()
+            
     # -- Create proximal synapses
     # inputObjects - list of names of inputs(areas)
     # inputs - panda vis input object

@@ -54,19 +54,17 @@ class cLayer:
         print("winners:"+str(winnerCells))
         print("predictive:"+str(predictiveCells))
         
-        for colID in range(len(self.corticalColumns)):# go through all cells in columns
-            
-            if colID in activeColumns:# if this column is in active columns, activate
-                self.corticalColumns[colID].UpdateState(False,True)
-            else:
-                self.corticalColumns[colID].UpdateState(False,False)
+        for colID in range(len(self.corticalColumns)):# go through all columns    
+            oneOfCellPredictive=False
             
             for cellID in range(len(self.corticalColumns[colID].cells)):
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in winnerCells
                 isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
-                    
+                if isPredictive:
+                    oneOfCellPredictive=True
                 self.corticalColumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive)
 
+            self.corticalColumns[colID].UpdateState(bursting=False, oneOfCellActive=(colID in activeColumns),oneOfCellPredictive=oneOfCellPredictive)
         
         
 #        for cellID in winnerCells:
@@ -76,6 +74,10 @@ class cLayer:
 #            self.corticalColumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = True)
         
 
+    def updateWireframe(self, value):
+        for col in self.corticalColumns:
+            col.updateWireframe(value)
+            
     def getNode(self):
         return self.__node
 

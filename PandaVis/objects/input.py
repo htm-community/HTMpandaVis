@@ -87,3 +87,8 @@ class cInput:
     def resetHighlight(self):
         for i in self.inputBits:
             i.resetHighLight()
+    
+    def updateWireframe(self, value):
+        
+        for i in self.inputBits:
+            i.updateWireframe(value)

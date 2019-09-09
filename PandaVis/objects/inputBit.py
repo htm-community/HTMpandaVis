@@ -20,7 +20,7 @@ class cInputBit:
     def CreateGfx(self, loader, idx):
 
         self.__node = loader.loadModel("models/cube")
-        self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
+        #self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)
 
@@ -47,7 +47,7 @@ class cInputBit:
             self.__node.setColor(col)
 
         # self.__node.setRenderModeThickness(5)
-        self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
+        #self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
 
     def getNode(self):
         return self.__node
@@ -59,3 +59,9 @@ class cInputBit:
     def resetHighLight(self):
         self.__highlight = False
         self.UpdateState()
+    
+    def updateWireframe(self,value):
+        if value:
+            self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+        else:
+            self.__node.setRenderModeFilled()

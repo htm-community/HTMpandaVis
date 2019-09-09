@@ -18,7 +18,7 @@ import math
 
 from panda3d.core import CollisionTraverser, CollisionNode
 from panda3d.core import CollisionHandlerQueue, CollisionRay
-
+from panda3d.core import DirectionalLight, AmbientLight
 from objects.htmObject import cHTM
 from gui import cGUI
 
@@ -45,7 +45,7 @@ class cApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
 
-        self.speed = 20
+        self.speed = 40
 
         # Mouse and camera movement init
         self.mouseX_last = 0
@@ -54,7 +54,7 @@ class cApp(ShowBase):
         self.move_z = 50
 
         self.CreateBasement()  # to not be lost if there is nothing around
-
+        self.SetupLights()
         self.SetupCameraAndKeys()
         self.taskMgr.add(self.update, "main loop")
         self.accept(self.win.getWindowEvent(), self.onWindowEvent)
@@ -85,6 +85,30 @@ class cApp(ShowBase):
         self.speedBoost = False
 
         # self.pixel2d.reparentTo(self.render2d)
+
+    def SetupLights(self):
+        # Create Ambient Light
+        ambientLight = AmbientLight('ambientLight')
+        ambientLight.setColor((0.2, 0.2, 0.2, 1))
+        self.ambLight  = self.render.attachNewNode(ambientLight)
+        self.render.setLight(self.ambLight)
+        
+        # Directional light 01
+        directionalLight1 = DirectionalLight('directionalLight')
+        directionalLight1.setColor((1, 1, 1, 1))
+        self.dirLight1 = self.render.attachNewNode(directionalLight1)
+        
+        # This light is facing backwards, towards the camera.
+        self.dirLight1.setHpr(40, -40, 0)
+        self.render.setLight(self.dirLight1)
+        
+        directionalLight2 = DirectionalLight('directionalLight')
+        directionalLight2.setColor((0.9, 0.9, 0.9, 1))
+        self.dirLight2 = self.render.attachNewNode(directionalLight2)
+        
+        # This light is facing backwards, towards the camera.
+        self.dirLight2.setHpr(180+40, 30, 0)
+        self.render.setLight(self.dirLight2)
 
     def SetupCameraAndKeys(self):
         # Setup controls
@@ -122,9 +146,9 @@ class cApp(ShowBase):
         lens.setFar(500.0)
         self.cam.node().setLens(lens)
 
-        self.camera.setPos(40, -80, 0)
-        self.heading = 0.0
-        self.pitch = -30.0
+        self.camera.setPos(100, -80, 0)
+        self.heading = 40.0
+        self.pitch = -8.0
 
         self.accept("mouse1", self.onMouseEvent, ["left", True])
         self.accept("mouse1-up", self.onMouseEvent, ["left", False])
@@ -393,6 +417,21 @@ class cApp(ShowBase):
         self.camera.setHpr(self.heading, self.pitch, 0)
 
         self.updateHTMstate()
+        
+        
+        if self.gui.wireframeChanged:
+            self.gui.wireframeChanged = False
+            if not self.gui.wireframe:
+                self.render.setLight(self.ambLight)
+                self.render.setLight(self.dirLight1)
+                self.render.setLight(self.dirLight2)
+            else:
+                self.render.clearLight(self.ambLight)
+                self.render.clearLight(self.dirLight1)
+                self.render.clearLight(self.dirLight2)
+            
+            for obj in self.HTMObjects.values():
+                obj.updateWireframe(self.gui.wireframe)
 
         return task.cont
 
@@ -408,7 +447,7 @@ class cApp(ShowBase):
         # Apply scale and position transforms on the model.
 
         self.cube.setScale(10, 10, 10)
-        self.cube.setPos(-8, -30, 0)
+        self.cube.setPos(-8, -40, 0)
 
         self.cube.setColor(1.0, 0, 0, 1.0)
         self.cube.setRenderModeThickness(5)

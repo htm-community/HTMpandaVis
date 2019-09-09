@@ -61,3 +61,10 @@ class cHTM:
     def DestroySynapses(self):
         for ly in self.layers.values():
             ly.DestroySynapses()
+        
+    def updateWireframe(self, value):
+        for ly in self.layers.values():
+            ly.updateWireframe(value)
+        for i in self.inputs.values():
+            i.updateWireframe(value)
+        
