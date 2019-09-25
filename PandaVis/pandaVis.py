@@ -330,7 +330,8 @@ class cApp(ShowBase):
                         printLog("distalSynapses:" + str(syn), verbosityHigh)
 
                         columnID = syn[0]
-                        distalSynapses = syn[1]
+                        cellID = syn[1]
+                        distalSynapses = syn[2]
 
                         # update columns with proximal Synapses
                         self.HTMObjects[obj].layers[l].corticalColumns[

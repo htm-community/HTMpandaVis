@@ -123,7 +123,7 @@ class SocketClient:
                     s,
                     PackData(
                         CLIENT_CMD.CMD_GET_PROXIMAL_DATA,
-                        [self._gui.focusedPath, self._gui.columnID, self._gui.cellID],
+                        [self._gui.focusedPath, self._gui.columnID],
                     ),
                 )
                 printLog(
@@ -140,7 +140,7 @@ class SocketClient:
                     ),
                 )
                 printLog(
-                    "GET distal for cell:" + str(self._gui.focusedCell),
+                    "GET distal for cell: " + str(self._gui.cellID) + " on column: "+str(self._gui.columnID),
                     verbosityHigh,
                 )
 

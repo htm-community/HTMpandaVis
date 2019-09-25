@@ -174,8 +174,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         #tm.compute(activeColumns, learn=True)
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
-        print("QQ")
-        print(predictiveCellsSDR.dense)
+        
         tm.activateCells(activeColumns,True)
         
         tm_info.addData(tm.getActiveCells().flatten())

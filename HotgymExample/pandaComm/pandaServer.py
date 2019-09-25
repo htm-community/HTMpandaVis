@@ -140,7 +140,6 @@ class PandaServer:
                         HTMObjectName = rxData[1][0][0]
                         layerName = rxData[1][0][1]
                         requestedCol = int(rxData[1][1])
-                        requestedCell = int(rxData[1][2])
 
                         printLog(
                             "HTM object:"
@@ -188,14 +187,32 @@ class PandaServer:
 
                         HTMObjectName = rxData[1][0][0]
                         layerName = rxData[1][0][1]
+                        requestedColumn = int(rxData[1][1])
+                        requestedCell = int(rxData[1][2])
                         
+                        cellsPerColumn = self.serverData.HTMObjects[HTMObjectName].layers[layerName].cellsPerColumn
+                        reqCellID = requestedColumn*cellsPerColumn + requestedCell
+                        
+                        printLog("Requested cell ID:"+str(reqCellID),verbosityMedium)
                         # TODO winner cells
                         tm = self.temporalMemories[HTMObjectName]
+
+                        segments = tm.connections.segmentsForCell(reqCellID)    
+                        presynCells = []
+                        print("Segments:"+str(segments))
+                        for seg in segments:
+                            synapses = tm.connections.synapsesForSegment(seg)
+                            
+                            for syn in synapses:
+                                presynCells += [tm.connections.presynapticCellForSynapse(syn)]
                         
-                        winners = tm.getWinnerCells()
+                        print("PRESYN CELLS:"+str(presynCells))
+                        #winners = tm.getWinnerCells()
                         
-                        print(winners)
-                    
+                        #print(winners)
+                        self.serverData.HTMObjects[HTMObjectName].layers[
+                            layerName
+                        ].distalSynapses = presynCells
                         send_one_message(
                             conn, PackData(SERVER_CMD.SEND_DISTAL_DATA, self.serverData)
                         )
