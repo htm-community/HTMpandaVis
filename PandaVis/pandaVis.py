@@ -8,9 +8,9 @@ import math
 
 
 from objects.htmObject import cHTM
-from gui import cGUI
-from environment import cEnvironment
-from interaction import cInteraction
+from gui import cGUI # Graphical user interface
+from environment import cEnvironment # handles everything about the environment
+from interaction import cInteraction # handles keys, user interaction etc..
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -64,13 +64,8 @@ class cApp(ShowBase):
         
         self.taskMgr.add(self.update, "main loop")
         self.accept(self.win.getWindowEvent(), self.interaction.onWindowEvent)
-
-        # self.gui.cBox.command = self.setWireFrame
-
-        
+       
         self.HTMObjects = {}
-
-        # self.pixel2d.reparentTo(self.render2d)
 
     def updateHTMstate(self):
         if self.client.stateDataArrived:
@@ -181,54 +176,14 @@ class cApp(ShowBase):
                             self.HTMObjects[obj].inputs,
                             proximalSynapses,
                         )
-                        
-    #            inputData = self.client.serverData.inputs
-    #            inputDataSizes = self.client.serverData.inputDataSizes
-    #            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
-    #
-    #            #UPDATES INPUTS
-    #            for i in range(len(inputData)):
-    #              if len(self.htmObject.inputs)<=i:#if no input instances exists
-    #                self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
-    #
-    #              self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
-    #
-    #            # UPDATES LAYERS
-    #            if len(self.htmObject.layers)==0:#if no input instances exists
-    #              self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
-    #            printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
-    #            self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
-    #
-    #          if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
-    #            self.client.columnDataArrived=False
-    #
-    #            #if self.focusCursor!=None:
-    #            self.htmObject.DestroySynapses()
-    #
-    #            self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
-    #
-    #            printLog("columnDataArrived",verbosityHigh)
 
     def update(self, task):
 
-        self.interaction.UpdateCameraMovement()
-
+        self.interaction.Update()
         self.updateHTMstate()
         
+        # update environment - e.g. controlling drawing style in runtime
         
-        if self.gui.wireframeChanged:
-            self.gui.wireframeChanged = False
-            if not self.gui.wireframe:
-                self.render.setLight(self.ambLight)
-                self.render.setLight(self.dirLight1)
-                self.render.setLight(self.dirLight2)
-            else:
-                self.render.clearLight(self.ambLight)
-                self.render.clearLight(self.dirLight1)
-                self.render.clearLight(self.dirLight2)
-            
-            for obj in self.HTMObjects.values():
-                obj.updateWireframe(self.gui.wireframe)
 
         return task.cont
 

@@ -245,3 +245,21 @@ class cInteraction:
             
         elif obj.getName() == "basement":
             self.testRoutine()
+            
+    def Update(self):
+        
+        self.UpdateCameraMovement()
+        
+        if self.base.gui.wireframeChanged:
+            self.gui.wireframeChanged = False
+            if not self.gui.wireframe:
+                self.render.setLight(self.base.env.ambLight)
+                self.render.setLight(self.base.env.dirLight1)
+                self.render.setLight(self.base.env.dirLight2)
+            else:
+                self.render.clearLight(self.base.env.ambLight)
+                self.render.clearLight(self.base.env.dirLight1)
+                self.render.clearLight(self.base.env.dirLight2)
+            
+            for obj in self.base.HTMObjects.values():
+                obj.updateWireframe(self.gui.wireframe)
