@@ -52,7 +52,7 @@ class dataLayer(object):
         # to what inputs are the synapses connected
         self.proximalInputs = []  # [inputName1,inputName2,...]
 
-        # array - [cellID,[destinationID1,destinationID2,...]]
+        # array - [columnID,cellID,[destinationID1,destinationID2,...]]
         self.distalSynapses = (
             []
         )  # first item in array is for what column, second is list of destination cells in this layer

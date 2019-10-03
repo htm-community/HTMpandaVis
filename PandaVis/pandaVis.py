@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import LColor, CollisionBox
-from panda3d.core import (
-    GeomVertexFormat,
-    GeomVertexData,
-    GeomVertexWriter,
-    Geom,
-    GeomLines,
-    GeomNode,
-    PerspectiveLens,
-)
 
 from pandaComm.client import SocketClient
 import math
 
-from panda3d.core import CollisionTraverser, CollisionNode
-from panda3d.core import CollisionHandlerQueue, CollisionRay
-from panda3d.core import DirectionalLight, AmbientLight
-from objects.htmObject import cHTM
-from gui import cGUI
 
+from objects.htmObject import cHTM
+from gui import cGUI # Graphical user interface
+from environment import cEnvironment # handles everything about the environment
+from interaction import cInteraction # handles keys, user interaction etc..
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -37,10 +26,6 @@ def printLog(txt, verbosity=verbosityLow):
 
 
 class cApp(ShowBase):
-
-    FOCAL_LENGTH = 500
-
-    focusCursor = None
         
     def __init__(self):
         ShowBase.__init__(self)
@@ -53,12 +38,12 @@ class cApp(ShowBase):
         self.rotateCamera = False
         self.move_z = 50
 
-        self.CreateBasement()  # to not be lost if there is nothing around
-        self.SetupLights()
-        self.SetupCameraAndKeys()
-        self.taskMgr.add(self.update, "main loop")
-        self.accept(self.win.getWindowEvent(), self.onWindowEvent)
-
+        self.env = cEnvironment(self)
+        
+        self.env.CreateBasement()  # to not be lost if there is nothing around
+        self.env.SetupLights()
+        self.env.SetupCamera()
+        
         width = self.win.getProperties().getXSize()
         height = self.win.getProperties().getYSize()
 
@@ -68,169 +53,19 @@ class cApp(ShowBase):
             self.loader,
             visApp = self
         )
-
-        # self.gui.cBox.command = self.setWireFrame
-
-        # self.CreateTestScene()
-
-        self.SetupOnClick()
-
+        
         self.client = SocketClient()
         self.client.setGui(self.gui)
-
+        
+        self.interaction = cInteraction(self)
+        
+        self.interaction.SetupKeys()
+        self.interaction.SetupOnClick()
+        
+        self.taskMgr.add(self.update, "main loop")
+        self.accept(self.win.getWindowEvent(), self.interaction.onWindowEvent)
+       
         self.HTMObjects = {}
-
-        self.focusedCell = None
-        self.focusedPath = None
-        self.speedBoost = False
-
-        # self.pixel2d.reparentTo(self.render2d)
-
-    def SetupLights(self):
-        # Create Ambient Light
-        ambientLight = AmbientLight('ambientLight')
-        ambientLight.setColor((0.2, 0.2, 0.2, 1))
-        self.ambLight  = self.render.attachNewNode(ambientLight)
-        self.render.setLight(self.ambLight)
-        
-        # Directional light 01
-        directionalLight1 = DirectionalLight('directionalLight')
-        directionalLight1.setColor((1, 1, 1, 1))
-        self.dirLight1 = self.render.attachNewNode(directionalLight1)
-        
-        # This light is facing backwards, towards the camera.
-        self.dirLight1.setHpr(40, -40, 0)
-        self.render.setLight(self.dirLight1)
-        
-        directionalLight2 = DirectionalLight('directionalLight')
-        directionalLight2.setColor((0.9, 0.9, 0.9, 1))
-        self.dirLight2 = self.render.attachNewNode(directionalLight2)
-        
-        # This light is facing backwards, towards the camera.
-        self.dirLight2.setHpr(180+40, 30, 0)
-        self.render.setLight(self.dirLight2)
-
-    def SetupCameraAndKeys(self):
-        # Setup controls
-        self.keys = {}
-        for key in [
-            "arrow_left",
-            "arrow_right",
-            "arrow_up",
-            "arrow_down",
-            "a",
-            "d",
-            "w",
-            "s",
-            "shift",
-            "control",
-            "space",
-        ]:
-            self.keys[key] = 0
-            self.accept(key, self.onKey, [key, 1])
-            self.accept("shift-%s" % key, self.onKey, [key, 1])
-            self.accept("%s-up" % key, self.onKey, [key, 0])
-
-        self.accept("escape", self.onEscape, [])
-        self.disableMouse()
-
-        # Setup camera
-        width = self.win.getProperties().getXSize()
-        height = self.win.getProperties().getYSize()
-        lens = PerspectiveLens()
-        lens.setFov(60)
-
-        lens.setAspectRatio(width / height)
-        # lens.setFilmSize(width,height)
-        # lens.setFocalLength(self.FOCAL_LENGTH)
-        lens.setFar(500.0)
-        self.cam.node().setLens(lens)
-
-        self.camera.setPos(100, -80, 0)
-        self.heading = 40.0
-        self.pitch = -8.0
-
-        self.accept("mouse1", self.onMouseEvent, ["left", True])
-        self.accept("mouse1-up", self.onMouseEvent, ["left", False])
-        self.accept("mouse3", self.onMouseEvent, ["right", True])
-        self.accept("mouse3-up", self.onMouseEvent, ["right", False])
-
-    def SetupOnClick(self):
-
-        pickerNode = CollisionNode("mouseRay")
-        pickerNP = self.camera.attachNewNode(pickerNode)
-        pickerNode.setFromCollideMask(
-            CollisionNode.getDefaultCollideMask()
-        )  # GeomNode.getDefaultCollideMask())
-        self.pickerRay = CollisionRay()
-        pickerNode.addSolid(self.pickerRay)
-
-        self.myTraverser = CollisionTraverser("mouseCollisionTraverser")
-
-        # self.myTraverser.showCollisions(self.render) #uncomment to see collision point
-
-        self.myHandler = CollisionHandlerQueue()
-
-        self.myTraverser.addCollider(pickerNP, self.myHandler)
-
-    def CloseApp(self):
-
-        printLog("CLOSE app event")
-        __import__("sys").exit(0)
-        self.client.terminateClientThread = True
-
-    def onWindowEvent(self, window):
-
-        if self.win.isClosed():
-            self.CloseApp()
-
-        width = self.win.getProperties().getXSize()
-        height = self.win.getProperties().getYSize()
-
-        lens = self.cam.node().getLens()
-        lens.setFov(60)
-        lens.setAspectRatio(width / height)
-
-        lens.setFar(500.0)
-        # lens.setFilmSize(width,height)
-        # lens.setFocalLength(self.FOCAL_LENGTH)
-        self.cam.node().setLens(lens)
-
-        self.gui.onWindowEvent(window)
-
-    def onKey(self, key, value):
-        """Stores a value associated with a key."""
-        self.keys[key] = value
-
-        if self.keys["space"]:
-            self.speedBoost = not self.speedBoost
-            self.gui.onSpeedBoostChanged(self.speedBoost)
-
-    def onEscape(self):
-        """Event when escape button is pressed."""
-
-        # unfocus all
-        for obj in self.HTMObjects.values():
-            obj.DestroySynapses()
-
-    def onMouseEvent(self, event, press):
-        printLog("Mouse event:" + str(event), verbosityHigh)
-        if event == "right":
-            self.rotateCamera = press
-
-            if self.mouseWatcherNode.hasMouse():
-                self.mouseX_last = self.mouseWatcherNode.getMouseX()
-                self.mouseY_last = self.mouseWatcherNode.getMouseY()
-            else:
-                self.mouseX_last = 0
-                self.mouseY_last = 0
-            """if press:
-                props = WindowProperties()
-                props.setCursorHidden(True)
-                props.setMouseMode(WindowProperties.M_relative)
-                self.win.requestProperties(props)"""
-        elif event == "left" and press:
-            self.onClickObject()
 
     def updateHTMstate(self):
         if self.client.stateDataArrived:
@@ -293,7 +128,7 @@ class cApp(ShowBase):
 
             for obj in serverObjs:
 
-                self.HTMObjects[obj].DestroySynapses()
+                self.HTMObjects[obj].DestroyProximalSynapses()
 
                 for l in serverObjs[obj].layers:  # dict
                     printLog(serverObjs[obj].layers[l].proximalSynapses, verbosityHigh)
@@ -320,7 +155,7 @@ class cApp(ShowBase):
 
             for obj in serverObjs:
 
-                self.HTMObjects[obj].DestroySynapses()
+                self.HTMObjects[obj].DestroyDistalSynapses()
 
                 for l in serverObjs[obj].layers:  # dict
                     printLog(serverObjs[obj].layers[l].distalSynapses, verbosityHigh)
@@ -330,242 +165,26 @@ class cApp(ShowBase):
                         printLog("distalSynapses:" + str(syn), verbosityHigh)
 
                         columnID = syn[0]
-                        distalSynapses = syn[1]
+                        cellID = syn[1]
+                        distalSynapses = syn[2]
 
                         # update columns with proximal Synapses
                         self.HTMObjects[obj].layers[l].corticalColumns[
                             columnID
-                        ].CreateDistalSynapses(
-                            serverObjs[obj].layers[l].distallInputs,
-                            self.HTMObjects[obj].inputs,
-                            proximalSynapses,
+                        ].cells[cellID].CreateDistalSynapses(
+                            self.HTMObjects[obj].layers[l],
+                            distalSynapses
                         )
-                        
-    #            inputData = self.client.serverData.inputs
-    #            inputDataSizes = self.client.serverData.inputDataSizes
-    #            inputsValueString = self.client.serverData.inputsValueString#just ordinary represented value that will be shown near input as string
-    #
-    #            #UPDATES INPUTS
-    #            for i in range(len(inputData)):
-    #              if len(self.htmObject.inputs)<=i:#if no input instances exists
-    #                self.htmObject.CreateInput("IN"+str(i),count=inputDataSizes[i],rows=int(math.sqrt(inputDataSizes[i])))
-    #
-    #              self.htmObject.inputs[i].UpdateState(inputData[i],inputsValueString[i])
-    #
-    #            # UPDATES LAYERS
-    #            if len(self.htmObject.layers)==0:#if no input instances exists
-    #              self.htmObject.CreateLayer("SP/TM",nOfColumnsPerLayer=self.client.serverData.columnDimensions,nOfCellsPerColumn=self.client.serverData.cellsPerColumn)
-    #            printLog("Active columns:"+str(self.client.serverData.activeColumns),verbosityHigh)
-    #            self.htmObject.layers[0].UpdateState(activeColumns=self.client.serverData.activeColumns,activeCells=self.client.serverData.activeCells)
-    #
-    #          if self.client.columnDataArrived and len(self.client.serverData.connectedSynapses)!=0:
-    #            self.client.columnDataArrived=False
-    #
-    #            #if self.focusCursor!=None:
-    #            self.htmObject.DestroySynapses()
-    #
-    #            self.focusCursor.column.CreateSynapses(self.htmObject.inputs,self.client.serverData.connectedSynapses)
-    #
-    #            printLog("columnDataArrived",verbosityHigh)
 
     def update(self, task):
 
-        """Updates the camera based on the keyboard input. Once this is
-      done, then the CellManager's update function is called."""
-        deltaT = globalClock.getDt()
-
-        speed = self.speed
-
-        if self.speedBoost:
-            speed *= 4
-
-        """Rotation with mouse while right-click"""
-        mw = self.mouseWatcherNode
-        deltaX = 0
-        deltaY = 0
-
-        if mw.hasMouse() and self.rotateCamera:
-            deltaX = mw.getMouseX() - self.mouseX_last
-            deltaY = mw.getMouseY() - self.mouseY_last
-
-            self.mouseX_last = mw.getMouseX()
-            self.mouseY_last = mw.getMouseY()
-
-        if deltaT > 0.05:
-            # FPS are low, limit deltaT
-            deltaT = 0.05
-
-        move_x = deltaT * speed * -self.keys["a"] + deltaT * speed * self.keys["d"]
-        move_y = deltaT * speed * self.keys["s"] + deltaT * speed * -self.keys["w"]
-        self.move_z += (
-            deltaT * speed * self.keys["shift"] + deltaT * speed * -self.keys["control"]
-        )
-
-        self.camera.setPos(self.camera, move_x, -move_y, 0)
-        self.camera.setZ(self.move_z)
-
-        self.heading += (
-            deltaT * 90 * self.keys["arrow_left"]
-            + deltaT * 90 * -self.keys["arrow_right"]
-            + deltaT * 5000 * -deltaX
-        )
-        self.pitch += (
-            deltaT * 90 * self.keys["arrow_up"]
-            + deltaT * 90 * -self.keys["arrow_down"]
-            + deltaT * 5000 * deltaY
-        )
-        self.camera.setHpr(self.heading, self.pitch, 0)
-
+        self.interaction.Update()
         self.updateHTMstate()
         
+        # update environment - e.g. controlling drawing style in runtime
         
-        if self.gui.wireframeChanged:
-            self.gui.wireframeChanged = False
-            if not self.gui.wireframe:
-                self.render.setLight(self.ambLight)
-                self.render.setLight(self.dirLight1)
-                self.render.setLight(self.dirLight2)
-            else:
-                self.render.clearLight(self.ambLight)
-                self.render.clearLight(self.dirLight1)
-                self.render.clearLight(self.dirLight2)
-            
-            for obj in self.HTMObjects.values():
-                obj.updateWireframe(self.gui.wireframe)
 
         return task.cont
-
-    def CreateBasement(
-        self
-    ):  # it will create basement object, just for case that nothing is drawn to be not lost
-
-        # Load the environment model.
-        self.cube = self.loader.loadModel("models/cube")  # /media/Data/Data/Panda3d/
-
-        # Reparent the model to render.
-        self.cube.reparentTo(self.render)
-        # Apply scale and position transforms on the model.
-
-        self.cube.setScale(10, 10, 10)
-        self.cube.setPos(-8, -40, 0)
-
-        self.cube.setColor(1.0, 0, 0, 1.0)
-        self.cube.setRenderModeThickness(5)
-
-        self.cube.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
-        # COLLISION
-        collBox = CollisionBox(self.cube.getPos(), 10.0, 10.0, 10.0)
-        cnodePath = self.cube.attachNewNode(CollisionNode("cnode"))
-        cnodePath.node().addSolid(collBox)
-
-        self.cube.setTag("clickable", "1")
-
-    def CreateTestScene(self):
-
-        form = GeomVertexFormat.getV3()
-        vdata = GeomVertexData("myLine", form, Geom.UHStatic)
-        vdata.setNumRows(1)
-        vertex = GeomVertexWriter(vdata, "vertex")
-
-        vertex.addData3f(0, 0, 0)
-        vertex.addData3f(60, 0, 50)
-
-        prim = GeomLines(Geom.UHStatic)
-        prim.addVertices(0, 1)
-
-        geom = Geom(vdata)
-        geom.addPrimitive(prim)
-
-        node = GeomNode("gnode")
-        node.addGeom(geom)
-
-        nodePath = self.render.attachNewNode(node)
-
-        # self.HTMObjects.CreateInput("IN 1",count=500,rows=int(math.sqrt(500)))
-        # self.HTMObjects.CreateLayer("SP/TM 1",nOfColumnsPerLayer=200,nOfCellsPerColumn=10)
-
-    def HandlePickedObject(self, obj):
-        printLog("PICKED OBJECT:" + str(obj), verbosityMedium)
-
-        thisId = int(obj.getTag("clickable"))
-        printLog("TAG:" + str(thisId), verbosityHigh)
-
-        parent = obj.getParent()  # skip LOD node
-        tag = parent.getTag("id")
-        if tag == "":
-            printLog("Parent is not clickable!", verbosityHigh)
-            return
-        else:
-            parentId = int(tag)
-            printLog("PARENT TAG:" + str(parentId), verbosityHigh)
-
-        if obj.getName() == "cell":
-            printLog("We clicked on cell", verbosityHigh)
-
-            focusedHTMObject = str(obj).split("/")[1]
-            focusedLayer = str(obj).split("/")[2]
-
-            HTMObj = self.HTMObjects[focusedHTMObject]
-            Layer = HTMObj.layers[focusedLayer]
-            newCellFocus = Layer.corticalColumns[parentId].cells[thisId]
-            self.focusedPath = [focusedHTMObject, focusedLayer]
-
-            if self.focusedCell != None:
-                self.focusedCell.resetFocus()  # reset previous
-            self.focusedCell = newCellFocus
-            self.focusedCell.setFocus()
-
-            self.gui.focusedCell = self.focusedCell
-            self.gui.focusedPath = self.focusedPath
-            
-            self.gui.columnID = Layer.corticalColumns.index(self.gui.focusedCell.column)
-            self.gui.cellID = Layer.corticalColumns[self.gui.columnID].cells.index(self.gui.focusedCell)
-
-            if self.gui.showProximalSynapses:
-                self.client.reqProximalData()
-            if self.gui.showDistalSynapses:
-                self.client.reqDistalData()
-            
-        elif obj.getName() == "basement":
-            self.testRoutine()
-
-    def testRoutine(self):
-        form = GeomVertexFormat.getV3()
-        vdata = GeomVertexData("myLine", form, Geom.UHStatic)
-        vdata.setNumRows(1)
-        vertex = GeomVertexWriter(vdata, "vertex")
-
-        vertex.addData3f(inputs[i].inputBits[y].getNode().getPos(self.__node))
-        vertex.addData3f(-8, -30, 0)
-
-        prim = GeomLines(Geom.UHStatic)
-        prim.addVertices(0, 1)
-
-        geom = Geom(vdata)
-        geom.addPrimitive(prim)
-
-        node = GeomNode("gnode")
-        node.addGeom(geom)
-
-        self.__columnBox.attachNewNode(node)
-
-    def onClickObject(self):
-        mpos = self.mouseWatcherNode.getMouse()
-        self.pickerRay.setFromLens(self.camNode, mpos.getX(), mpos.getY())
-
-        self.myTraverser.traverse(self.render)
-        # assume for simplicity's sake that myHandler is a CollisionHandlerQueue
-        if self.myHandler.getNumEntries() > 0:
-            # get closest object
-            self.myHandler.sortEntries()
-
-            pickedObj = self.myHandler.getEntry(0).getIntoNodePath()
-            # printLog("----------- "+str(self.myHandler.getNumEntries()))
-            print(self.myHandler.getEntries())
-            pickedObj = pickedObj.findNetTag("clickable")
-            print(pickedObj)
-            if not pickedObj.isEmpty():
-                self.HandlePickedObject(pickedObj)
 
 
 if __name__ == "__main__":

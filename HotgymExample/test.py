@@ -4,10 +4,6 @@ import os
 import numpy as np
 import math
 
-# Panda vis
-from pandaComm.pandaServer import PandaServer
-from pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
-
 from htm.bindings.sdr import SDR, Metrics
 from htm.encoders.rdse import RDSE, RDSE_Parameters
 from htm.encoders.date import DateEncoder
@@ -19,7 +15,6 @@ from htm.bindings.algorithms import Predictor
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
 
-pandaServer = PandaServer()
 
 default_parameters = {
   # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
@@ -54,7 +49,35 @@ default_parameters = {
         'reestimationPeriod': 100} #These settings are copied from NAB
  }
 }
+def getAllPresynapticCellsForCell(tm,cellID):
+    segments = tm.connections.segmentsForCell(cellID)
+                    
+    synapses = []
+    for seg in segments:
+        for syn in tm.connections.synapsesForSegment(seg):
+            synapses += [syn]
+ 
+    presynapticCells = []
+    for syn in synapses:
+        presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+     
+    return presynapticCells
 
+def getPresynapticCellsForCell(tm, cellID):
+    segments = tm.connections.segmentsForCell(cellID)
+                    
+    synapses = []
+    res = []
+    for seg in segments:
+        for syn in tm.connections.synapsesForSegment(seg):
+            synapses += [syn]
+ 
+        presynapticCells = []
+        for syn in synapses:
+            presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+    
+        res += [presynapticCells]
+    return res
 
 def main(parameters=default_parameters, argv=None, verbose=True):
 
@@ -146,8 +169,9 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     anomaly = []
     anomalyProb = []
     predictions = {1: [], 5: []}
+    iteration = 0
     for count, record in enumerate(records):
-
+    
         # Convert date string into Python date object.
         dateString = datetime.datetime.strptime(record[0], "%m/%d/%y %H:%M")
         # Convert data value string into float.
@@ -180,7 +204,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         tm_info.addData(tm.getActiveCells().flatten())
 
         activeCells = tm.getActiveCells()
-        print("ACTIVE"+str(len(activeCells.sparse)))
+        #print("ACTIVE"+str(len(activeCells.sparse)))
 
         # Predict what will happen, and then train the predictor based on what just happened.
         pdf = predictor.infer(count, tm.getActiveCells())
@@ -197,44 +221,6 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         anomaly.append(tm.anomaly)
         anomalyProb.append(anomalyLikelihood)
 
-        # ------------------HTMpandaVis----------------------
-
-        timeOfDayString = record[0]
-
-        # just shortcuts to shorten names
-        SL = serverData.HTMObjects["HTM1"].layers["SensoryLayer"]
-        ConsumInp = serverData.HTMObjects["HTM1"].inputs["SL_Consumption"]
-        TimeOfDayInp = serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"]
-
-        # fill up values
-        ConsumInp.stringValue = "consumption: {:.2f}".format(consumption)
-        TimeOfDayInp.stringValue = timeOfDayString
-
-        ConsumInp.bits = consumptionBits.sparse
-        ConsumInp.count = consumptionBits.size
-
-        TimeOfDayInp.bits = dateBits.sparse
-        TimeOfDayInp.count = dateBits.size
-        SL.activeColumns = activeColumns.sparse
-        
-        SL.winnerCells = tm.getWinnerCells().sparse
-        SL.predictiveCells = predictiveCellsSDR.sparse
-        print("PREDICTIVE:"+str(SL.predictiveCells))
-
-        # pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
-        # pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
-        #        pandaServer.serverData.inputDataSizes= [dateBits.size, consumptionBits.size]
-        #        pandaServer.serverData.activeColumns=activeColumns.sparse
-        #        pandaServer.serverData.activeCells=activeCells
-        #        pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
-        #        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
-
-        pandaServer.serverData = serverData
-
-        pandaServer.spatialPoolers["HTM1"] = sp
-        pandaServer.temporalMemories["HTM1"] = tm
-        pandaServer.NewStateDataReady()
-
         # connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
         # sp.getConnectedSynapses(1, connectedSynapses)
 
@@ -243,16 +229,42 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         # print("CONNECTED:")
         # print("len:"+str(len(connectedSynapses)))
         # print(connectedSynapses)
-        # print("active:"+str(sum([i for i in connectedSynapses])))
-
-        print("One step finished")
-        while not pandaServer.runInLoop and not pandaServer.runOneStep:
-            pass
-        pandaServer.runOneStep = False
-        print("Proceeding one step...")
-
-    # ------------------HTMpandaVis----------------------
-
+        
+        iteration += 1
+        
+        if iteration > 50:
+            
+            segments = []
+            for i in range(tmParams["cellsPerColumn"]*spParams["columnCount"]):
+                segments = tm.connections.segmentsForCell(i)
+                
+                if len(segments)>0:
+                    print("cell:"+str(i))
+                    break
+            
+            
+            presynapticCells =  getPresynapticCellsBySegmentsForCell(tm,i)
+            
+            
+#            if len(segments)>0:
+#                 print("Segments:"+str(segments))
+#                 
+#                 synapses = []
+#                 for seg in segments:
+#                     for syn in tm.connections.synapsesForSegment(seg):
+#                         synapses += [syn]
+#                 
+#                 #print("Cell for segment:"+str(tm.connections.cellForSegment(segments[0])))
+#                 
+#                 print("Synapses:"+str(synapses))
+#                 presynapticCells = []
+#                 for syn in synapses:
+#                     presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+                     
+            print("Presynaptic cells for that cell:"+str(presynapticCells))
+            
+            
+      
     # Print information & statistics about the state of the HTM.
     print("Encoded Input", enc_info)
     print("")
@@ -337,33 +349,12 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
     return -accuracy[5]
 
-
-def BuildPandaSystem():
-    global serverData
-    serverData = ServerData()
-    serverData.HTMObjects["HTM1"] = dataHTMObject()
-    serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
-    serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
-
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(
-        default_parameters["sp"]["columnCount"],
-        default_parameters["tm"]["cellsPerColumn"],
-    )
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
-        "SL_Consumption",
-        "SL_TimeOfDay",
-    ]
-
-
 if __name__ == "__main__":
+   
     try:
-        pandaServer.Start()
-        BuildPandaSystem()
-
         #while True:  # run infinitely
         main()
 
     except KeyboardInterrupt:
         print("Keyboard interrupt")
-        pandaServer.MainThreadQuitted()
     print("Script finished")

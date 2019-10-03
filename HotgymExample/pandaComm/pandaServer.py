@@ -140,7 +140,6 @@ class PandaServer:
                         HTMObjectName = rxData[1][0][0]
                         layerName = rxData[1][0][1]
                         requestedCol = int(rxData[1][1])
-                        requestedCell = int(rxData[1][2])
 
                         printLog(
                             "HTM object:"
@@ -188,14 +187,25 @@ class PandaServer:
 
                         HTMObjectName = rxData[1][0][0]
                         layerName = rxData[1][0][1]
+                        requestedColumn = int(rxData[1][1])
+                        requestedCell = int(rxData[1][2])
                         
+                        cellsPerColumn = self.serverData.HTMObjects[HTMObjectName].layers[layerName].cellsPerColumn
+                        reqCellID = requestedColumn*cellsPerColumn + requestedCell
+                        
+                        printLog("Requested cell ID:"+str(reqCellID),verbosityMedium)
                         # TODO winner cells
                         tm = self.temporalMemories[HTMObjectName]
+
+                        presynCells = getPresynapticCellsForCell(tm,reqCellID)
                         
-                        winners = tm.getWinnerCells()
+                        print("PRESYN CELLS:"+str(presynCells))
+                        #winners = tm.getWinnerCells()
                         
-                        print(winners)
-                    
+                        #print(winners)
+                        self.serverData.HTMObjects[HTMObjectName].layers[
+                            layerName
+                        ].distalSynapses = [[requestedColumn,requestedCell,presynCells]]#sending just one pack for one cell
                         send_one_message(
                             conn, PackData(SERVER_CMD.SEND_DISTAL_DATA, self.serverData)
                         )
@@ -235,6 +245,21 @@ class PandaServer:
         printLog("Server quit")
         conn.close()
 
+def getPresynapticCellsForCell(tm, cellID):
+    segments = tm.connections.segmentsForCell(cellID)
+                    
+    synapses = []
+    res = []
+    for seg in segments:
+        for syn in tm.connections.synapsesForSegment(seg):
+            synapses += [syn]
+ 
+        presynapticCells = []
+        for syn in synapses:
+            presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+    
+        res += [presynapticCells]
+    return res
 
 class ServerThread(threading.Thread):
     def __init__(self, serverInstance, threadID, name):
