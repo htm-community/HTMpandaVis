@@ -1,5 +1,7 @@
 # HTMpandaVis
 
+(I will add soon some instruction how to install and use with examples)
+
 Screenshots for visualization of the "hotgym" example
 ![img1](img1.png)
 ![img2](img2.png)
