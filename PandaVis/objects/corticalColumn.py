@@ -35,6 +35,7 @@ class cCorticalColumn:
         self.oneOfCellActive = False
         self.bursting = False
         self.parentLayer = nameOfLayer
+        self.transparency = 1.0
 
     def CreateGfx(self, loader, idx):
         #                __node
@@ -90,13 +91,13 @@ class cCorticalColumn:
 
         # update column box color (for LOD in distance look)
         if self.oneOfCellActive and self.oneOfCellPredictive:
-            self.__columnBox.setColor(0.0, 1.0, 0.0, 1.0)  # green
+            self.__columnBox.setColor(0.0, 1.0, 0.0, self.transparency)  # green
         elif self.oneOfCellActive:
-            self.__columnBox.setColor(1.0, 1.0, 0.0, 1.0)  # yellow
+            self.__columnBox.setColor(1.0, 1.0, 0.0, self.transparency)  # yellow
         elif self.oneOfCellPredictive:
-            self.__columnBox.setColor(1.0, 0.0, 0.0, 1.0)  # red
+            self.__columnBox.setColor(1.0, 0.0, 0.0, self.transparency)  # red
         else:
-            self.__columnBox.setColor(1.0, 1.0, 1.0, 1.0)  # white
+            self.__columnBox.setColor(1.0, 1.0, 1.0, self.transparency)  # white
 
 #        for n in self.cells:
 #            n.active = active
@@ -174,14 +175,24 @@ class cCorticalColumn:
 
                     prim = GeomLines(Geom.UHStatic)
                     prim.addVertices(0, 1)
+                    
 
                     geom = Geom(vdata)
                     geom.addPrimitive(prim)
 
                     node = GeomNode("synapse")
                     node.addGeom(geom)
+                                       
 
-                    self.__cellsNodePath.attachNewNode(node)
+                    nodePath = self.__cellsNodePath.attachNewNode(node)
+                    
+                    nodePath.setRenderModeThickness(3)
+                    #nodePath.setColor(0.0, 1.0, 0.0, 1.0) color of the line
+
+    def setTransparency(self,transparency):
+        self.transparency = transparency
+        for cell in self.cells:
+            cell.setTransparency(transparency)
 
     def DestroySynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("synapse"):

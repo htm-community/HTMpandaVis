@@ -84,3 +84,8 @@ class cLayer:
     def DestroySynapses(self):
         for col in self.corticalColumns:
             col.DestroySynapses()
+            
+    def setTransparency(self,transparency):
+        self.transparency = transparency
+        for col in self.corticalColumns:
+            col.setTransparency(transparency)

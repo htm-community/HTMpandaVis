@@ -12,7 +12,7 @@ class cCell:
     def __init__(self, column):
         self.active = False
         self.predictive = False
-        
+        self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
 
     def CreateGfx(
@@ -41,19 +41,22 @@ class cCell:
         if self.focused:
             self.__node.setColor(0.2, 0.5, 1.0, 1.0)  # light blue
         elif self.predictive and self.active:
-            self.__node.setColor(0.0, 1.0, 0.0, 1.0)  # green
+            self.__node.setColor(0.0, 1.0, 0.0, self.transparency)  # green
         elif self.predictive:
-            self.__node.setColor(1.0, 0.0, 0.0, 1.0)  # red
+            self.__node.setColor(1.0, 0.0, 0.0, self.transparency)  # red
         elif self.active:
-            self.__node.setColor(1.0, 0.8, 0.8, 1.0)  # pink
+            self.__node.setColor(1.0, 0.8, 0.8, self.transparency)  # pink
         else:
-            self.__node.setColor(1.0, 1.0, 1.0, 1.0)  # white
+            self.__node.setColor(1.0, 1.0, 1.0, self.transparency)  # white
 
     def setFocus(self):
         self.UpdateState(self.active,self.predictive,True)# no change except focus
 
     def resetFocus(self):
         self.UpdateState(self.active,self.predictive,False)# no change except focus
+    
+    def setTransparency(self,transparency):
+        self.transparency = transparency
         
     def updateWireframe(self,value):
         if value:
