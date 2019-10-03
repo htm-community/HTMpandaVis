@@ -63,6 +63,22 @@ def getAllPresynapticCellsForCell(tm,cellID):
      
     return presynapticCells
 
+def getPresynapticCellsForCell(tm, cellID):
+    segments = tm.connections.segmentsForCell(cellID)
+                    
+    synapses = []
+    res = []
+    for seg in segments:
+        for syn in tm.connections.synapsesForSegment(seg):
+            synapses += [syn]
+ 
+        presynapticCells = []
+        for syn in synapses:
+            presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+    
+        res += [presynapticCells]
+    return res
+
 def main(parameters=default_parameters, argv=None, verbose=True):
 
     modelParams = parameters
@@ -227,7 +243,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
                     break
             
             
-            presynapticCells =  getAllPresynapticCellsForCell(tm,i)
+            presynapticCells =  getPresynapticCellsBySegmentsForCell(tm,i)
             
             
 #            if len(segments)>0:
