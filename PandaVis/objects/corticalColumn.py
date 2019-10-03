@@ -122,10 +122,10 @@ class cCorticalColumn:
     def CreateProximalSynapses(self, inputObjects, inputs, synapses):
 
         for child in self.__cellsNodePath.getChildren():
-            if child.getName() == "myLine":
+            if child.getName() == "ProximalSynapseLine":
                 child.removeNode()
 
-        printLog("Creating synapses", verbosityMedium)
+        printLog("Creating proximal synapses", verbosityMedium)
         printLog("To inputs called:" + str(inputObjects), verbosityMedium)
         printLog("Synapses count:" + str(len(synapses)), verbosityMedium)
         printLog("active:" + str(sum([i for i in synapses])), verbosityHigh)
@@ -153,7 +153,7 @@ class cCorticalColumn:
                 if synapsesDiv[i][y] == 1:
 
                     form = GeomVertexFormat.getV3()
-                    vdata = GeomVertexData("myLine", form, Geom.UHStatic)
+                    vdata = GeomVertexData("ProximalSynapseLine", form, Geom.UHStatic)
                     vdata.setNumRows(1)
                     vertex = GeomVertexWriter(vdata, "vertex")
 
@@ -180,13 +180,13 @@ class cCorticalColumn:
                     geom = Geom(vdata)
                     geom.addPrimitive(prim)
 
-                    node = GeomNode("synapse")
+                    node = GeomNode("ProximalSynapse")
                     node.addGeom(geom)
                                        
 
                     nodePath = self.__cellsNodePath.attachNewNode(node)
                     
-                    nodePath.setRenderModeThickness(3)
+                    nodePath.setRenderModeThickness(2)
                     #nodePath.setColor(0.0, 1.0, 0.0, 1.0) color of the line
 
     def setTransparency(self,transparency):
@@ -194,6 +194,10 @@ class cCorticalColumn:
         for cell in self.cells:
             cell.setTransparency(transparency)
 
-    def DestroySynapses(self):
-        for syn in self.__cellsNodePath.findAllMatches("synapse"):
+    def DestroyProximalSynapses(self):
+        for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
             syn.removeNode()
+    
+    def DestroyDistalSynapses(self):
+        for cell in self.cells:
+            cell.DestroyDistalSynapses()

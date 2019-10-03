@@ -197,14 +197,7 @@ class PandaServer:
                         # TODO winner cells
                         tm = self.temporalMemories[HTMObjectName]
 
-                        segments = tm.connections.segmentsForCell(reqCellID)    
-                        presynCells = []
-                        print("Segments:"+str(segments))
-                        for seg in segments:
-                            synapses = tm.connections.synapsesForSegment(seg)
-                            
-                            for syn in synapses:
-                                presynCells += [tm.connections.presynapticCellForSynapse(syn)]
+                        presynCells = getPresynapticCellsForCell(tm,reqCellID)
                         
                         print("PRESYN CELLS:"+str(presynCells))
                         #winners = tm.getWinnerCells()
@@ -212,7 +205,7 @@ class PandaServer:
                         #print(winners)
                         self.serverData.HTMObjects[HTMObjectName].layers[
                             layerName
-                        ].distalSynapses = presynCells
+                        ].distalSynapses = [[requestedColumn,requestedCell,presynCells]]#sending just one pack for one cell
                         send_one_message(
                             conn, PackData(SERVER_CMD.SEND_DISTAL_DATA, self.serverData)
                         )
@@ -252,6 +245,21 @@ class PandaServer:
         printLog("Server quit")
         conn.close()
 
+def getPresynapticCellsForCell(tm, cellID):
+    segments = tm.connections.segmentsForCell(cellID)
+                    
+    synapses = []
+    res = []
+    for seg in segments:
+        for syn in tm.connections.synapsesForSegment(seg):
+            synapses += [syn]
+ 
+        presynapticCells = []
+        for syn in synapses:
+            presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+    
+        res += [presynapticCells]
+    return res
 
 class ServerThread(threading.Thread):
     def __init__(self, serverInstance, threadID, name):

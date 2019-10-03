@@ -128,7 +128,7 @@ class cApp(ShowBase):
 
             for obj in serverObjs:
 
-                self.HTMObjects[obj].DestroySynapses()
+                self.HTMObjects[obj].DestroyProximalSynapses()
 
                 for l in serverObjs[obj].layers:  # dict
                     printLog(serverObjs[obj].layers[l].proximalSynapses, verbosityHigh)
@@ -155,7 +155,7 @@ class cApp(ShowBase):
 
             for obj in serverObjs:
 
-                self.HTMObjects[obj].DestroySynapses()
+                self.HTMObjects[obj].DestroyDistalSynapses()
 
                 for l in serverObjs[obj].layers:  # dict
                     printLog(serverObjs[obj].layers[l].distalSynapses, verbosityHigh)
@@ -171,10 +171,9 @@ class cApp(ShowBase):
                         # update columns with proximal Synapses
                         self.HTMObjects[obj].layers[l].corticalColumns[
                             columnID
-                        ].CreateDistalSynapses(
-                            serverObjs[obj].layers[l].distallInputs,
-                            self.HTMObjects[obj].inputs,
-                            proximalSynapses,
+                        ].cells[cellID].CreateDistalSynapses(
+                            self.HTMObjects[obj].layers[l],
+                            distalSynapses
                         )
 
     def update(self, task):

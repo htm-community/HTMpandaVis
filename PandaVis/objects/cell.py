@@ -6,8 +6,25 @@ Created on Wed Feb  6 05:46:38 2019
 @author: osboxes
 """
 from panda3d.core import LColor, CollisionBox, CollisionNode
+from panda3d.core import (
+    GeomVertexFormat,
+    GeomVertexData,
+    GeomVertexWriter,
+    Geom,
+    GeomLines,
+    GeomNode,
+)
+import random
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = verbosityHigh  # change this to change printing verbosity of this file
 
+def printLog(txt, verbosity=verbosityLow):
+    if FILE_VERBOSITY >= verbosity:
+        print(txt)
+        
 class cCell:
     def __init__(self, column):
         self.active = False
@@ -67,76 +84,56 @@ class cCell:
     def getNode(self):
         return self.__node
     
-     # -- Create distal synapses
-    # inputObjects - list of names of inputs(areas)
-    # inputs - panda vis input object
-    # synapses - list of the second points of synapses (first point is this cortical column)
-    # NOTE: synapses are now DENSE
-    def CreateDistalSynapses(self, inputObjects, inputs, synapses):
+    def CreateDistalSynapses(self, layer, data):
 
-        for child in self.__cellsNodePath.getChildren():
-            if child.getName() == "myLine":
+        for child in self.__node.getChildren():
+            if child.getName() == "DistalSynapseLine":
                 child.removeNode()
 
-        printLog("Creating synapses", verbosityMedium)
-        #printLog("To inputs called:" + str(inputObjects), verbosityMedium)
-        printLog("Synapses count:" + str(len(synapses)), verbosityMedium)
-        printLog("active:" + str(sum([i for i in synapses])), verbosityHigh)
+        printLog("Creating distal synapses", verbosityMedium)
+       
+        
+        for segment in data:
+            
+            lineColor = LColor(random.random(),random.random(),random.random(),1.0)
+            
+            for presynCellID in segment:
+                
+                cellID = presynCellID % layer.nOfCellsPerColumn
+                colID = (int)(presynCellID / layer.nOfCellsPerColumn)
+                
+                
+                presynCell = layer.corticalColumns[colID].cells[cellID]
+        
+        
+                form = GeomVertexFormat.getV3()
+                vdata = GeomVertexData("DistalSynapseLine", form, Geom.UHStatic)
+                vdata.setNumRows(1)
+                vertex = GeomVertexWriter(vdata, "vertex")
 
-        # inputs are divided into separate items in list - [input1,input2,input3]
-        # synapses are one united array [1,0,0,1,0,1,0...]
-        # length is the same
+                vertex.addData3f(
+                    presynCell
+                    .getNode()
+                    .getPos(self.__node)
+                )
+                vertex.addData3f(0, 0, 0)
+               
 
-        # synapses can be connected to one input or to several inputs
-        # if to more than one - split synapses array
-        if len(inputObjects) > 1:
-            synapsesDiv = []
-            offset = 0
-            for inputObj in inputObjects:
-                synapsesDiv.append(synapses[offset : offset + inputs[inputObj].count])
-                offset += inputs[inputObj].count
+                prim = GeomLines(Geom.UHStatic)
+                prim.addVertices(0, 1)
 
-        for i in range(len(synapsesDiv)):  # for each input object
+                geom = Geom(vdata)
+                geom.addPrimitive(prim)
 
-            inputs[inputObjects[i]].resetHighlight()  # clear color highlight
-
-            for y in range(
-                len(synapsesDiv[i])
-            ):  # go through every synapse and check activity
-                if synapsesDiv[i][y] == 1:
-
-                    form = GeomVertexFormat.getV3()
-                    vdata = GeomVertexData("myLine", form, Geom.UHStatic)
-                    vdata.setNumRows(1)
-                    vertex = GeomVertexWriter(vdata, "vertex")
-
-                    vertex.addData3f(
-                        inputs[inputObjects[i]]
-                        .inputBits[y]
-                        .getNode()
-                        .getPos(self.__node)
-                    )
-                    vertex.addData3f(0, 0, 0)
-                    # vertex.addData3f(self.__node.getPos())
-                    # printLog("Inputs:"+str(i)+"bits:"+str(y))
-                    # printLog(inputs[i].inputBits[y].getNode().getPos(self.__node))
-
-                    # highlight
-                    inputs[inputObjects[i]].inputBits[
-                        y
-                    ].setHighlight()  # highlight connected bits
-
-                    prim = GeomLines(Geom.UHStatic)
-                    prim.addVertices(0, 1)
-
-                    geom = Geom(vdata)
-                    geom.addPrimitive(prim)
-
-                    node = GeomNode("synapse")
-                    node.addGeom(geom)
-
-                    self.__cellsNodePath.attachNewNode(node)
+                node = GeomNode("DistalSynapse")
+                node.addGeom(geom)
+                
+                nodePath = self.__node.attachNewNode(node)
+                
+                nodePath.setRenderModeThickness(2)
+                nodePath.setColor(lineColor)# color of the line
+                
 
     def DestroyDistalSynapses(self):
-        for syn in self.__cellsNodePath.findAllMatches("synapse"):
+        for syn in self.__node.findAllMatches("DistalSynapse"):
             syn.removeNode()
