@@ -122,7 +122,6 @@ class cInteraction:
         # lens.setFocalLength(self.FOCAL_LENGTH)
         self.base.cam.node().setLens(lens)
 
-        self.base.gui.onWindowEvent(window)
 
     def onKey(self, key, value):
         """Stores a value associated with a key."""
@@ -198,8 +197,10 @@ class cInteraction:
     def CloseApp(self):
 
         printLog("CLOSE app event")
-        __import__("sys").exit(0)
         self.client.terminateClientThread = True
+        self.base.gui.terminate = True  # terminate GUI windows
+
+        __import__("sys").exit(0)
         
     def HandlePickedObject(self, obj):
         printLog("PICKED OBJECT:" + str(obj), verbosityMedium)
