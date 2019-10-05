@@ -11,6 +11,7 @@ from objects.htmObject import cHTM
 from gui import cGUI # Graphical user interface
 from environment import cEnvironment # handles everything about the environment
 from interaction import cInteraction # handles keys, user interaction etc..
+import threading
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -29,7 +30,6 @@ class cApp(ShowBase):
         
     def __init__(self):
         ShowBase.__init__(self)
-
         self.speed = 40
 
         # Mouse and camera movement init
@@ -53,7 +53,10 @@ class cApp(ShowBase):
             self.loader,
             visApp = self
         )
-        
+
+        self.guiThread = threading.Thread(target = self.gui.update)
+        self.guiThread.start()
+
         self.client = SocketClient()
         self.client.setGui(self.gui)
         
@@ -180,14 +183,12 @@ class cApp(ShowBase):
 
         self.interaction.Update()
         self.updateHTMstate()
-        
         # update environment - e.g. controlling drawing style in runtime
-        
 
         return task.cont
 
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     app = cApp()
     app.run()
