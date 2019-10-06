@@ -136,7 +136,9 @@ class cInteraction:
 
         # unfocus all
         for obj in self.base.HTMObjects.values():
-            obj.DestroySynapses()
+            obj.DestroyProximalSynapses()
+        for obj in self.base.HTMObjects.values():
+            obj.DestroyDistalSynapses()
 
     def onMouseEvent(self, event, press):
         printLog("Mouse event:" + str(event), verbosityHigh)
@@ -241,8 +243,15 @@ class cInteraction:
 
             if self.gui.showProximalSynapses:
                 self.client.reqProximalData()
-            if self.gui.showDistalSynapses:
+            else:
+                for obj in self.base.HTMObjects.values():
+                    obj.DestroyProximalSynapses()
+
+            if self.gui.showDistalSynapses:# destroy synapses if they not to be shown
                 self.client.reqDistalData()
+            else:
+                for obj in self.base.HTMObjects.values():# destroy synapses if they not to be shown
+                    obj.DestroyDistalSynapses()
             
         elif obj.getName() == "basement":
             self.testRoutine()
@@ -251,7 +260,7 @@ class cInteraction:
         
         self.UpdateCameraMovement()
         
-        if self.base.gui.wireframeChanged:
+        if self.gui.wireframeChanged:
             self.gui.wireframeChanged = False
             if not self.gui.wireframe:
                 self.render.setLight(self.base.env.ambLight)
@@ -264,3 +273,10 @@ class cInteraction:
             
             for obj in self.base.HTMObjects.values():
                 obj.updateWireframe(self.gui.wireframe)
+
+        if self.gui.transparencyChanged:
+            self.gui.transparencyChanged = False
+
+            for obj in self.base.HTMObjects.values():
+                for ly in obj.layers.values():
+                    ly.setTransparency(self.gui.transparency/100.0)

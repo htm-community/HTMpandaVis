@@ -15,6 +15,7 @@ from panda3d.core import (
     GeomNode,
 )
 import random
+from Colors import *
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -56,15 +57,23 @@ class cCell:
         self.focused = focused
         
         if self.focused:
-            self.__node.setColor(0.2, 0.5, 1.0, 1.0)  # light blue
+            self.__node.setColor(COL_CELL_FOCUSED)
         elif self.predictive and self.active:
-            self.__node.setColor(0.0, 1.0, 0.0, self.transparency)  # green
+            COL_CELL_CORRECTLY_PREDICTED.setW(self.transparency)
+            col = COL_CELL_CORRECTLY_PREDICTED
+            self.__node.setColor(col)
         elif self.predictive:
-            self.__node.setColor(1.0, 0.0, 0.0, self.transparency)  # red
+            COL_CELL_PREDICTIVE.setW(self.transparency)
+            col = COL_CELL_PREDICTIVE
+            self.__node.setColor(col)
         elif self.active:
-            self.__node.setColor(1.0, 0.8, 0.8, self.transparency)  # pink
+            COL_CELL_ACTIVE.setW(self.transparency)
+            col = COL_CELL_ACTIVE
+            self.__node.setColor(col)
         else:
-            self.__node.setColor(1.0, 1.0, 1.0, self.transparency)  # white
+            COL_CELL_DEFAULT.setW(self.transparency)
+            col = COL_CELL_DEFAULT
+            self.__node.setColor(col)
 
     def setFocus(self):
         self.UpdateState(self.active,self.predictive,True)# no change except focus

@@ -14,22 +14,15 @@ from direct.gui.DirectGui import (
     DirectEntry,
     OnscreenText,
 )
-from pandac.PandaModules import TextNode
-
+from GUILegend import GUILegend
 import PySimpleGUI as sg
 
 class cGUI:
     def __init__(self, defaultWidth, defaultHeight, loader, visApp):
         sg.ChangeLookAndFeel('NeutralBlue')#NeutralBlue
 
-        layout = [ [sg.Button('ONE STEP')],
-                   [sg.Button('RUN'), sg.Button('STOP')],
-                   [sg.Checkbox('Show proximal synapes',key="proximalSynapses",enable_events=True)],
-                   [sg.Checkbox('Show distal synapes',key="distalSynapses",enable_events=True)],
-                   [sg.Checkbox('Wireframe mode',key="wireFrame",enable_events=True)],
-                   [sg.Submit()] ]
 
-        self.window = sg.Window('Main panel',keep_on_top = True, location=(0, 0)).Layout(layout)
+
 
         self.focusedCell = None
         self.focusedPath = None
@@ -40,6 +33,8 @@ class cGUI:
 
         self.wireframeChanged = False
         self.wireframe = False
+        self.transparency = 100
+        self.transparencyChanged = False
 
         self.visApp = visApp
         self.loader = loader
@@ -48,39 +43,64 @@ class cGUI:
 
         self.ResetCommands()
         self.terminate = False
+        self.init = False
+
+        self.legend = GUILegend()
+        layout = [[sg.Button('ONE STEP')],
+                  [sg.Button('RUN'), sg.Button('STOP')],
+                  [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
+                  [sg.Checkbox('Wireframe mode', key="wireFrame", enable_events=True)],
+                  [sg.Text('Layer transparency'),
+                   sg.Slider(key='transparencySlider', range=(1, 100), orientation='h', size=(20, 10),
+                             default_value=100, enable_events=True)],
+                  [sg.Canvas(size=(self.legend.figure_w, self.legend.figure_h), key='canvas')]
+                  ]
+
+        self.window = sg.Window('Main panel', keep_on_top=True, location=(0, 0)).Layout(layout)
+
 
     def update(self):
-        self.window.Read(timeout=10)
 
-        self.window.Element('distalSynapses').Update(self.showDistalSynapses)
-        self.window.Element('proximalSynapses').Update(self.showProximalSynapses)
+        if not self.init: # init values at the first run
+            self.init = True
+            self.window.Read(timeout=10)
 
-        while not self.terminate:
-            event, values = self.window.Read(timeout=10)
+            self.window.Element('distalSynapses').Update(self.showDistalSynapses)
+            self.window.Element('proximalSynapses').Update(self.showProximalSynapses)
+
+            fig_canvas_agg = self.legend.draw_figure(self.window['canvas'].TKCanvas, self.legend.figlegend)
+            return
+
+        event, values = self.window.Read(timeout=10)
 
 
-            if event is None or event == 'Exit':
-                self.terminate = False
-                break
+        if event is None or event == 'Exit':
+            self.terminate = True
+            return
 
-            if event != '__TIMEOUT__':
+        if event != '__TIMEOUT__':
 
-                if event == "ONE STEP":
-                    self.cmdStepForward = True
-                    print("one step")
-                elif event == "RUN":
-                    self.cmdRun = True
-                elif event == " STOP":
-                    self.cmdStop = True
+            if event == "ONE STEP":
+                self.cmdStepForward = True
+                print("one step")
+            elif event == "RUN":
+                self.cmdRun = True
+            elif event == "STOP":
+                self.cmdStop = True
+            elif event == "transparencySlider":
+                self.transparency = values["transparencySlider"]
+                self.transparencyChanged = True
 
-                self.wireframe = values["wireFrame"]
-                self.wireframeChanged = event == "wireFrame"
+            self.wireframe = values["wireFrame"]
+            self.wireframeChanged = event == "wireFrame"
 
-                self.showProximalSynapses = values["proximalSynapses"]
-                self.showDistalSynapses = values["distalSynapses"]
+            self.showProximalSynapses = values["proximalSynapses"]
+            self.showDistalSynapses = values["distalSynapses"]
 
-                print("event "+str(event))
-                print("values "+str(values))
+            print("event "+str(event))
+            print("values "+str(values))
+
 
     def ResetCommands(self):
         self.cmdRun = False

@@ -54,8 +54,8 @@ class cApp(ShowBase):
             visApp = self
         )
 
-        self.guiThread = threading.Thread(target = self.gui.update)
-        self.guiThread.start()
+        #self.guiThread = threading.Thread(target = self.gui.update)
+        #self.guiThread.start()
 
         self.client = SocketClient()
         self.client.setGui(self.gui)
@@ -181,6 +181,7 @@ class cApp(ShowBase):
 
     def update(self, task):
 
+        self.gui.update()
         self.interaction.Update()
         self.updateHTMstate()
         # update environment - e.g. controlling drawing style in runtime

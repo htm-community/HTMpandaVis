@@ -194,6 +194,8 @@ class cCorticalColumn:
         for cell in self.cells:
             cell.setTransparency(transparency)
 
+        self.UpdateState(self.bursting, self.oneOfCellActive, self.oneOfCellPredictive)
+
     def DestroyProximalSynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
             syn.removeNode()
