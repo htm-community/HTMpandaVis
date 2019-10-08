@@ -9,13 +9,23 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Colors import *
 
+data = {'active cell': ['patch', COL_CELL_ACTIVE],
+        'predictive cell': ['patch', COL_CELL_PREDICTIVE],
+        'focused cell': ['patch', COL_CELL_FOCUSED],
+        'inactive cell': ['patch', COL_CELL_INACTIVE],
+        'correctly predicted cell': ['patch', COL_CELL_CORRECTLY_PREDICTED],
+        'false predicted cell': ['patch', COL_CELL_FALSE_PREDICTED],
+        'column with one of cells active': ['patch', COL_COLUMN_ONEOFCELLACTIVE],
+        'column with one of cells correctly predicted': ['patch', COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED],
+        'column with one of cells predictive': ['patch', COL_COLUMN_ONEOFCELLPREDICTIVE],
+        'inactive column': ['patch', COL_COLUMN_INACTIVE],
+
+        }
+
+
 class GUILegend:
     def __init__(self):
-        # ------------------------------- PASTE YOUR MATPLOTLIB CODE HERE -------------------------------
-
-
-        data = {'activeBits': ['line', COL_CELL_ACTIVE],
-                'predictiveBits': ['patch', COL_CELL_PREDICTIVE]}
+        # ------------------------------- PASTE YOUR MATPLOTLIB CODE HERE -----------------------------
 
         objs = []
         descriptions = []
@@ -28,11 +38,14 @@ class GUILegend:
                 objs += [GUILegend.patch([data[i][1][0],data[i][1][1],data[i][1][2],data[i][1][3]])]
                 descriptions += [i]
 
-        blue_line = GUILegend.line('red')
-        red_patch = GUILegend.patch('red')
 
-        self.figlegend = pylab.figure(figsize=(3,2))
-        self.figlegend.legend(objs, descriptions, 'center')
+        self.figlegend = pylab.figure(figsize=(4,3))
+        legend = self.figlegend.legend(objs, descriptions, 'center')
+
+        legend.get_frame().set_facecolor('#92aa9d') # fill color in frame
+        legend.get_frame().set_edgecolor('black') # frame color
+        self.figlegend.set_facecolor('#92aa9d')# surrounding background color
+
         self.figure_x, self.figure_y, self.figure_w, self.figure_h = self.figlegend.bbox.bounds
 
     @staticmethod
@@ -48,7 +61,7 @@ class GUILegend:
 
 # ------------------------------- Beginning of Matplotlib helper code -----------------------
 
-    def draw_figure(self,canvas, figure, loc=(0, 0)):
+    def draw_figure(self, canvas, figure, loc=(0, 0)):
         figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
         figure_canvas_agg.draw()
         figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)

@@ -30,6 +30,8 @@ class cCell:
     def __init__(self, column):
         self.active = False
         self.predictive = False
+        self.presynapticFocus = False
+        self.focused = False
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
 
@@ -50,11 +52,12 @@ class cCell:
 
         self.UpdateState(False, False)
 
-    def UpdateState(self, active, predictive, focused=False):
+    def UpdateState(self, active, predictive, focused=False, presynapticFocus=False):
         
         self.active = active
         self.predictive = predictive
         self.focused = focused
+        self.presynapticFocus = presynapticFocus
         
         if self.focused:
             self.__node.setColor(COL_CELL_FOCUSED)
@@ -70,19 +73,30 @@ class cCell:
             COL_CELL_ACTIVE.setW(self.transparency)
             col = COL_CELL_ACTIVE
             self.__node.setColor(col)
+        elif self.presynapticFocus:
+            col = COL_CELL_PRESYNAPTIC_FOCUS
+            self.__node.setColor(col)
         else:
-            COL_CELL_DEFAULT.setW(self.transparency)
-            col = COL_CELL_DEFAULT
+            COL_CELL_INACTIVE.setW(self.transparency)
+            col = COL_CELL_INACTIVE
             self.__node.setColor(col)
 
     def setFocus(self):
-        self.UpdateState(self.active,self.predictive,True)# no change except focus
+        self.UpdateState(self.active, self.predictive, True)  #no change except focus
 
     def resetFocus(self):
-        self.UpdateState(self.active,self.predictive,False)# no change except focus
-    
-    def setTransparency(self,transparency):
+        self.UpdateState(self.active, self.predictive, False)  #reset focus
+
+    def setPresynapticFocus(self):
+        self.UpdateState(self.active, self.predictive, False, True)  # no change except presynaptic focus
+
+    def resetPresynapticFocus(self):
+        self.UpdateState(self.active, self.predictive, False, False)  # reset presynaptic focus
+
+    def setTransparency(self, transparency):
         self.transparency = transparency
+
+        self.UpdateState(self.active, self.predictive, self.focused, self.presynapticFocus)
         
     def updateWireframe(self,value):
         if value:
@@ -113,7 +127,8 @@ class cCell:
                 
                 
                 presynCell = layer.corticalColumns[colID].cells[cellID]
-        
+
+                presynCell.setPresynapticFocus()  # highlight presynapctic cells
         
                 form = GeomVertexFormat.getV3()
                 vdata = GeomVertexData("DistalSynapseLine", form, Geom.UHStatic)

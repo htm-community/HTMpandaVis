@@ -36,6 +36,10 @@ class cGUI:
         self.transparency = 100
         self.transparencyChanged = False
 
+        self.LODvalue1 = 100
+        self.LODvalue2 = 5000
+        self.LODChanged = True
+
         self.visApp = visApp
         self.loader = loader
         self._defaultWidth = defaultWidth
@@ -54,7 +58,12 @@ class cGUI:
                   [sg.Text('Layer transparency'),
                    sg.Slider(key='transparencySlider', range=(1, 100), orientation='h', size=(20, 10),
                              default_value=100, enable_events=True)],
-                  [sg.Canvas(size=(self.legend.figure_w, self.legend.figure_h), key='canvas')]
+                  [sg.Text('LOD columns'),
+                  sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
+                            default_value=100, enable_events=True),
+                  sg.Slider(key='LODSlider2', range=(1, 10000), orientation='h', size=(20, 10),
+                            default_value=100, enable_events=True)],
+                  [sg.Canvas(background_color='#92aa9d', size=(self.legend.figure_w, self.legend.figure_h), key='canvas')]
                   ]
 
         self.window = sg.Window('Main panel', keep_on_top=True, location=(0, 0)).Layout(layout)
@@ -91,6 +100,12 @@ class cGUI:
             elif event == "transparencySlider":
                 self.transparency = values["transparencySlider"]
                 self.transparencyChanged = True
+            elif event == "LODSlider1" or event == "LODSlider2":
+                if values["LODSlider2"]>values["LODSlider1"]:
+                    self.LODvalue1 = values["LODSlider1"]
+                    self.LODvalue2 = values["LODSlider2"]
+
+                    self.LODChanged = True
 
             self.wireframe = values["wireFrame"]
             self.wireframeChanged = event == "wireFrame"

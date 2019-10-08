@@ -280,3 +280,9 @@ class cInteraction:
             for obj in self.base.HTMObjects.values():
                 for ly in obj.layers.values():
                     ly.setTransparency(self.gui.transparency/100.0)
+
+        if self.gui.LODChanged:
+            self.gui.LODChanged = False
+            for obj in self.base.HTMObjects.values():
+                for ly in obj.layers.values():
+                    ly.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)

@@ -93,3 +93,7 @@ class cLayer:
         self.transparency = transparency
         for col in self.corticalColumns:
             col.setTransparency(transparency)
+
+    def LODUpdateSwitch(self, lodDistance, lodDistance2):
+        for col in self.corticalColumns:
+            col.LODUpdateSwitch(lodDistance, lodDistance2)

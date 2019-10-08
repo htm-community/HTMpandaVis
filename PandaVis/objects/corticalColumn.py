@@ -11,7 +11,7 @@ from panda3d.core import (
     GeomLines,
     GeomNode,
 )
-
+from Colors import *
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -83,6 +83,14 @@ class cCorticalColumn:
             z += 1+CELL_OFFSET
             n.getNode().reparentTo(self.__cellsNodePath)
 
+    def LODUpdateSwitch(self, lodDistance, lodDistance2):
+        print(lodDistance)
+        print(lodDistance2)
+
+        self.lod.clearSwitches()
+        self.lod.addSwitch(lodDistance, 0.0)
+        self.lod.addSwitch(lodDistance2, lodDistance)
+
     def UpdateState(self, bursting, oneOfCellActive,oneOfCellPredictive):
 
         self.bursting = bursting
@@ -91,13 +99,21 @@ class cCorticalColumn:
 
         # update column box color (for LOD in distance look)
         if self.oneOfCellActive and self.oneOfCellPredictive:
-            self.__columnBox.setColor(0.0, 1.0, 0.0, self.transparency)  # green
+            COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED
+            self.__columnBox.setColor(col)
         elif self.oneOfCellActive:
-            self.__columnBox.setColor(1.0, 1.0, 0.0, self.transparency)  # yellow
+            COL_COLUMN_ONEOFCELLACTIVE.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLACTIVE
+            self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
-            self.__columnBox.setColor(1.0, 0.0, 0.0, self.transparency)  # red
+            COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLPREDICTIVE
+            self.__columnBox.setColor(col)
         else:
-            self.__columnBox.setColor(1.0, 1.0, 1.0, self.transparency)  # white
+            COL_COLUMN_INACTIVE.setW(self.transparency)
+            col = COL_COLUMN_INACTIVE
+            self.__columnBox.setColor(col)
 
 #        for n in self.cells:
 #            n.active = active
@@ -189,7 +205,7 @@ class cCorticalColumn:
                     nodePath.setRenderModeThickness(2)
                     #nodePath.setColor(0.0, 1.0, 0.0, 1.0) color of the line
 
-    def setTransparency(self,transparency):
+    def setTransparency(self, transparency):
         self.transparency = transparency
         for cell in self.cells:
             cell.setTransparency(transparency)
@@ -203,3 +219,4 @@ class cCorticalColumn:
     def DestroyDistalSynapses(self):
         for cell in self.cells:
             cell.DestroyDistalSynapses()
+            cell.resetPresynapticFocus()  # also reset distal focus
