@@ -200,7 +200,7 @@ class cInteraction:
 
         printLog("CLOSE app event")
         self.client.terminateClientThread = True
-        self.base.gui.terminate = True  # terminate GUI windows
+        self.base.gui.Terminate() # terminate GUI windows
 
         __import__("sys").exit(0)
         

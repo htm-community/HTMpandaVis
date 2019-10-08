@@ -16,13 +16,11 @@ from direct.gui.DirectGui import (
 )
 from GUILegend import GUILegend
 import PySimpleGUI as sg
+import json
 
 class cGUI:
     def __init__(self, defaultWidth, defaultHeight, loader, visApp):
         sg.ChangeLookAndFeel('NeutralBlue')#NeutralBlue
-
-
-
 
         self.focusedCell = None
         self.focusedPath = None
@@ -46,8 +44,14 @@ class cGUI:
         self._defaultHeight = defaultHeight
 
         self.ResetCommands()
-        self.terminate = False
         self.init = False
+
+        try:
+            with open('guiDefaults.ini', 'r') as file:
+                self.defaults = json.loads(file.read())
+        except:
+            self.defaults = {}
+
 
         self.legend = GUILegend()
         layout = [[sg.Button('ONE STEP')],
@@ -68,24 +72,42 @@ class cGUI:
 
         self.window = sg.Window('Main panel', keep_on_top=True, location=(0, 0)).Layout(layout)
 
+    def updateDefaults(self):
+        for o in self.window.AllKeysDict:
+            try:
+                self.window[o].Update(self.defaults[o])
+            except:
+                continue
+                #print("Default not for:"+str(o))
+
+    def retrieveDefaults(self):
+
+
+        event, values = self.window.Read(timeout=10)
+
+        if values is not None:
+            for o in values:
+                try:
+                    self.defaults[o] = values[o]
+                except Exception as e:
+                    print(e)
+                    print("Default not for:"+str(o))
 
     def update(self):
 
-        if not self.init: # init values at the first run
+        if not self.init:  # init values at the first run
+
             self.init = True
             self.window.Read(timeout=10)
-
-            self.window.Element('distalSynapses').Update(self.showDistalSynapses)
-            self.window.Element('proximalSynapses').Update(self.showProximalSynapses)
+            self.updateDefaults()
 
             fig_canvas_agg = self.legend.draw_figure(self.window['canvas'].TKCanvas, self.legend.figlegend)
             return
 
         event, values = self.window.Read(timeout=10)
 
-
-        if event is None or event == 'Exit':
-            self.terminate = True
+        if event is None or event == 'Exit':#gui was closed separately by user
+            self.Terminate()
             return
 
         if event != '__TIMEOUT__':
@@ -121,3 +143,11 @@ class cGUI:
         self.cmdRun = False
         self.cmdStop = False
         self.cmdStepForward = False
+
+    def Terminate(self): #  event when app exit
+        self.retrieveDefaults()
+        try:
+            with open('guiDefaults.ini', 'w') as file:
+                file.write(json.dumps(self.defaults))
+        except:
+            self.defaults = {}
