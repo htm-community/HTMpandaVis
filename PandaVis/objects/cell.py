@@ -82,16 +82,20 @@ class cCell:
             self.__node.setColor(col)
 
     def setFocus(self):
+        print("setFocus")
         self.UpdateState(self.active, self.predictive, True)  #no change except focus
 
     def resetFocus(self):
+        print("resetFocus")
         self.UpdateState(self.active, self.predictive, False)  #reset focus
 
     def setPresynapticFocus(self):
-        self.UpdateState(self.active, self.predictive, False, True)  # no change except presynaptic focus
+        print("setPresyn")
+        self.UpdateState(self.active, self.predictive, self.focused, True)  # no change except presynaptic focus
 
     def resetPresynapticFocus(self):
-        self.UpdateState(self.active, self.predictive, False, False)  # reset presynaptic focus
+        print("resetPresyn")
+        self.UpdateState(self.active, self.predictive, self.focused, False)  # reset presynaptic focus
 
     def setTransparency(self, transparency):
         self.transparency = transparency
@@ -117,9 +121,7 @@ class cCell:
        
         
         for segment in data:
-            
-            lineColor = LColor(random.random(),random.random(),random.random(),1.0)
-            
+
             for presynCellID in segment:
                 
                 cellID = presynCellID % layer.nOfCellsPerColumn
@@ -155,8 +157,8 @@ class cCell:
                 nodePath = self.__node.attachNewNode(node)
                 
                 nodePath.setRenderModeThickness(2)
-                nodePath.setColor(lineColor)# color of the line
-                
+                nodePath.setColor(COL_DISTAL_SYNAPSES) # color of the line)# color of the line
+
 
     def DestroyDistalSynapses(self):
         for syn in self.__node.findAllMatches("DistalSynapse"):

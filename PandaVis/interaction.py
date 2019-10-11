@@ -230,7 +230,8 @@ class cInteraction:
             newCellFocus = Layer.corticalColumns[parentId].cells[thisId]
             self.focusedPath = [focusedHTMObject, focusedLayer]
 
-            if self.focusedCell != None:
+
+            if self.focusedCell is not None:
                 self.focusedCell.resetFocus()  # reset previous
             self.focusedCell = newCellFocus
             self.focusedCell.setFocus()
@@ -241,17 +242,19 @@ class cInteraction:
             self.gui.columnID = Layer.corticalColumns.index(self.gui.focusedCell.column)
             self.gui.cellID = Layer.corticalColumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
+            # -------- proximal and distal synapses -----------------------
             if self.gui.showProximalSynapses:
                 self.client.reqProximalData()
             else:
                 for obj in self.base.HTMObjects.values():
                     obj.DestroyProximalSynapses()
 
-            if self.gui.showDistalSynapses:# destroy synapses if they not to be shown
+            if self.gui.showDistalSynapses:  # destroy synapses if they not to be shown
                 self.client.reqDistalData()
             else:
-                for obj in self.base.HTMObjects.values():# destroy synapses if they not to be shown
+                for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
                     obj.DestroyDistalSynapses()
+            # -----------------------------------------------------------
             
         elif obj.getName() == "basement":
             self.testRoutine()
@@ -260,7 +263,7 @@ class cInteraction:
         
         self.UpdateCameraMovement()
         
-        if self.gui.wireframeChanged:
+        if self.gui.wireframeChanged and len(self.base.HTMObjects) > 0:
             self.gui.wireframeChanged = False
             if not self.gui.wireframe:
                 self.render.setLight(self.base.env.ambLight)
@@ -274,15 +277,16 @@ class cInteraction:
             for obj in self.base.HTMObjects.values():
                 obj.updateWireframe(self.gui.wireframe)
 
-        if self.gui.transparencyChanged:
+        if self.gui.transparencyChanged and len(self.base.HTMObjects) > 0:
             self.gui.transparencyChanged = False
 
             for obj in self.base.HTMObjects.values():
                 for ly in obj.layers.values():
                     ly.setTransparency(self.gui.transparency/100.0)
 
-        if self.gui.LODChanged:
+        if self.gui.LODChanged and len(self.base.HTMObjects) > 0:
             self.gui.LODChanged = False
+            print("LOD changed:"+str(self.gui.LODvalue1)+" "+str(self.gui.LODvalue2))
             for obj in self.base.HTMObjects.values():
                 for ly in obj.layers.values():
                     ly.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)

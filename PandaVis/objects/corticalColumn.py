@@ -84,9 +84,6 @@ class cCorticalColumn:
             n.getNode().reparentTo(self.__cellsNodePath)
 
     def LODUpdateSwitch(self, lodDistance, lodDistance2):
-        print(lodDistance)
-        print(lodDistance2)
-
         self.lod.clearSwitches()
         self.lod.addSwitch(lodDistance, 0.0)
         self.lod.addSwitch(lodDistance2, lodDistance)
@@ -203,7 +200,7 @@ class cCorticalColumn:
                     nodePath = self.__cellsNodePath.attachNewNode(node)
                     
                     nodePath.setRenderModeThickness(2)
-                    #nodePath.setColor(0.0, 1.0, 0.0, 1.0) color of the line
+                    nodePath.setColor(COL_PROXIMAL_SYNAPSES)# color of the line
 
     def setTransparency(self, transparency):
         self.transparency = transparency

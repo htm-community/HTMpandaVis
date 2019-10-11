@@ -19,34 +19,56 @@ data = {'active cell': ['patch', COL_CELL_ACTIVE],
         'column with one of cells correctly predicted': ['patch', COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED],
         'column with one of cells predictive': ['patch', COL_COLUMN_ONEOFCELLPREDICTIVE],
         'inactive column': ['patch', COL_COLUMN_INACTIVE],
+        'proximal synapses': ['line', COL_PROXIMAL_SYNAPSES],
+        'distal synapses': ['line', COL_DISTAL_SYNAPSES],
 
         }
 
 
 class GUILegend:
-    def __init__(self):
+    def __init__(self,showProximalSynapses, showDistalSynapses):
         # ------------------------------- PASTE YOUR MATPLOTLIB CODE HERE -----------------------------
+        self.figure_canvas_agg = None
 
+        self.figlegend = pylab.figure(figsize=(4, 3))
+
+        self.Update(showProximalSynapses, showDistalSynapses)
+
+
+        self.legend.get_frame().set_facecolor('#92aa9d')  # fill color in frame
+        self.legend.get_frame().set_edgecolor('black')  # frame color
+        self.figlegend.set_facecolor('#92aa9d')  # surrounding background color
+
+        self.figure_x, self.figure_y, self.figure_w, self.figure_h = self.figlegend.bbox.bounds
+
+        layout = [[sg.Canvas(background_color='#92aa9d', size=(self.figure_w, self.figure_h), key='canvas')]]
+
+        self.window = sg.Window('a panel', keep_on_top=True, location=(0, 0)).Layout(layout)
+
+
+
+
+    def Update(self,showProximalSynapses, showDistalSynapses):
+
+        print(showProximalSynapses)
+        print(showDistalSynapses)
         objs = []
         descriptions = []
         for i in data.keys():
-            print(i)
+
+            # don't show colors that can't be shown by settings
+            if (not showProximalSynapses and data[i][1] == COL_PROXIMAL_SYNAPSES) or \
+                    (not showDistalSynapses and data[i][1] == COL_DISTAL_SYNAPSES):
+                print("deleted:"+str(i)+":"+str(data[i][1]))
+                continue
+
             if data[i][0] == 'line':
-                objs += [GUILegend.line([data[i][1][0],data[i][1][1],data[i][1][2],data[i][1][3]])]
+                objs += [GUILegend.line([data[i][1][0], data[i][1][1], data[i][1][2], data[i][1][3]])]
                 descriptions += [i]
             elif data[i][0] == 'patch':
-                objs += [GUILegend.patch([data[i][1][0],data[i][1][1],data[i][1][2],data[i][1][3]])]
+                objs += [GUILegend.patch([data[i][1][0], data[i][1][1], data[i][1][2], data[i][1][3]])]
                 descriptions += [i]
-
-
-        self.figlegend = pylab.figure(figsize=(4,3))
-        legend = self.figlegend.legend(objs, descriptions, 'center')
-
-        legend.get_frame().set_facecolor('#92aa9d') # fill color in frame
-        legend.get_frame().set_edgecolor('black') # frame color
-        self.figlegend.set_facecolor('#92aa9d')# surrounding background color
-
-        self.figure_x, self.figure_y, self.figure_w, self.figure_h = self.figlegend.bbox.bounds
+        self.legend = self.figlegend.legend(objs, descriptions, 'center')
 
     @staticmethod
     def line(color):
@@ -61,11 +83,11 @@ class GUILegend:
 
 # ------------------------------- Beginning of Matplotlib helper code -----------------------
 
-    def draw_figure(self, canvas, figure, loc=(0, 0)):
-        figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
-        figure_canvas_agg.draw()
-        figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
-        return figure_canvas_agg
+    def draw_figure(self, loc=(0, 0)):
+        self.figure_canvas_agg = FigureCanvasTkAgg(self.figlegend, self.window['canvas'].TKCanvas)
+        self.figure_canvas_agg.draw()
+        self.figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+
 
 
 # ------------------------------- Beginning of GUI CODE -------------------------------

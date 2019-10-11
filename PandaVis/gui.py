@@ -26,18 +26,6 @@ class cGUI:
         self.focusedPath = None
         self.columnID = 0
 
-        self.showProximalSynapses = True
-        self.showDistalSynapses = True
-
-        self.wireframeChanged = False
-        self.wireframe = False
-        self.transparency = 100
-        self.transparencyChanged = False
-
-        self.LODvalue1 = 100
-        self.LODvalue2 = 5000
-        self.LODChanged = True
-
         self.visApp = visApp
         self.loader = loader
         self._defaultWidth = defaultWidth
@@ -52,8 +40,21 @@ class cGUI:
         except:
             self.defaults = {}
 
+        self.showProximalSynapses = self.defaults["proximalSynapses"]
+        self.showDistalSynapses = self.defaults["distalSynapses"]
 
-        self.legend = GUILegend()
+        self.wireframeChanged = True
+        self.wireframe = self.defaults["wireFrame"]
+        self.transparency = self.defaults["transparencySlider"]
+        self.transparencyChanged = True
+
+        self.LODvalue1 = self.defaults["LODSlider1"]
+        self.LODvalue2 = self.defaults["LODSlider2"]
+        self.LODChanged = True
+
+        self.updateLegend = True
+        self.legend = None
+
         layout = [[sg.Button('ONE STEP')],
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
@@ -62,12 +63,11 @@ class cGUI:
                   [sg.Text('Layer transparency'),
                    sg.Slider(key='transparencySlider', range=(1, 100), orientation='h', size=(20, 10),
                              default_value=100, enable_events=True)],
-                  [sg.Text('LOD columns'),
+                  [sg.Frame('Level of detail for columns', [[
                   sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
-                            default_value=100, enable_events=True),
-                  sg.Slider(key='LODSlider2', range=(1, 10000), orientation='h', size=(20, 10),
                             default_value=100, enable_events=True)],
-                  [sg.Canvas(background_color='#92aa9d', size=(self.legend.figure_w, self.legend.figure_h), key='canvas')]
+                  [sg.Slider(key='LODSlider2', range=(1, 10000), orientation='h', size=(20, 10),
+                            default_value=100, enable_events=True)]])]
                   ]
 
         self.window = sg.Window('Main panel', keep_on_top=True, location=(0, 0)).Layout(layout)
@@ -81,7 +81,6 @@ class cGUI:
                 #print("Default not for:"+str(o))
 
     def retrieveDefaults(self):
-
 
         event, values = self.window.Read(timeout=10)
 
@@ -100,9 +99,26 @@ class cGUI:
             self.init = True
             self.window.Read(timeout=10)
             self.updateDefaults()
-
-            fig_canvas_agg = self.legend.draw_figure(self.window['canvas'].TKCanvas, self.legend.figlegend)
             return
+
+        if self.updateLegend:
+            self.updateLegend = False
+            print("Legend updated")
+            if self.legend is not None:
+                self.legend.window.close()
+            self.legend = GUILegend(self.showProximalSynapses, self.showDistalSynapses)
+
+            self.legend.window.Read(timeout=0)
+            #self.legend = GUILegend(self.showProximalSynapses, self.showDistalSynapses)
+            #self.legend.Update(self.showProximalSynapses, self.showDistalSynapses)
+            self.legend.draw_figure()
+            #self.window['canvas'].TKCanvas.delete(self.legend.figure_canvas_agg)
+
+            #self.legend.figure_canvas_agg.delete("all")
+            #self.legend.Update(False, False)
+            #self.legend.figure_canvas_agg.draw()
+
+
 
         event, values = self.window.Read(timeout=10)
 
@@ -128,6 +144,9 @@ class cGUI:
                     self.LODvalue2 = values["LODSlider2"]
 
                     self.LODChanged = True
+            elif event == "proximalSynapses" or event == "distalSynapses":
+                #self.legend.Update(values["proximalSynapses"], values["distalSynapses"])# update legend
+                self.updateLegend = True
 
             self.wireframe = values["wireFrame"]
             self.wireframeChanged = event == "wireFrame"
