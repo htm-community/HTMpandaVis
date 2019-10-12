@@ -25,15 +25,35 @@ data = {'active cell': ['patch', COL_CELL_ACTIVE],
         }
 
 
-class GUILegend:
-    def __init__(self,showProximalSynapses, showDistalSynapses):
+class cLegendWindow:
+    def __init__(self,showProximalSynapses, showDistalSynapses, winPos):
         # ------------------------------- PASTE YOUR MATPLOTLIB CODE HERE -----------------------------
         self.figure_canvas_agg = None
 
         self.figlegend = pylab.figure(figsize=(4, 3))
 
-        self.Update(showProximalSynapses, showDistalSynapses)
+        print(showProximalSynapses)
+        print(showDistalSynapses)
+        objs = []
+        descriptions = []
+        itemCnt = 0
+        for i in data.keys():
 
+            # don't show colors that can't be shown by settings
+            if (not showProximalSynapses and data[i][1] == COL_PROXIMAL_SYNAPSES) or \
+                    (not showDistalSynapses and data[i][1] == COL_DISTAL_SYNAPSES):
+                print("deleted:" + str(i) + ":" + str(data[i][1]))
+                continue
+
+            if data[i][0] == 'line':
+                objs += [cLegendWindow.line([data[i][1][0], data[i][1][1], data[i][1][2], data[i][1][3]])]
+                descriptions += [i]
+            elif data[i][0] == 'patch':
+                objs += [cLegendWindow.patch([data[i][1][0], data[i][1][1], data[i][1][2], data[i][1][3]])]
+                descriptions += [i]
+
+            itemCnt += 1
+        self.legend = self.figlegend.legend(objs, descriptions, 'center')
 
         self.legend.get_frame().set_facecolor('#92aa9d')  # fill color in frame
         self.legend.get_frame().set_edgecolor('black')  # frame color
@@ -43,32 +63,8 @@ class GUILegend:
 
         layout = [[sg.Canvas(background_color='#92aa9d', size=(self.figure_w, self.figure_h), key='canvas')]]
 
-        self.window = sg.Window('a panel', keep_on_top=True, location=(0, 0)).Layout(layout)
+        self.window = sg.Window('Legend', keep_on_top=True, location=winPos).Layout(layout)
 
-
-
-
-    def Update(self,showProximalSynapses, showDistalSynapses):
-
-        print(showProximalSynapses)
-        print(showDistalSynapses)
-        objs = []
-        descriptions = []
-        for i in data.keys():
-
-            # don't show colors that can't be shown by settings
-            if (not showProximalSynapses and data[i][1] == COL_PROXIMAL_SYNAPSES) or \
-                    (not showDistalSynapses and data[i][1] == COL_DISTAL_SYNAPSES):
-                print("deleted:"+str(i)+":"+str(data[i][1]))
-                continue
-
-            if data[i][0] == 'line':
-                objs += [GUILegend.line([data[i][1][0], data[i][1][1], data[i][1][2], data[i][1][3]])]
-                descriptions += [i]
-            elif data[i][0] == 'patch':
-                objs += [GUILegend.patch([data[i][1][0], data[i][1][1], data[i][1][2], data[i][1][3]])]
-                descriptions += [i]
-        self.legend = self.figlegend.legend(objs, descriptions, 'center')
 
     @staticmethod
     def line(color):

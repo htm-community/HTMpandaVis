@@ -14,7 +14,8 @@ from direct.gui.DirectGui import (
     DirectEntry,
     OnscreenText,
 )
-from GUILegend import GUILegend
+from legendWindow import cLegendWindow
+from descriptionWindow import cDescriptionWindow
 import PySimpleGUI as sg
 import json
 
@@ -40,28 +41,37 @@ class cGUI:
         except:
             self.defaults = {}
 
-        self.showProximalSynapses = self.defaults["proximalSynapses"]
-        self.showDistalSynapses = self.defaults["distalSynapses"]
+
+        self.showProximalSynapses = self.getDefault("proximalSynapses")
+        self.showDistalSynapses = self.getDefault("distalSynapses")
 
         self.wireframeChanged = True
-        self.wireframe = self.defaults["wireFrame"]
-        self.transparency = self.defaults["transparencySlider"]
+        self.wireframe = self.getDefault("wireFrame")
+        self.transparency = self.getDefault("transparencySlider")
         self.transparencyChanged = True
 
-        self.LODvalue1 = self.defaults["LODSlider1"]
-        self.LODvalue2 = self.defaults["LODSlider2"]
+        self.LODvalue1 = self.getDefault("LODSlider1")
+        self.LODvalue2 = self.getDefault("LODSlider2")
         self.LODChanged = True
 
         self.updateLegend = True
+        self.updateDescriptionWindow = True
         self.legend = None
+        self.description = None
+        self.showLegend = self.getDefault("legend")
+        self.showDescription = self.getDefault("desc")
+
+
 
         layout = [[sg.Button('ONE STEP')],
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
                   [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
                   [sg.Checkbox('Wireframe mode', key="wireFrame", enable_events=True)],
+                  [sg.Checkbox('Show legend', key="legend", enable_events=True)],
+                  [sg.Checkbox('Show description', key="desc", enable_events=True)],
                   [sg.Text('Layer transparency'),
-                   sg.Slider(key='transparencySlider', range=(1, 100), orientation='h', size=(20, 10),
+                   sg.Slider(key='transparencySlider', range=(1, 100), orientation='h', size=(10, 10),
                              default_value=100, enable_events=True)],
                   [sg.Frame('Level of detail for columns', [[
                   sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
@@ -70,7 +80,14 @@ class cGUI:
                             default_value=100, enable_events=True)]])]
                   ]
 
-        self.window = sg.Window('Main panel', keep_on_top=True, location=(0, 0)).Layout(layout)
+        self.window = sg.Window('Main panel', keep_on_top=True, location=self.getDefault("mainWinPos")).Layout(layout)
+
+    def getDefault(self, key):
+        try:
+            return self.defaults[key]
+        except KeyError as e:
+            print("Can't load default value:" + str(e))
+            return False
 
     def updateDefaults(self):
         for o in self.window.AllKeysDict:
@@ -92,6 +109,10 @@ class cGUI:
                     print(e)
                     print("Default not for:"+str(o))
 
+        self.defaults["mainWinPos"] = self.window.current_location()
+        self.defaults["legendWinPos"] = self.legend.window.current_location()
+        self.defaults["descWinPos"] = self.description.window.current_location()
+
     def update(self):
 
         if not self.init:  # init values at the first run
@@ -101,24 +122,24 @@ class cGUI:
             self.updateDefaults()
             return
 
-        if self.updateLegend:
+        if self.updateLegend and self.showLegend:
             self.updateLegend = False
             print("Legend updated")
             if self.legend is not None:
                 self.legend.window.close()
-            self.legend = GUILegend(self.showProximalSynapses, self.showDistalSynapses)
+            self.legend = cLegendWindow(self.showProximalSynapses, self.showDistalSynapses, self.getDefault("legendWinPos"))
 
             self.legend.window.Read(timeout=0)
-            #self.legend = GUILegend(self.showProximalSynapses, self.showDistalSynapses)
-            #self.legend.Update(self.showProximalSynapses, self.showDistalSynapses)
             self.legend.draw_figure()
-            #self.window['canvas'].TKCanvas.delete(self.legend.figure_canvas_agg)
 
-            #self.legend.figure_canvas_agg.delete("all")
-            #self.legend.Update(False, False)
-            #self.legend.figure_canvas_agg.draw()
+        if self.updateDescriptionWindow and self.showDescription:
+            self.updateDescriptionWindow = False
+            print("Description updated")
+            if self.description is not None:
+                self.description.window.close()
+            self.description = cDescriptionWindow(self.getDefault("descWinPos"))
 
-
+            self.description.window.Read(timeout=0)
 
         event, values = self.window.Read(timeout=10)
 
@@ -148,15 +169,34 @@ class cGUI:
                 #self.legend.Update(values["proximalSynapses"], values["distalSynapses"])# update legend
                 self.updateLegend = True
 
+            elif event == "legend":
+                if values["legend"]:
+                    self.updateLegend = True
+                else:
+                    self.legend.window.close()
+                    self.legend = None
+            elif event == "desc":
+                if values["desc"]:
+                    self.updateDescriptionWindow = True
+                else:
+                    self.description.window.close()
+                    self.description = None
+
+
             self.wireframe = values["wireFrame"]
             self.wireframeChanged = event == "wireFrame"
 
             self.showProximalSynapses = values["proximalSynapses"]
             self.showDistalSynapses = values["distalSynapses"]
 
+            self.showLegend = values["legend"]
+            self.showDescription = values["desc"]
+
             print("event "+str(event))
             print("values "+str(values))
 
+    def UpdateDescription(self, txt):
+        self.description.updateText(txt)
 
     def ResetCommands(self):
         self.cmdRun = False

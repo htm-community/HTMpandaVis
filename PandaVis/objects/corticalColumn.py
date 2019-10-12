@@ -88,9 +88,10 @@ class cCorticalColumn:
         self.lod.addSwitch(lodDistance, 0.0)
         self.lod.addSwitch(lodDistance2, lodDistance)
 
-    def UpdateState(self, bursting, oneOfCellActive,oneOfCellPredictive):
+    def UpdateState(self, bursting, activeColumn, oneOfCellActive,oneOfCellPredictive):
 
         self.bursting = bursting
+        self.active = activeColumn
         self.oneOfCellActive = oneOfCellActive
         self.oneOfCellPredictive = oneOfCellPredictive
 
@@ -99,13 +100,13 @@ class cCorticalColumn:
             COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED
             self.__columnBox.setColor(col)
-        elif self.oneOfCellActive:
-            COL_COLUMN_ONEOFCELLACTIVE.setW(self.transparency)
-            col = COL_COLUMN_ONEOFCELLACTIVE
-            self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
             COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLPREDICTIVE
+            self.__columnBox.setColor(col)
+        elif self.oneOfCellActive:
+            COL_COLUMN_ONEOFCELLACTIVE.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLACTIVE
             self.__columnBox.setColor(col)
         else:
             COL_COLUMN_INACTIVE.setW(self.transparency)
@@ -207,7 +208,7 @@ class cCorticalColumn:
         for cell in self.cells:
             cell.setTransparency(transparency)
 
-        self.UpdateState(self.bursting, self.oneOfCellActive, self.oneOfCellPredictive)
+        self.UpdateState(self.bursting, self.active, self.oneOfCellActive, self.oneOfCellPredictive)
 
     def DestroyProximalSynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
@@ -217,3 +218,11 @@ class cCorticalColumn:
         for cell in self.cells:
             cell.DestroyDistalSynapses()
             cell.resetPresynapticFocus()  # also reset distal focus
+
+    def getDescription(self):
+        txt = ""
+        txt += "Active:" + str(self.active)+"\n"
+        txt += "One of cell is active" + str(self.oneOfCellActive)+"\n"
+        txt += "One of cell is predictive" + str(self.oneOfCellPredictive) + "\n"
+
+        return txt

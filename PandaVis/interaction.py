@@ -255,6 +255,14 @@ class cInteraction:
                 for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
                     obj.DestroyDistalSynapses()
             # -----------------------------------------------------------
+
+            desc = "path:\n"
+            desc += str(self.gui.focusedPath)+"\n"
+            desc += self.gui.focusedCell.getDescription()
+            desc += "column:\n"
+            desc += self.gui.focusedCell.column.getDescription()
+
+            self.gui.UpdateDescription(desc)
             
         elif obj.getName() == "basement":
             self.testRoutine()

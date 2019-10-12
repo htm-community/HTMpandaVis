@@ -159,6 +159,12 @@ class cCell:
                 nodePath.setRenderModeThickness(2)
                 nodePath.setColor(COL_DISTAL_SYNAPSES) # color of the line)# color of the line
 
+    def getDescription(self):
+        txt = ""
+        txt += "Active:" + str(self.active)+"\n"
+        txt += "Predictive" + str(self.predictive)+"\n"
+
+        return txt
 
     def DestroyDistalSynapses(self):
         for syn in self.__node.findAllMatches("DistalSynapse"):

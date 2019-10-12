@@ -174,28 +174,6 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         #tm.compute(activeColumns, learn=True)
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
-        
-        tm.activateCells(activeColumns,True)
-        
-        tm_info.addData(tm.getActiveCells().flatten())
-
-        activeCells = tm.getActiveCells()
-        print("ACTIVE"+str(len(activeCells.sparse)))
-
-        # Predict what will happen, and then train the predictor based on what just happened.
-        pdf = predictor.infer(count, tm.getActiveCells())
-        for n in (1, 5):
-            if pdf[n]:
-                predictions[n].append(np.argmax(pdf[n]) * predictor_resolution)
-            else:
-                predictions[n].append(float("nan"))
-        predictor.learn(
-            count, tm.getActiveCells(), int(consumption / predictor_resolution)
-        )
-
-        anomalyLikelihood = anomaly_history.anomalyProbability(consumption, tm.anomaly)
-        anomaly.append(tm.anomaly)
-        anomalyProb.append(anomalyLikelihood)
 
         # ------------------HTMpandaVis----------------------
 
@@ -216,10 +194,10 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         TimeOfDayInp.bits = dateBits.sparse
         TimeOfDayInp.count = dateBits.size
         SL.activeColumns = activeColumns.sparse
-        
+
         SL.winnerCells = tm.getWinnerCells().sparse
         SL.predictiveCells = predictiveCellsSDR.sparse
-        print("PREDICTIVE:"+str(SL.predictiveCells))
+        print("PREDICTIVE:" + str(SL.predictiveCells))
 
         # pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
         # pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
@@ -251,7 +229,32 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaServer.runOneStep = False
         print("Proceeding one step...")
 
-    # ------------------HTMpandaVis----------------------
+        # ------------------HTMpandaVis----------------------
+
+
+        tm.activateCells(activeColumns,True)
+        
+        tm_info.addData(tm.getActiveCells().flatten())
+
+        activeCells = tm.getActiveCells()
+        print("ACTIVE"+str(len(activeCells.sparse)))
+
+        # Predict what will happen, and then train the predictor based on what just happened.
+        pdf = predictor.infer(count, tm.getActiveCells())
+        for n in (1, 5):
+            if pdf[n]:
+                predictions[n].append(np.argmax(pdf[n]) * predictor_resolution)
+            else:
+                predictions[n].append(float("nan"))
+        predictor.learn(
+            count, tm.getActiveCells(), int(consumption / predictor_resolution)
+        )
+
+        anomalyLikelihood = anomaly_history.anomalyProbability(consumption, tm.anomaly)
+        anomaly.append(tm.anomaly)
+        anomalyProb.append(anomalyLikelihood)
+
+
 
     # Print information & statistics about the state of the HTM.
     print("Encoded Input", enc_info)
