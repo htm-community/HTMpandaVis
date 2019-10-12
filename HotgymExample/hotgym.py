@@ -177,51 +177,24 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
         # ------------------HTMpandaVis----------------------
 
-        timeOfDayString = record[0]
-
-        # just shortcuts to shorten names
-        SL = serverData.HTMObjects["HTM1"].layers["SensoryLayer"]
-        ConsumInp = serverData.HTMObjects["HTM1"].inputs["SL_Consumption"]
-        TimeOfDayInp = serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"]
-
         # fill up values
-        ConsumInp.stringValue = "consumption: {:.2f}".format(consumption)
-        TimeOfDayInp.stringValue = timeOfDayString
+        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
+        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.size
 
-        ConsumInp.bits = consumptionBits.sparse
-        ConsumInp.count = consumptionBits.size
+        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
+        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
+        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].count = dateBits.size
 
-        TimeOfDayInp.bits = dateBits.sparse
-        TimeOfDayInp.count = dateBits.size
-        SL.activeColumns = activeColumns.sparse
-
-        SL.winnerCells = tm.getWinnerCells().sparse
-        SL.predictiveCells = predictiveCellsSDR.sparse
-        print("PREDICTIVE:" + str(SL.predictiveCells))
-
-        # pandaServer.serverData.inputsValueString = [timeOfDayString,"consumption: {:.2f}".format(consumption)]
-        # pandaServer.serverData.inputs = [dateBits.sparse, consumptionBits.sparse] # TODO better use sparse
-        #        pandaServer.serverData.inputDataSizes= [dateBits.size, consumptionBits.size]
-        #        pandaServer.serverData.activeColumns=activeColumns.sparse
-        #        pandaServer.serverData.activeCells=activeCells
-        #        pandaServer.serverData.columnDimensions=modelParams["sp"]["columnCount"]
-        #        pandaServer.serverData.cellsPerColumn=modelParams["tm"]["cellsPerColumn"]
+        serverData.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
+        serverData.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
+        serverData.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
 
         pandaServer.serverData = serverData
 
         pandaServer.spatialPoolers["HTM1"] = sp
         pandaServer.temporalMemories["HTM1"] = tm
         pandaServer.NewStateDataReady()
-
-        # connectedSynapses = np.zeros(sp.getNumInputs(), dtype=np.int32)
-        # sp.getConnectedSynapses(1, connectedSynapses)
-
-        # pandaServer.serverData.connectedSynapses = connectedSynapses
-
-        # print("CONNECTED:")
-        # print("len:"+str(len(connectedSynapses)))
-        # print(connectedSynapses)
-        # print("active:"+str(sum([i for i in connectedSynapses])))
 
         print("One step finished")
         while not pandaServer.runInLoop and not pandaServer.runOneStep:
