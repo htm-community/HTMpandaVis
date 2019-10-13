@@ -1,7 +1,5 @@
 # HTMpandaVis
 
-(I will add soon some instruction how to install and use with examples)
-
 Screenshots for visualization of the "hotgym" example
 ![img1](img1.png)
 ![img2](img2.png)
@@ -28,4 +26,30 @@ That is also main idea, anybody can take his own current computation script, sli
 ![Diagram](readmeDiagram.png)
 
 
+# How to install on Linux
 
+Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) for other installation instructions)
+```
+git clone https://github.com/htm-community/htm.core.git
+sudo apt-get install cmake
+python3 setup.py install --user --force
+```
+
+```
+python3 -m pip install numpy
+git clone https://github.com/Zbysekz/HTMpandaVis.git
+cd HTMpandaVis
+```
+# How to run
+
+Run server - example "hotgym"
+```
+cd HTMpandaVis/HotgymExample
+python3 hotgym.py
+```
+
+Run client - pandaVis tool
+```
+cd HTMpandaVis/PandaVis
+python3 pandaVis.py
+```
