@@ -15,6 +15,7 @@ from panda3d.core import (
     GeomNode,
 )
 import random
+from Colors import *
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -29,6 +30,8 @@ class cCell:
     def __init__(self, column):
         self.active = False
         self.predictive = False
+        self.presynapticFocus = False
+        self.focused = False
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
 
@@ -49,31 +52,55 @@ class cCell:
 
         self.UpdateState(False, False)
 
-    def UpdateState(self, active, predictive, focused=False):
+    def UpdateState(self, active, predictive, focused=False, presynapticFocus=False):
         
         self.active = active
         self.predictive = predictive
         self.focused = focused
+        self.presynapticFocus = presynapticFocus
         
         if self.focused:
-            self.__node.setColor(0.2, 0.5, 1.0, 1.0)  # light blue
+            self.__node.setColor(COL_CELL_FOCUSED)
         elif self.predictive and self.active:
-            self.__node.setColor(0.0, 1.0, 0.0, self.transparency)  # green
+            COL_CELL_CORRECTLY_PREDICTED.setW(self.transparency)
+            col = COL_CELL_CORRECTLY_PREDICTED
+            self.__node.setColor(col)
         elif self.predictive:
-            self.__node.setColor(1.0, 0.0, 0.0, self.transparency)  # red
+            COL_CELL_PREDICTIVE.setW(self.transparency)
+            col = COL_CELL_PREDICTIVE
+            self.__node.setColor(col)
         elif self.active:
-            self.__node.setColor(1.0, 0.8, 0.8, self.transparency)  # pink
+            COL_CELL_ACTIVE.setW(self.transparency)
+            col = COL_CELL_ACTIVE
+            self.__node.setColor(col)
+        elif self.presynapticFocus:
+            col = COL_CELL_PRESYNAPTIC_FOCUS
+            self.__node.setColor(col)
         else:
-            self.__node.setColor(1.0, 1.0, 1.0, self.transparency)  # white
+            COL_CELL_INACTIVE.setW(self.transparency)
+            col = COL_CELL_INACTIVE
+            self.__node.setColor(col)
 
     def setFocus(self):
-        self.UpdateState(self.active,self.predictive,True)# no change except focus
+        print("setFocus")
+        self.UpdateState(self.active, self.predictive, True)  #no change except focus
 
     def resetFocus(self):
-        self.UpdateState(self.active,self.predictive,False)# no change except focus
-    
-    def setTransparency(self,transparency):
+        print("resetFocus")
+        self.UpdateState(self.active, self.predictive, False)  #reset focus
+
+    def setPresynapticFocus(self):
+        print("setPresyn")
+        self.UpdateState(self.active, self.predictive, self.focused, True)  # no change except presynaptic focus
+
+    def resetPresynapticFocus(self):
+        print("resetPresyn")
+        self.UpdateState(self.active, self.predictive, self.focused, False)  # reset presynaptic focus
+
+    def setTransparency(self, transparency):
         self.transparency = transparency
+
+        self.UpdateState(self.active, self.predictive, self.focused, self.presynapticFocus)
         
     def updateWireframe(self,value):
         if value:
@@ -84,27 +111,47 @@ class cCell:
     def getNode(self):
         return self.__node
     
-    def CreateDistalSynapses(self, layer, data):
+    def CreateDistalSynapses(self, HTMObject, layer, data, inputObjects):
 
         for child in self.__node.getChildren():
             if child.getName() == "DistalSynapseLine":
                 child.removeNode()
 
         printLog("Creating distal synapses", verbosityMedium)
-       
-        
+
+        printLog("EXTERNAL DISTAL:"+str(inputObjects))
+        printLog("HTM inputs:"+str(HTMObject.inputs))
+        printLog("HTM layers:" + str(HTMObject.layers))
+
         for segment in data:
-            
-            lineColor = LColor(random.random(),random.random(),random.random(),1.0)
-            
+
             for presynCellID in segment:
                 
                 cellID = presynCellID % layer.nOfCellsPerColumn
                 colID = (int)(presynCellID / layer.nOfCellsPerColumn)
-                
-                
-                presynCell = layer.corticalColumns[colID].cells[cellID]
-        
+
+                if colID < len(layer.corticalColumns):
+                    presynCell = layer.corticalColumns[colID].cells[cellID] # it is within current layer
+                else: # it is for external distal input
+                    cellID = presynCellID - len(layer.corticalColumns)*layer.nOfCellsPerColumn
+                    for inputObj in inputObjects:
+
+                        if inputObj in HTMObject.inputs:
+                            if cellID < HTMObject.inputs[inputObj].count:
+                                presynCell = HTMObject.inputs[inputObj].inputBits[cellID]
+                                break
+                            else: # not this one
+                                cellID -= HTMObject.inputs[inputObj].count
+
+                        elif inputObj in HTMObject.layers:
+                            if cellID < HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].corticalColumns):
+
+                                presynCell = HTMObject.layers[inputObj].corticalColumns[(int)(cellID / HTMObject.layers[inputObj].nOfCellsPerColumn)].cells[cellID % HTMObject.layers[inputObj].nOfCellsPerColumn]
+                                break
+                            else: # not this one
+                                cellID -= HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].corticalColumns)
+
+                presynCell.setPresynapticFocus()  # highlight presynapctic cells
         
                 form = GeomVertexFormat.getV3()
                 vdata = GeomVertexData("DistalSynapseLine", form, Geom.UHStatic)
@@ -131,8 +178,14 @@ class cCell:
                 nodePath = self.__node.attachNewNode(node)
                 
                 nodePath.setRenderModeThickness(2)
-                nodePath.setColor(lineColor)# color of the line
-                
+                nodePath.setColor(COL_DISTAL_SYNAPSES) # color of the line)# color of the line
+
+    def getDescription(self):
+        txt = ""
+        txt += "Active:" + str(self.active)+"\n"
+        txt += "Predictive" + str(self.predictive)+"\n"
+
+        return txt
 
     def DestroyDistalSynapses(self):
         for syn in self.__node.findAllMatches("DistalSynapse"):

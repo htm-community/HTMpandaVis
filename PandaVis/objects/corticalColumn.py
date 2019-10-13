@@ -11,7 +11,7 @@ from panda3d.core import (
     GeomLines,
     GeomNode,
 )
-
+from Colors import *
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -83,21 +83,35 @@ class cCorticalColumn:
             z += 1+CELL_OFFSET
             n.getNode().reparentTo(self.__cellsNodePath)
 
-    def UpdateState(self, bursting, oneOfCellActive,oneOfCellPredictive):
+    def LODUpdateSwitch(self, lodDistance, lodDistance2):
+        self.lod.clearSwitches()
+        self.lod.addSwitch(lodDistance, 0.0)
+        self.lod.addSwitch(lodDistance2, lodDistance)
+
+    def UpdateState(self, bursting, activeColumn, oneOfCellActive,oneOfCellPredictive):
 
         self.bursting = bursting
+        self.active = activeColumn
         self.oneOfCellActive = oneOfCellActive
         self.oneOfCellPredictive = oneOfCellPredictive
 
         # update column box color (for LOD in distance look)
         if self.oneOfCellActive and self.oneOfCellPredictive:
-            self.__columnBox.setColor(0.0, 1.0, 0.0, self.transparency)  # green
-        elif self.oneOfCellActive:
-            self.__columnBox.setColor(1.0, 1.0, 0.0, self.transparency)  # yellow
+            COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED
+            self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
-            self.__columnBox.setColor(1.0, 0.0, 0.0, self.transparency)  # red
+            COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLPREDICTIVE
+            self.__columnBox.setColor(col)
+        elif self.oneOfCellActive:
+            COL_COLUMN_ONEOFCELLACTIVE.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLACTIVE
+            self.__columnBox.setColor(col)
         else:
-            self.__columnBox.setColor(1.0, 1.0, 1.0, self.transparency)  # white
+            COL_COLUMN_INACTIVE.setW(self.transparency)
+            col = COL_COLUMN_INACTIVE
+            self.__columnBox.setColor(col)
 
 #        for n in self.cells:
 #            n.active = active
@@ -136,12 +150,11 @@ class cCorticalColumn:
 
         # synapses can be connected to one input or to several inputs
         # if to more than one - split synapses array
-        if len(inputObjects) > 1:
-            synapsesDiv = []
-            offset = 0
-            for inputObj in inputObjects:
-                synapsesDiv.append(synapses[offset : offset + inputs[inputObj].count])
-                offset += inputs[inputObj].count
+        synapsesDiv = []
+        offset = 0
+        for inputObj in inputObjects:
+            synapsesDiv.append(synapses[offset : offset + inputs[inputObj].count])
+            offset += inputs[inputObj].count
 
         for i in range(len(synapsesDiv)):  # for each input object
 
@@ -187,12 +200,14 @@ class cCorticalColumn:
                     nodePath = self.__cellsNodePath.attachNewNode(node)
                     
                     nodePath.setRenderModeThickness(2)
-                    #nodePath.setColor(0.0, 1.0, 0.0, 1.0) color of the line
+                    nodePath.setColor(COL_PROXIMAL_SYNAPSES)# color of the line
 
-    def setTransparency(self,transparency):
+    def setTransparency(self, transparency):
         self.transparency = transparency
         for cell in self.cells:
             cell.setTransparency(transparency)
+
+        self.UpdateState(self.bursting, self.active, self.oneOfCellActive, self.oneOfCellPredictive)
 
     def DestroyProximalSynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
@@ -201,3 +216,12 @@ class cCorticalColumn:
     def DestroyDistalSynapses(self):
         for cell in self.cells:
             cell.DestroyDistalSynapses()
+            cell.resetPresynapticFocus()  # also reset distal focus
+
+    def getDescription(self):
+        txt = ""
+        txt += "Active:" + str(self.active)+"\n"
+        txt += "One of cell is active" + str(self.oneOfCellActive)+"\n"
+        txt += "One of cell is predictive" + str(self.oneOfCellPredictive) + "\n"
+
+        return txt

@@ -54,8 +54,8 @@ class cApp(ShowBase):
             visApp = self
         )
 
-        self.guiThread = threading.Thread(target = self.gui.update)
-        self.guiThread.start()
+        #self.guiThread = threading.Thread(target = self.gui.update)
+        #self.guiThread.start()
 
         self.client = SocketClient()
         self.client.setGui(self.gui)
@@ -95,6 +95,7 @@ class cApp(ShowBase):
                         )
                     # create layers
                     for lay in serverObjs[obj].layers:
+                        print(lay)
                         newObj.CreateLayer(
                             name=lay,
                             nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,
@@ -175,12 +176,15 @@ class cApp(ShowBase):
                         self.HTMObjects[obj].layers[l].corticalColumns[
                             columnID
                         ].cells[cellID].CreateDistalSynapses(
+                            self.HTMObjects[obj],
                             self.HTMObjects[obj].layers[l],
-                            distalSynapses
+                            distalSynapses,
+                            serverObjs[obj].layers[l].distalInputs
                         )
 
     def update(self, task):
 
+        self.gui.update()
         self.interaction.Update()
         self.updateHTMstate()
         # update environment - e.g. controlling drawing style in runtime

@@ -224,6 +224,11 @@ class PandaServer:
                     elif rxData[0] == CLIENT_CMD.QUIT:
                         printLog("Client quitted!")
                         # quitServer=True
+                except struct.error as e:
+                    printLog("StructError:")
+                    printLog(e)
+                    clientConnected = False
+                    break
                 except socket.timeout:
                     printLog("SocketTimeout")
                     continue

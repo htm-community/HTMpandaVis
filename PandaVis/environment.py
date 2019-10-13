@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from panda3d.core import DirectionalLight, AmbientLight, AntialiasAttrib
+from panda3d.core import DirectionalLight, AmbientLight, AntialiasAttrib, TransparencyAttrib
 from panda3d.core import LColor, CollisionBox, CollisionNode
 from panda3d.core import (
     GeomVertexFormat,
@@ -72,6 +72,8 @@ class cEnvironment:
         self.render.setLight(self.dirLight2)
         
         self.render.setAntialias(AntialiasAttrib.MLine)
+
+        self.render.setAttrib(TransparencyAttrib.make(TransparencyAttrib.M_dual))
         
     def CreateBasement(
         self

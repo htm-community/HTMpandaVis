@@ -6,6 +6,8 @@ from panda3d.core import NodePath, PandaNode, TextNode
 
 
 class cLayer:
+    ONE_ROW_SIZE = 150
+    
     def __init__(self, name, nOfColumns, nOfCellsPerColumn):
 
         self.name = name
@@ -41,7 +43,7 @@ class cLayer:
             c.getNode().setPos(row * 10, y, 0)
             y += 3
 
-            if y > 150:
+            if y > cLayer.ONE_ROW_SIZE:
                 y = 0
                 row += 1
             c.getNode().reparentTo(self.__node)
@@ -56,15 +58,17 @@ class cLayer:
         
         for colID in range(len(self.corticalColumns)):# go through all columns    
             oneOfCellPredictive=False
-            
+            oneOfCellActive = False
             for cellID in range(len(self.corticalColumns[colID].cells)):
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in winnerCells
                 isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
+                if isActive:
+                    oneOfCellActive=True
                 if isPredictive:
                     oneOfCellPredictive=True
                 self.corticalColumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive)
 
-            self.corticalColumns[colID].UpdateState(bursting=False, oneOfCellActive=(colID in activeColumns),oneOfCellPredictive=oneOfCellPredictive)
+            self.corticalColumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellActive = oneOfCellActive,oneOfCellPredictive=oneOfCellPredictive)
         
         
 #        for cellID in winnerCells:
@@ -93,3 +97,7 @@ class cLayer:
         self.transparency = transparency
         for col in self.corticalColumns:
             col.setTransparency(transparency)
+
+    def LODUpdateSwitch(self, lodDistance, lodDistance2):
+        for col in self.corticalColumns:
+            col.LODUpdateSwitch(lodDistance, lodDistance2)
