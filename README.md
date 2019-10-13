@@ -37,8 +37,11 @@ python3 setup.py install --user --force
 
 ```
 python3 -m pip install numpy
+python3 -m pip install matplotlib
+python3 -m pip install panda3d
+sudo apt-get install python3-tk
+
 git clone https://github.com/Zbysekz/HTMpandaVis.git
-cd HTMpandaVis
 ```
 # How to run
 
