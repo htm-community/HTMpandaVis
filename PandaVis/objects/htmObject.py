@@ -36,12 +36,12 @@ class cHTM:
         self.layers[name] = l
 
         l.CreateGfx(self.__loader)
-        l.getNode().setPos(cHTM.layerOffset, 0, 0)
+        l.getNode().setPos(0, 0 , cHTM.layerOffset)
 
         l.getNode().reparentTo(self.__node)
         # self.__node = NodePath()
 
-        cHTM.layerOffset += 40
+        cHTM.layerOffset += nOfCellsPerColumn + 40
 
     def CreateInput(self, name, count, rows):
 

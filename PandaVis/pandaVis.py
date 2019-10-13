@@ -95,6 +95,7 @@ class cApp(ShowBase):
                         )
                     # create layers
                     for lay in serverObjs[obj].layers:
+                        print(lay)
                         newObj.CreateLayer(
                             name=lay,
                             nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,
@@ -175,8 +176,10 @@ class cApp(ShowBase):
                         self.HTMObjects[obj].layers[l].corticalColumns[
                             columnID
                         ].cells[cellID].CreateDistalSynapses(
+                            self.HTMObjects[obj],
                             self.HTMObjects[obj].layers[l],
-                            distalSynapses
+                            distalSynapses,
+                            serverObjs[obj].layers[l].distalInputs
                         )
 
     def update(self, task):

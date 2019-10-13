@@ -150,12 +150,11 @@ class cCorticalColumn:
 
         # synapses can be connected to one input or to several inputs
         # if to more than one - split synapses array
-        if len(inputObjects) > 1:
-            synapsesDiv = []
-            offset = 0
-            for inputObj in inputObjects:
-                synapsesDiv.append(synapses[offset : offset + inputs[inputObj].count])
-                offset += inputs[inputObj].count
+        synapsesDiv = []
+        offset = 0
+        for inputObj in inputObjects:
+            synapsesDiv.append(synapses[offset : offset + inputs[inputObj].count])
+            offset += inputs[inputObj].count
 
         for i in range(len(synapsesDiv)):  # for each input object
 

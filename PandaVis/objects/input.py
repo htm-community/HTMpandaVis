@@ -92,3 +92,11 @@ class cInput:
         
         for i in self.inputBits:
             i.updateWireframe(value)
+
+    def setPresynapticFocus(self):
+        #TODO
+        return
+
+    def resetPresynapticFocus(self):
+        #TODO
+        return

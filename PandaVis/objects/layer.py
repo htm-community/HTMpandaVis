@@ -6,6 +6,8 @@ from panda3d.core import NodePath, PandaNode, TextNode
 
 
 class cLayer:
+    ONE_ROW_SIZE = 150
+    
     def __init__(self, name, nOfColumns, nOfCellsPerColumn):
 
         self.name = name
@@ -41,7 +43,7 @@ class cLayer:
             c.getNode().setPos(row * 10, y, 0)
             y += 3
 
-            if y > 150:
+            if y > cLayer.ONE_ROW_SIZE:
                 y = 0
                 row += 1
             c.getNode().reparentTo(self.__node)

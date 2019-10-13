@@ -111,24 +111,45 @@ class cCell:
     def getNode(self):
         return self.__node
     
-    def CreateDistalSynapses(self, layer, data):
+    def CreateDistalSynapses(self, HTMObject, layer, data, inputObjects):
 
         for child in self.__node.getChildren():
             if child.getName() == "DistalSynapseLine":
                 child.removeNode()
 
         printLog("Creating distal synapses", verbosityMedium)
-       
-        
+
+        printLog("EXTERNAL DISTAL:"+str(inputObjects))
+        printLog("HTM inputs:"+str(HTMObject.inputs))
+        printLog("HTM layers:" + str(HTMObject.layers))
+
         for segment in data:
 
             for presynCellID in segment:
                 
                 cellID = presynCellID % layer.nOfCellsPerColumn
                 colID = (int)(presynCellID / layer.nOfCellsPerColumn)
-                
-                
-                presynCell = layer.corticalColumns[colID].cells[cellID]
+
+                if colID < len(layer.corticalColumns):
+                    presynCell = layer.corticalColumns[colID].cells[cellID] # it is within current layer
+                else: # it is for external distal input
+                    cellID = presynCellID - len(layer.corticalColumns)*layer.nOfCellsPerColumn
+                    for inputObj in inputObjects:
+
+                        if inputObj in HTMObject.inputs:
+                            if cellID < HTMObject.inputs[inputObj].count:
+                                presynCell = HTMObject.inputs[inputObj].inputBits[cellID]
+                                break
+                            else: # not this one
+                                cellID -= HTMObject.inputs[inputObj].count
+
+                        elif inputObj in HTMObject.layers:
+                            if cellID < HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].corticalColumns):
+
+                                presynCell = HTMObject.layers[inputObj].corticalColumns[(int)(cellID / HTMObject.layers[inputObj].nOfCellsPerColumn)].cells[cellID % HTMObject.layers[inputObj].nOfCellsPerColumn]
+                                break
+                            else: # not this one
+                                cellID -= HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].corticalColumns)
 
                 presynCell.setPresynapticFocus()  # highlight presynapctic cells
         
