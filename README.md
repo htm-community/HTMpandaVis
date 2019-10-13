@@ -30,11 +30,12 @@ That is also main idea, anybody can take his own current computation script, sli
 
 Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) for other installation instructions)
 ```
-git clone https://github.com/htm-community/htm.core.git
 sudo apt-get install cmake
+git clone https://github.com/htm-community/htm.core.git
 python3 setup.py install --user --force
 ```
 
+Install prerequisities & clone pandaVis
 ```
 python3 -m pip install numpy
 python3 -m pip install matplotlib
