@@ -31,7 +31,7 @@ default_parameters = {
  },
  'predictor': {'sdrc_alpha': 0.1},
  'sp': {'boostStrength': 3.0,
-        'columnCount': 400,#1638
+        'columnCount': 1638,
         'localAreaDensity': 0.04395604395604396,
         'potentialPct': 0.85,
         'synPermActiveInc': 0.04,

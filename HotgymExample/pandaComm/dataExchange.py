@@ -52,16 +52,13 @@ class dataLayer(object):
         # to what inputs are the synapses connected
         self.proximalInputs = []  # [inputName1,inputName2,...]
 
-        # array - [cellID,[destinationID1,destinationID2,...]]
+        # array - [colID, cellID,[destinationID1,destinationID2,...]]
         self.distalSynapses = (
             []
         )  # first item in array is for what column, second is list of destination cells in this layer
 
-        # three dims, [columnID,destinationLayerID, [destination_id1,...]]
-        self.distalSynapses_external = (
-            []
-        )  # first item in array is for what column, second is list of destination cells in other layer
-
+        # to what distal connections are connected (exluding itself, so these are external distal)
+        self.distalInputs = [] # [inputName1, inputName2] - can be input or layer
 
 class dataInput(object):
     def __init__(self):

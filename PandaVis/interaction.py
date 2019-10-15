@@ -129,7 +129,6 @@ class cInteraction:
 
         if self.keys["space"]:
             self.speedBoost = not self.speedBoost
-            self.gui.onSpeedBoostChanged(self.speedBoost)
 
     def onEscape(self):
         """Event when escape button is pressed."""

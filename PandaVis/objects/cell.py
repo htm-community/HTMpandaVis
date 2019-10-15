@@ -62,15 +62,12 @@ class cCell:
         if self.focused:
             self.__node.setColor(COL_CELL_FOCUSED)
         elif self.predictive and self.active:
-            COL_CELL_CORRECTLY_PREDICTED.setW(self.transparency)
             col = COL_CELL_CORRECTLY_PREDICTED
             self.__node.setColor(col)
         elif self.predictive:
-            COL_CELL_PREDICTIVE.setW(self.transparency)
             col = COL_CELL_PREDICTIVE
             self.__node.setColor(col)
         elif self.active:
-            COL_CELL_ACTIVE.setW(self.transparency)
             col = COL_CELL_ACTIVE
             self.__node.setColor(col)
         elif self.presynapticFocus:
@@ -183,7 +180,7 @@ class cCell:
     def getDescription(self):
         txt = ""
         txt += "Active:" + str(self.active)+"\n"
-        txt += "Predictive" + str(self.predictive)+"\n"
+        txt += "Predictive:" + str(self.predictive)+"\n"
 
         return txt
 

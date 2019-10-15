@@ -221,7 +221,7 @@ class cCorticalColumn:
     def getDescription(self):
         txt = ""
         txt += "Active:" + str(self.active)+"\n"
-        txt += "One of cell is active" + str(self.oneOfCellActive)+"\n"
-        txt += "One of cell is predictive" + str(self.oneOfCellPredictive) + "\n"
+        txt += "One of cell is active:" + str(self.oneOfCellActive)+"\n"
+        txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
 
         return txt

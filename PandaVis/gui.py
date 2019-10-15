@@ -196,7 +196,8 @@ class cGUI:
             print("values "+str(values))
 
     def UpdateDescription(self, txt):
-        self.description.updateText(txt)
+        if self.description is not None:
+            self.description.updateText(txt)
 
     def ResetCommands(self):
         self.cmdRun = False
