@@ -65,3 +65,9 @@ class cInputBit:
             self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
         else:
             self.__node.setRenderModeFilled()
+            
+    def getDescription(self):
+        txt = ""
+        txt += "State:" + str(self.state)+"\n"
+
+        return txt
