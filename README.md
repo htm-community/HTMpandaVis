@@ -1,4 +1,5 @@
 # HTMpandaVis
+**See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
 
 Screenshots for visualization of the "hotgym" example
 ![img1](img1.png)
