@@ -29,6 +29,7 @@ That is also main idea, anybody can take his own current computation script, sli
 
 # How to install on Linux
 
+Python 3.6 is recommended.
 Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) for other installation instructions)
 ```
 sudo apt-get install cmake
