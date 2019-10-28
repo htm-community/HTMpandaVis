@@ -7,15 +7,17 @@ Created on Sat Feb 23 11:37:36 2019
 """
 
 from panda3d.core import LColor, CollisionNode, CollisionBox
-
+from Colors import *
 # import random
 
 
 class cInputBit:
     def __init__(self):
         self.state = False  # False if random.randint(0,1)==0 else True
+        self.focused = False
         self.__node = None
-        self.__highlight = False
+        self.__proximalFocus = False
+        self.__distalFocus = False
 
     def CreateGfx(self, loader, idx):
 
@@ -34,17 +36,22 @@ class cInputBit:
 
         self.UpdateState()
 
-    def UpdateState(self):
-        if self.state:
-            self.__node.setColor(0.0, 1.0, 0.0, 1.0)  # green
-        else:
-            self.__node.setColor(1.0, 1.0, 1.0, 1.0)  # white
 
-        if self.__highlight:
-            col = self.__node.getColor()
-            col[1] *= 0.6
-            col[2] *= 0.6
-            self.__node.setColor(col)
+    def UpdateState(self, focused=False , proximalFocus=False, distalFocus=False):
+        self.focused = focused
+        self.__proximalFocus = proximalFocus
+        self.__distalFocus = distalFocus
+
+        if self.focused:
+            self.__node.setColor(IN_BIT_FOCUSED)
+        elif self.state:
+            self.__node.setColor(IN_BIT_ACTIVE)
+        elif self.__distalFocus:
+            self.__node.setColor(IN_BIT_DISTAL_FOCUS)
+        elif self.__proximalFocus:
+            self.__node.setColor(IN_BIT_PROXIMAL_FOCUS)
+        else:
+            self.__node.setColor(IN_BIT_INACTIVE)
 
         # self.__node.setRenderModeThickness(5)
         #self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
@@ -52,15 +59,19 @@ class cInputBit:
     def getNode(self):
         return self.__node
 
-    def setHighlight(self):
-        self.__highlight = True
-        self.UpdateState()
+    def setProximalFocus(self):
+        self.UpdateState(self.focused, True, self.__distalFocus)  # no change except proximal focus
 
-    def resetHighLight(self):
-        self.__highlight = False
-        self.UpdateState()
-    
-    def updateWireframe(self,value):
+    def resetProximalFocus(self):
+        self.UpdateState(self.focused, False, self.__distalFocus)  # reset proximal focus
+
+    def setPresynapticFocus(self):#needs to have same name as for cells for polymorphysm
+        self.UpdateState(self.focused,  self.__proximalFocus, True)  # no change except distal focus
+
+    def resetPresynapticFocus(self):#needs to have same name as for cells for polymorphysm
+        self.UpdateState(self.focused,  self.__proximalFocus, False)  # reset distal focus
+
+    def updateWireframe(self, value):
         if value:
             self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
         else:

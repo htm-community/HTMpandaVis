@@ -110,8 +110,10 @@ class cGUI:
                     print("Default not for:"+str(o))
 
         self.defaults["mainWinPos"] = self.window.current_location()
-        self.defaults["legendWinPos"] = self.legend.window.current_location()
-        self.defaults["descWinPos"] = self.description.window.current_location()
+        if self.legend is not None:
+            self.defaults["legendWinPos"] = self.legend.window.current_location()
+        if self.description is not None:
+            self.defaults["descWinPos"] = self.description.window.current_location()
 
     def update(self):
 

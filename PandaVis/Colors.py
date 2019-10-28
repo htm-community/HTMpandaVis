@@ -17,5 +17,10 @@ COL_COLUMN_INACTIVE = LColor(1.0, 1.0, 1.0, 1.0) # white
 COL_PROXIMAL_SYNAPSES = LColor(1.0, 1.0, 1.0, 1.0)#white
 COL_DISTAL_SYNAPSES = LColor(0.2, 0.2, 1.0, 1.0)#blue
 
+IN_BIT_FOCUSED = LColor(1.0, 1.0, 0.0, 1.0) # yellow
+IN_BIT_ACTIVE = LColor(0.0, 1.0, 0.0, 1.0)#green
+IN_BIT_DISTAL_FOCUS = LColor(0.5, 0.8, 1.0, 1.0)# bright blue
+IN_BIT_PROXIMAL_FOCUS = LColor(0.5, 0.8, 1.0, 1.0)# bright blue
+IN_BIT_INACTIVE = LColor(1.0, 1.0, 1.0, 1.0) # white
 
 

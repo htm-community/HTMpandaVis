@@ -79,19 +79,15 @@ class cCell:
             self.__node.setColor(col)
 
     def setFocus(self):
-        print("setFocus")
         self.UpdateState(self.active, self.predictive, True)  #no change except focus
 
     def resetFocus(self):
-        print("resetFocus")
         self.UpdateState(self.active, self.predictive, False)  #reset focus
 
     def setPresynapticFocus(self):
-        print("setPresyn")
         self.UpdateState(self.active, self.predictive, self.focused, True)  # no change except presynaptic focus
 
     def resetPresynapticFocus(self):
-        print("resetPresyn")
         self.UpdateState(self.active, self.predictive, self.focused, False)  # reset presynaptic focus
 
     def setTransparency(self, transparency):

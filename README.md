@@ -61,3 +61,6 @@ Run client - pandaVis tool
 cd HTMpandaVis/PandaVis
 python3 pandaVis.py
 ```
+
+# How to use with your computation script
+TODO soon

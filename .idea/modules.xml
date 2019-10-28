@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/HTMpandaVis.iml" filepath="$PROJECT_DIR$/.idea/HTMpandaVis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../htm-2d-object-modeling/.idea/htm-2d-object-modeling.iml" filepath="$PROJECT_DIR$/../htm-2d-object-modeling/.idea/htm-2d-object-modeling.iml" />
     </modules>
   </component>
 </project>

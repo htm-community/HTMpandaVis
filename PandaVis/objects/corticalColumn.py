@@ -158,7 +158,7 @@ class cCorticalColumn:
 
         for i in range(len(synapsesDiv)):  # for each input object
 
-            inputs[inputObjects[i]].resetHighlight()  # clear color highlight
+            inputs[inputObjects[i]].resetProximalFocus()  # clear color highlight
 
             for y in range(
                 len(synapsesDiv[i])
@@ -184,7 +184,7 @@ class cCorticalColumn:
                     # highlight
                     inputs[inputObjects[i]].inputBits[
                         y
-                    ].setHighlight()  # highlight connected bits
+                    ].setProximalFocus()  # highlight connected bits
 
                     prim = GeomLines(Geom.UHStatic)
                     prim.addVertices(0, 1)

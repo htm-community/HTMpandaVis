@@ -2,15 +2,20 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e58d671a-8a4c-470c-a966-efade912648d" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/HotgymExample/hotgym.py" beforeDir="false" afterPath="$PROJECT_DIR$/HotgymExample/hotgym.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/HTMpandaVis.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/HTMpandaVis.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/Colors.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/Colors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PandaVis/GUILegend.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/legendWindow.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/gui.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/guiDefaults.ini" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/guiDefaults.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PandaVis/interaction.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/interaction.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/objects/cell.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/cell.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/objects/corticalColumn.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/corticalColumn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PandaVis/objects/layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/layer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/objects/input.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/input.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/objects/inputBit.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/inputBit.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../htm-2d-object-modeling/python/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../htm-2d-object-modeling/python/main.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -29,15 +34,24 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1RkfjENb9fsJ0T4dZzL07xpG520" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/PandaVis" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../htm.core/bindings/py/cpp_src/bindings/algorithms/py_TemporalMemory.cpp" />
     <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings module-name="htm-2d-object-modeling" is-module-sdk="true">
+        <option name="myUseModuleSdk" value="true" />
+        <option name="myModuleName" value="htm-2d-object-modeling" />
+      </console-settings>
+    </option>
+  </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
+    <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/PandaVis" />
     </key>
-    <key name="MoveFile.RECENT_KEYS">
+    <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/PandaVis" />
     </key>
   </component>
@@ -54,6 +68,27 @@
     </option>
   </component>
   <component name="RunManager" selected="Python.pandaVis">
+    <configuration name="2dObjectModelling" type="PythonConfigurationType" factoryName="Python">
+      <module name="htm-2d-object-modeling" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../htm-2d-object-modeling/python" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../htm-2d-object-modeling/python/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="true" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="HTMpandaVis" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -203,6 +238,7 @@
     </configuration>
     <list>
       <item itemvalue="Python.pandaVis" />
+      <item itemvalue="Python.2dObjectModelling" />
       <item itemvalue="Python.gui2" />
       <item itemvalue="Python.hotgym" />
       <item itemvalue="Python.tt" />
