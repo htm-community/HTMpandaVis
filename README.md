@@ -46,7 +46,7 @@ python3 -m pip install pysimplegui
 
 (sudo apt-get install python3-tk - this is probably not needed, not sure)
 
-git clone https://github.com/Zbysekz/HTMpandaVis.git
+git clone https://github.com/htm-community/HTMpandaVis.git
 ```
 # How to run
 
