@@ -122,7 +122,8 @@ class cApp(ShowBase):
                     self.HTMObjects[obj].layers[l].UpdateState(
                         serverObjs[obj].layers[l].activeColumns,
                         serverObjs[obj].layers[l].winnerCells,
-                        serverObjs[obj].layers[l].predictiveCells
+                        serverObjs[obj].layers[l].predictiveCells,
+                        newStep = True
                     )
 
         if self.client.proximalDataArrived:

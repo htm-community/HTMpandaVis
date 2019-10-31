@@ -2,20 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e58d671a-8a4c-470c-a966-efade912648d" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/HTMpandaVis.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/HTMpandaVis.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/Colors.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/Colors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PandaVis/gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/gui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/descriptionWindow.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/descriptionWindow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/gui/test.ui" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/guiDefaults.ini" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/guiDefaults.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/interaction.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/interaction.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/objects/cell.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/cell.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/PandaVis/objects/corticalColumn.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/corticalColumn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PandaVis/objects/input.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/input.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PandaVis/objects/inputBit.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/inputBit.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/objects/layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/objects/layer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PandaVis/pandaVis.py" beforeDir="false" afterPath="$PROJECT_DIR$/PandaVis/pandaVis.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../htm-2d-object-modeling/python/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../htm-2d-object-modeling/python/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../htm-2d-object-modeling/python/modelParams.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/../htm-2d-object-modeling/python/modelParams.cfg" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -31,12 +29,12 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../htm-2d-object-modeling" />
   </component>
   <component name="ProjectId" id="1RkfjENb9fsJ0T4dZzL07xpG520" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../htm.core/bindings/py/cpp_src/bindings/algorithms/py_TemporalMemory.cpp" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../htm.core/py/htm/examples/mnist.py" />
     <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="PyConsoleOptionsProvider">
@@ -237,13 +235,13 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.pandaVis" />
       <item itemvalue="Python.2dObjectModelling" />
+      <item itemvalue="Python.pandaVis" />
+      <item itemvalue="Python.aaa" />
       <item itemvalue="Python.gui2" />
+      <item itemvalue="Python.gui" />
       <item itemvalue="Python.hotgym" />
       <item itemvalue="Python.tt" />
-      <item itemvalue="Python.aaa" />
-      <item itemvalue="Python.gui" />
     </list>
     <recent_temporary>
       <list>

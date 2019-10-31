@@ -88,17 +88,23 @@ class cCorticalColumn:
         self.lod.addSwitch(lodDistance, 0.0)
         self.lod.addSwitch(lodDistance2, lodDistance)
 
-    def UpdateState(self, bursting, activeColumn, oneOfCellActive,oneOfCellPredictive):
+    def UpdateState(self, bursting, activeColumn, oneOfCellActive, oneOfCellPredictive, oneOfCellCorrectlyPredicted, oneOfCellFalsePredicted):
 
         self.bursting = bursting
         self.active = activeColumn
         self.oneOfCellActive = oneOfCellActive
         self.oneOfCellPredictive = oneOfCellPredictive
+        self.oneOfCellCorrectlyPredicted = oneOfCellCorrectlyPredicted
+        self.oneOfCellFalsePredicted = oneOfCellFalsePredicted
 
         # update column box color (for LOD in distance look)
-        if self.oneOfCellActive and self.oneOfCellPredictive:
+        if self.oneOfCellCorrectlyPredicted:
             COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED
+            self.__columnBox.setColor(col)
+        elif self.oneOfCellFalsePredicted:
+            COL_COLUMN_ONEOFCELLFALSE_PREDICTED.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLFALSE_PREDICTED
             self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
             COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
@@ -207,7 +213,7 @@ class cCorticalColumn:
         for cell in self.cells:
             cell.setTransparency(transparency)
 
-        self.UpdateState(self.bursting, self.active, self.oneOfCellActive, self.oneOfCellPredictive)
+        self.UpdateState(self.bursting, self.active, self.oneOfCellActive, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalsePredicted)
 
     def DestroyProximalSynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
@@ -223,5 +229,6 @@ class cCorticalColumn:
         txt += "Active:" + str(self.active)+"\n"
         txt += "One of cell is active:" + str(self.oneOfCellActive)+"\n"
         txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
-
+        txt += "One of cell correctly predicted:" + str(self.oneOfCellCorrectlyPredicted) + "\n"
+        txt += "One of cell false predicted:" + str(self.oneOfCellFalsePredicted) + "\n"
         return txt

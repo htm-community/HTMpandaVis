@@ -3,9 +3,9 @@ import PySimpleGUI as sg
 class cDescriptionWindow:
     def __init__(self, winPos):
 
-        txt=["first line\nsecond line"]
+        txt=[""]
 
-        layout = [[sg.Multiline(default_text=txt, size=(35, 10), key="multiline")]]
+        layout = [[sg.Multiline(default_text=txt, size=(35, 20), key="multiline")]]
 
         self.window = sg.Window('Description', keep_on_top=True, location=winPos).Layout(layout)
 

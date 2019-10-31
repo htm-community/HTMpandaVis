@@ -257,8 +257,9 @@ class cInteraction:
 
             desc = "path:\n"
             desc += str(self.gui.focusedPath)+"\n"
+            desc += "\n---CELL:\n"
             desc += self.gui.focusedCell.getDescription()
-            desc += "column:\n"
+            desc += "\n---COLUMN:\n"
             desc += self.gui.focusedCell.column.getDescription()
 
             self.gui.UpdateDescription(desc)
