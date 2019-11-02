@@ -39,12 +39,9 @@ python3 setup.py install --user --force
 
 Install prerequisities & clone pandaVis
 ```
-python3 -m pip install numpy
-python3 -m pip install matplotlib
-python3 -m pip install panda3d
-python3 -m pip install pysimplegui 
+sudo apt-get install python3-tk
 
-(sudo apt-get install python3-tk - this is probably not needed, not sure)
+python3 -m pip install -r requirements.txt
 
 git clone https://github.com/htm-community/HTMpandaVis.git
 ```
