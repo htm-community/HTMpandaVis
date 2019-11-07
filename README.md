@@ -29,8 +29,11 @@ That is also main idea, anybody can take his own current computation script, sli
 
 # How to install on Linux
 
-Python 3.6 is recommended.
-Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) for other installation instructions)
+Python >3.6 is recommended.
+Also using one of the python environment managers is recommended,
+like [Anaconda](https://www.anaconda.com/distribution/)
+
+Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) if you need other installation instructions)
 ```
 sudo apt-get install cmake
 git clone https://github.com/htm-community/htm.core.git

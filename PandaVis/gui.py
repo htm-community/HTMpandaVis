@@ -36,10 +36,12 @@ class cGUI:
         self.init = False
 
         try:
-            with open('guiDefaults.ini', 'r') as file:
+            with open('guiValues.ini', 'r') as file:
                 self.defaults = json.loads(file.read())
         except:
-            self.defaults = {}
+            # guiValues doesn't exist, probably is this the first time run
+            with open('guiDefaults.ini', 'r') as file:
+                self.defaults = json.loads(file.read())
 
 
         self.showProximalSynapses = self.getDefault("proximalSynapses")
@@ -209,7 +211,8 @@ class cGUI:
     def Terminate(self): #  event when app exit
         self.retrieveDefaults()
         try:
-            with open('guiDefaults.ini', 'w') as file:
+            with open('guiValues.ini', 'w') as file:
                 file.write(json.dumps(self.defaults))
         except:
             self.defaults = {}
+            print("Wasn't able to save defaults into file guiValues.ini !!")
