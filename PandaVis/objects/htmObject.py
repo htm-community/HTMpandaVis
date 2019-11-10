@@ -27,7 +27,7 @@ class cHTM:
         self.__gfx = None
         self.__node = None
         self.name = name
-
+        self.gfxCreationFinished = False
         self.__node = NodePath(PandaNode(name))
 
     def CreateLayer(self, name, nOfColumnsPerLayer, nOfCellsPerColumn):
@@ -71,4 +71,14 @@ class cHTM:
             ly.updateWireframe(value)
         for i in self.inputs.values():
             i.updateWireframe(value)
-        
+    def CreateGfxProgressively(self):
+
+        allFinished = True
+        for ly in self.layers:
+            if not self.layers[ly].gfxCreationFinished:
+                self.layers[ly].CreateGfxProgressively()
+                allFinished = False
+
+        if allFinished:
+            self.gfxCreationFinished = True
+

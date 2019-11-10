@@ -34,6 +34,7 @@ class cGUI:
 
         self.ResetCommands()
         self.init = False
+        self.terminating = False
 
         try:
             with open('guiValues.ini', 'r') as file:
@@ -209,6 +210,7 @@ class cGUI:
         self.cmdStepForward = False
 
     def Terminate(self): #  event when app exit
+        self.terminating = True
         self.retrieveDefaults()
         try:
             with open('guiValues.ini', 'w') as file:

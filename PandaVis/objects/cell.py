@@ -72,6 +72,9 @@ class cCell:
         self.active = active
         self.predictive = predictive
         self.focused = focused
+        if self.focused:# if we have this cell focused, modify LOD to long distance
+            self.column.LODUpdateSwitch_long()
+
         self.presynapticFocus = presynapticFocus
         
         if self.focused:
@@ -101,6 +104,7 @@ class cCell:
 
     def resetFocus(self):
         self.UpdateState(self.active, self.predictive, False)  #reset focus
+        self.column.LODUpdateSwitch_normal()
 
     def setPresynapticFocus(self):
         self.UpdateState(self.active, self.predictive, self.focused, True)  # no change except presynaptic focus

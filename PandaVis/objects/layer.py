@@ -3,19 +3,28 @@
 
 from objects.corticalColumn import cCorticalColumn
 from panda3d.core import NodePath, PandaNode, TextNode
-
+from time import perf_counter
 
 class cLayer:
     ONE_ROW_SIZE = 150
-    
+    MAX_CREATED_COL_PER_CYCLE = 50
+
     def __init__(self, name, nOfColumns, nOfCellsPerColumn):
 
         self.name = name
         self.nOfCellsPerColumn = nOfCellsPerColumn
         self.corticalColumns = []
         for i in range(nOfColumns):
+            print("column:"+str(i))
             c = cCorticalColumn(name, nOfCellsPerColumn)
             self.corticalColumns.append(c)
+
+        # for creation of GFX
+        self.offset_y = 0
+        self.offset_idx = 0
+        self.offset_row = 0
+        self.loader = None
+        self.gfxCreationFinished = False
 
     def CreateGfx(self, loader):
 
@@ -23,10 +32,10 @@ class cLayer:
             PandaNode(self.name)
         )  # TextNode('layerText')#loader.loadModel("models/teapot")
 
-        text = TextNode("Layer text node")
-        text.setText(self.name)
+        self.text = TextNode("Layer text node")
+        self.text.setText(self.name)
 
-        textNodePath = self.__node.attachNewNode(text)
+        textNodePath = self.__node.attachNewNode(self.text)
         textNodePath.setScale(2)
 
         textNodePath.setPos(0, -5, 0)
@@ -34,21 +43,42 @@ class cLayer:
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(1, 1, 1)
 
-        y = 0
-        idx = 0
-        row = 0
+        self.loader = loader
+        self.offset_y = 0
+        self.offset_idx = 0
+        self.offset_row = 0
+
+
+    def CreateGfxProgressively(self):
+        createdCols = 0
+        currentlyCreatedCols = 0
+        allFinished = True
         for c in self.corticalColumns:
-            c.CreateGfx(loader, idx)
-            idx += 1
-            c.getNode().setPos(row * 10, y, 0)
-            y += 3
+            if not c.gfxCreated:
+                c.CreateGfx(self.loader, self.offset_idx)
+                self.offset_idx += 1
+                c.getNode().setPos(self.offset_row * 10, self.offset_y, 0)
+                self.offset_y += 3
 
-            if y > cLayer.ONE_ROW_SIZE:
-                y = 0
-                row += 1
-            c.getNode().reparentTo(self.__node)
+                if self.offset_y > cLayer.ONE_ROW_SIZE:
+                    self.offset_y = 0
+                    self.offset_row += 1
+                c.getNode().reparentTo(self.__node)
+                c.gfxCreated = True
+                currentlyCreatedCols += 1
 
-        return
+                if currentlyCreatedCols >= cLayer.MAX_CREATED_COL_PER_CYCLE:
+                    allFinished = False
+                    break
+            else:
+                createdCols += 1
+
+        if allFinished:
+            if not self.gfxCreationFinished:
+                self.gfxCreationFinished = True
+                self.text.setText(self.name)
+        else:
+            self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.corticalColumns)))+" %)")
 
     def UpdateState(self, activeColumns, winnerCells, predictiveCells, newStep = False):
 
@@ -58,15 +88,13 @@ class cLayer:
         
         for colID in range(len(self.corticalColumns)):# go through all columns    
             oneOfCellPredictive=False
-            oneOfCellActive = False
             oneOfCellCorrectlyPredicted = False
             oneOfCellFalsePredicted = False
 
             for cellID in range(len(self.corticalColumns[colID].cells)): # for each cell in column
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in winnerCells
                 isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
-                if isActive:
-                    oneOfCellActive=True
+
                 if isPredictive:
                     oneOfCellPredictive=True
 
@@ -80,7 +108,7 @@ class cLayer:
                     oneOfCellFalsePredicted = True
 
 
-            self.corticalColumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellActive = oneOfCellActive,oneOfCellPredictive=oneOfCellPredictive,
+            self.corticalColumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
                                                     oneOfCellCorrectlyPredicted=oneOfCellCorrectlyPredicted, oneOfCellFalsePredicted=oneOfCellFalsePredicted)
         
         
