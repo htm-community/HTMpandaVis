@@ -33,7 +33,7 @@ class cCell:
         self.presynapticFocus = False
         self.focused = False
         self.correctlyPredicted = False
-        self.falsePredicted = False
+        self.falselyPredicted = False
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
 
@@ -61,13 +61,13 @@ class cCell:
             if self.predictive:#was predicted last step
                 if active:#now active
                     self.correctlyPredicted = True
-                    self.falsePredicted = False
+                    self.falselyPredicted = False
                 else:
                     self.correctlyPredicted = False
-                    self.falsePredicted = True
+                    self.falselyPredicted = True
             else: # wasn't predictive previous step, so can't be correct or false
                 self.correctlyPredicted = False
-                self.falsePredicted = False
+                self.falselyPredicted = False
 
         self.active = active
         self.predictive = predictive
@@ -82,8 +82,8 @@ class cCell:
         elif self.correctlyPredicted:
             col = COL_CELL_CORRECTLY_PREDICTED
             self.__node.setColor(col)
-        elif self.falsePredicted:
-            col = COL_CELL_FALSE_PREDICTED
+        elif self.falselyPredicted:
+            col = COL_CELL_FALSELY_PREDICTED
             self.__node.setColor(col)
         elif self.predictive:
             col = COL_CELL_PREDICTIVE
@@ -193,14 +193,20 @@ class cCell:
                 nodePath = self.__node.attachNewNode(node)
                 
                 nodePath.setRenderModeThickness(2)
-                nodePath.setColor(COL_DISTAL_SYNAPSES) # color of the line)# color of the line
+
+                # color of the line
+                if presynCell.active:
+                    nodePath.setColor(COL_DISTAL_SYNAPSES_ACTIVE)
+                else:
+                    nodePath.setColor(COL_DISTAL_SYNAPSES_INACTIVE)
+
 
     def getDescription(self):
         txt = ""
         txt += "Active:" + str(self.active)+"\n"
         txt += "Predictive:" + str(self.predictive)+"\n"
         txt += "Correctly predicted:" + str(self.correctlyPredicted)+"\n"
-        txt += "False predicted:" + str(self.falsePredicted)+"\n"
+        txt += "Falsely predicted:" + str(self.falselyPredicted)+"\n"
 
         return txt
 

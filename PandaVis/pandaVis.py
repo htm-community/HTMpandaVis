@@ -85,7 +85,7 @@ class cApp(ShowBase):
                 if not obj in self.HTMObjects:  # its new HTM object
                     printLog("New HTM object arrived! Name:" + str(obj))
                     # create HTM object
-                    newObj = cHTM(self.loader, obj)
+                    newObj = cHTM(self, self.loader, obj)
                     newObj.getNode().reparentTo(self.render)
 
                     # create inputs

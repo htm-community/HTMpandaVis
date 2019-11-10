@@ -42,7 +42,7 @@ class cCorticalColumn:
         self.active = False
         self.oneOfCellPredictive = False
         self.oneOfCellCorrectlyPredicted = False
-        self.oneOfCellFalsePredicted = False
+        self.oneOfCellFalselyPredicted = False
 
     def CreateGfx(self, loader, idx):
         #                __node
@@ -108,22 +108,22 @@ class cCorticalColumn:
     def LODUpdateSwitch_normal(self):
         self.LODUpdateSwitch(self.lodDistance1Stored, self.lodDistance2Stored)
 
-    def UpdateState(self, bursting, activeColumn, oneOfCellPredictive, oneOfCellCorrectlyPredicted, oneOfCellFalsePredicted):
+    def UpdateState(self, bursting, activeColumn, oneOfCellPredictive, oneOfCellCorrectlyPredicted, oneOfCellFalselyPredicted):
 
         self.bursting = bursting
         self.active = activeColumn
         self.oneOfCellPredictive = oneOfCellPredictive
         self.oneOfCellCorrectlyPredicted = oneOfCellCorrectlyPredicted
-        self.oneOfCellFalsePredicted = oneOfCellFalsePredicted
+        self.oneOfCellFalselyPredicted = oneOfCellFalselyPredicted
 
         # update column box color (for LOD in distance look)
         if self.oneOfCellCorrectlyPredicted:
             COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED
             self.__columnBox.setColor(col)
-        elif self.oneOfCellFalsePredicted:
-            COL_COLUMN_ONEOFCELLFALSE_PREDICTED.setW(self.transparency)
-            col = COL_COLUMN_ONEOFCELLFALSE_PREDICTED
+        elif self.oneOfCellFalselyPredicted:
+            COL_COLUMN_ONEOFCELLFALSELY_PREDICTED.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLFALSELY_PREDICTED
             self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
             COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
@@ -225,14 +225,18 @@ class cCorticalColumn:
                     nodePath = self.__cellsNodePath.attachNewNode(node)
                     
                     nodePath.setRenderModeThickness(2)
-                    nodePath.setColor(COL_PROXIMAL_SYNAPSES)# color of the line
+                    # color of the line
+                    if inputs[inputObjects[i]].inputBits[y].active:
+                        nodePath.setColor(COL_PROXIMAL_SYNAPSES_ACTIVE)
+                    else:
+                        nodePath.setColor(COL_PROXIMAL_SYNAPSES_INACTIVE)
 
     def setTransparency(self, transparency):
         self.transparency = transparency
         for cell in self.cells:
             cell.setTransparency(transparency)
 
-        self.UpdateState(self.bursting, self.active, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalsePredicted)
+        self.UpdateState(self.bursting, self.active, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalselyPredicted)
 
     def DestroyProximalSynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
@@ -248,5 +252,5 @@ class cCorticalColumn:
         txt += "Active:" + str(self.active)+"\n"
         txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
         txt += "One of cell correctly predicted:" + str(self.oneOfCellCorrectlyPredicted) + "\n"
-        txt += "One of cell false predicted:" + str(self.oneOfCellFalsePredicted) + "\n"
+        txt += "One of cell false predicted:" + str(self.oneOfCellFalselyPredicted) + "\n"
         return txt

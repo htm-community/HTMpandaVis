@@ -12,12 +12,14 @@ from Colors import *
 
 
 class cInputBit:
-    def __init__(self):
-        self.state = False  # False if random.randint(0,1)==0 else True
+    def __init__(self, parentObj):
+        self.__parentObj = parentObj
+        self.active = False  # False if random.randint(0,1)==0 else True
         self.focused = False
         self.__node = None
         self.__proximalFocus = False
         self.__distalFocus = False
+        self.__prevActive = False
 
     def CreateGfx(self, loader, idx):
 
@@ -42,17 +44,26 @@ class cInputBit:
         self.__proximalFocus = proximalFocus
         self.__distalFocus = distalFocus
 
-        if self.focused:
-            self.__node.setColor(IN_BIT_FOCUSED)
-        elif self.state:
-            self.__node.setColor(IN_BIT_ACTIVE)
-        elif self.__distalFocus:
-            self.__node.setColor(IN_BIT_DISTAL_FOCUS)
-        elif self.__proximalFocus:
-            self.__node.setColor(IN_BIT_PROXIMAL_FOCUS)
+        if self.__parentObj.base.gui.showInputOverlapWithPrevStep:# special overlap colors
+            if self.__prevActive and self.active:
+                self.__node.setColor(IN_BIT_OVERLAPPING)
+            elif self.active:
+                self.__node.setColor(IN_BIT_ACTIVE)
+            else:
+                self.__node.setColor(IN_BIT_INACTIVE)
         else:
-            self.__node.setColor(IN_BIT_INACTIVE)
+            if self.focused:
+                self.__node.setColor(IN_BIT_FOCUSED)
+            elif self.active:
+                self.__node.setColor(IN_BIT_ACTIVE)
+            elif self.__distalFocus:
+                self.__node.setColor(IN_BIT_DISTAL_FOCUS)
+            elif self.__proximalFocus:
+                self.__node.setColor(IN_BIT_PROXIMAL_FOCUS)
+            else:
+                self.__node.setColor(IN_BIT_INACTIVE)
 
+        self.__prevActive = self.active
         # self.__node.setRenderModeThickness(5)
         #self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
 
@@ -79,6 +90,6 @@ class cInputBit:
             
     def getDescription(self):
         txt = ""
-        txt += "State:" + str(self.state)+"\n"
+        txt += "Active:" + str(self.active)+"\n"
 
         return txt

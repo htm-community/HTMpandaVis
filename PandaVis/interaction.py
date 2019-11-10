@@ -117,7 +117,6 @@ class cInteraction:
         lens.setFov(60)
         lens.setAspectRatio(width / height)
 
-        lens.setFar(500.0)
         # lens.setFilmSize(width,height)
         # lens.setFocalLength(self.FOCAL_LENGTH)
         self.base.cam.node().setLens(lens)
@@ -298,7 +297,10 @@ class cInteraction:
 
         if self.gui.LODChanged and len(self.base.HTMObjects) > 0:
             self.gui.LODChanged = False
-            print("LOD changed:"+str(self.gui.LODvalue1)+" "+str(self.gui.LODvalue2))
+            printLog("LOD changed:"+str(self.gui.LODvalue1)+" "+str(self.gui.LODvalue2))
+
+            self.base.cam.node().getLens().setFar(self.gui.LODvalue2)
+
             for obj in self.base.HTMObjects.values():
                 for ly in obj.layers.values():
                     ly.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)

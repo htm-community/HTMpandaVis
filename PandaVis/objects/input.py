@@ -5,15 +5,16 @@ from objects.inputBit import cInputBit
 
 
 class cInput:
-    def __init__(self, name, count, rows):
+    def __init__(self, baseApp, name, count, rows):
 
+        self.base = baseApp
         self.name = name
         self.count = count
         self.rows = rows
 
         self.inputBits = []
         for i in range(count):
-            c = cInputBit()
+            c = cInputBit(self)
             self.inputBits.append(c)
 
     def CreateGfx(self, loader):
@@ -73,10 +74,10 @@ class cInput:
         self.__textValNodePath.getNode(0).setText(text)
 
         for i in range(len(self.inputBits)):
-            self.inputBits[i].state = False
+            self.inputBits[i].active = False
 
         for i in data:  # data contains indicies of what bits are "ON"
-            self.inputBits[i].state = True
+            self.inputBits[i].active = True
 
         for i in range(len(self.inputBits)):  # update all states
             self.inputBits[i].UpdateState()

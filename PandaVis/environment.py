@@ -40,7 +40,7 @@ class cEnvironment:
         lens.setAspectRatio(width / height)
         # lens.setFilmSize(width,height)
         # lens.setFocalLength(self.FOCAL_LENGTH)
-        lens.setFar(500.0)
+        lens.setFar(50000.0)
         self.base.cam.node().setLens(lens)
 
         self.base.camera.setPos(100, -80, 0)

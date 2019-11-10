@@ -18,8 +18,9 @@ class cHTM:
     layerOffset = 0
     inputOffset = 0
 
-    def __init__(self, loader, name):
+    def __init__(self, baseApp, loader, name):
 
+        self.__base = baseApp
         self.__loader = loader
         self.layers = {}
         self.inputs = {}
@@ -45,7 +46,7 @@ class cHTM:
 
     def CreateInput(self, name, count, rows):
 
-        i = cInput(name, count, rows)
+        i = cInput(self.__base, name, count, rows)
         self.inputs[name] = i
 
         i.CreateGfx(self.__loader)

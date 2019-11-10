@@ -14,34 +14,36 @@ data = {'active cell': ['patch', COL_CELL_ACTIVE],
         'focused cell': ['patch', COL_CELL_FOCUSED],
         'inactive cell': ['patch', COL_CELL_INACTIVE],
         'correctly predicted cell': ['patch', COL_CELL_CORRECTLY_PREDICTED],
-        'false predicted cell': ['patch', COL_CELL_FALSE_PREDICTED],
+        'falsely predicted cell': ['patch', COL_CELL_FALSELY_PREDICTED],
         'active column': ['patch', COL_COLUMN_ACTIVE],
         'column with one of cells correctly predicted': ['patch', COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED],
+        'column with one of cells falsely predicted': ['patch', COL_COLUMN_ONEOFCELLFALSELY_PREDICTED],
         'column with one of cells predictive': ['patch', COL_COLUMN_ONEOFCELLPREDICTIVE],
         'inactive column': ['patch', COL_COLUMN_INACTIVE],
-        'proximal synapses': ['line', COL_PROXIMAL_SYNAPSES],
-        'distal synapses': ['line', COL_DISTAL_SYNAPSES],
-
+        'overlapping input bit': ['patch', IN_BIT_OVERLAPPING],
+        'inactive proximal synapses': ['line', COL_PROXIMAL_SYNAPSES_INACTIVE],
+        'active proximal synapses': ['line', COL_PROXIMAL_SYNAPSES_ACTIVE],
+        'inactive distal synapses': ['line', COL_DISTAL_SYNAPSES_INACTIVE],
+        'active distal synapses': ['line', COL_DISTAL_SYNAPSES_ACTIVE],
         }
 
 
 class cLegendWindow:
-    def __init__(self,showProximalSynapses, showDistalSynapses, winPos):
+    def __init__(self,showProximalSynapses, showDistalSynapses, showInputOverlapWithPrevStep, winPos):
         # ------------------------------- PASTE YOUR MATPLOTLIB CODE HERE -----------------------------
         self.figure_canvas_agg = None
 
-        self.figlegend = pylab.figure(figsize=(4, 3))
+        self.figlegend = pylab.figure(figsize=(4, 4))
 
-        print(showProximalSynapses)
-        print(showDistalSynapses)
         objs = []
         descriptions = []
         itemCnt = 0
         for i in data.keys():
 
             # don't show colors that can't be shown by settings
-            if (not showProximalSynapses and data[i][1] == COL_PROXIMAL_SYNAPSES) or \
-                    (not showDistalSynapses and data[i][1] == COL_DISTAL_SYNAPSES):
+            if (not showProximalSynapses and (data[i][1] == COL_PROXIMAL_SYNAPSES_INACTIVE or data[i][1] == COL_PROXIMAL_SYNAPSES_ACTIVE)) or \
+                (not showDistalSynapses and (data[i][1] == COL_DISTAL_SYNAPSES_INACTIVE or data[i][1] == COL_DISTAL_SYNAPSES_ACTIVE)) or \
+                (not showInputOverlapWithPrevStep and data[i][1] == IN_BIT_OVERLAPPING):
                 print("deleted:" + str(i) + ":" + str(data[i][1]))
                 continue
 
@@ -61,7 +63,10 @@ class cLegendWindow:
 
         self.figure_x, self.figure_y, self.figure_w, self.figure_h = self.figlegend.bbox.bounds
 
-        layout = [[sg.Canvas(background_color='#92aa9d', size=(self.figure_w, self.figure_h), key='canvas')]]
+        layout = [[sg.Canvas(background_color='#92aa9d', size=(self.figure_w, self.figure_h), key='canvas')],
+                  [sg.Text('WSAD, Shift, Ctrl to move around')],
+                  [sg.Text('SPACEBAR toggle for boost speed')],
+                  [sg.Text('ESC to cancel focus')]]
 
         self.window = sg.Window('Legend', keep_on_top=True, location=winPos).Layout(layout)
 

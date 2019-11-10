@@ -47,6 +47,7 @@ class cGUI:
 
         self.showProximalSynapses = self.getDefault("proximalSynapses")
         self.showDistalSynapses = self.getDefault("distalSynapses")
+        self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
 
         self.wireframeChanged = True
         self.wireframe = self.getDefault("wireFrame")
@@ -70,6 +71,7 @@ class cGUI:
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
                   [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Wireframe mode', key="wireFrame", enable_events=True)],
                   [sg.Checkbox('Show legend', key="legend", enable_events=True)],
                   [sg.Checkbox('Show description', key="desc", enable_events=True)],
@@ -132,7 +134,7 @@ class cGUI:
             print("Legend updated")
             if self.legend is not None:
                 self.legend.window.close()
-            self.legend = cLegendWindow(self.showProximalSynapses, self.showDistalSynapses, self.getDefault("legendWinPos"))
+            self.legend = cLegendWindow(self.showProximalSynapses, self.showDistalSynapses, self.showInputOverlapWithPrevStep, self.getDefault("legendWinPos"))
 
             self.legend.window.Read(timeout=0)
             self.legend.draw_figure()
@@ -170,8 +172,7 @@ class cGUI:
                     self.LODvalue2 = values["LODSlider2"]
 
                     self.LODChanged = True
-            elif event == "proximalSynapses" or event == "distalSynapses":
-                #self.legend.Update(values["proximalSynapses"], values["distalSynapses"])# update legend
+            elif event in ["proximalSynapses", "distalSynapses", "inputPrevStepOverlap"]:
                 self.updateLegend = True
 
             elif event == "legend":
@@ -193,6 +194,7 @@ class cGUI:
 
             self.showProximalSynapses = values["proximalSynapses"]
             self.showDistalSynapses = values["distalSynapses"]
+            self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
 
             self.showLegend = values["legend"]
             self.showDescription = values["desc"]

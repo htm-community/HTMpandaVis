@@ -87,7 +87,7 @@ class cLayer:
         for colID in range(len(self.corticalColumns)):# go through all columns    
             oneOfCellPredictive=False
             oneOfCellCorrectlyPredicted = False
-            oneOfCellFalsePredicted = False
+            oneOfCellFalselyPredicted = False
 
             for cellID in range(len(self.corticalColumns[colID].cells)): # for each cell in column
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in winnerCells
@@ -102,12 +102,12 @@ class cLayer:
                 if self.corticalColumns[colID].cells[cellID].correctlyPredicted:
                     oneOfCellCorrectlyPredicted = True
 
-                if self.corticalColumns[colID].cells[cellID].falsePredicted:
-                    oneOfCellFalsePredicted = True
+                if self.corticalColumns[colID].cells[cellID].falselyPredicted:
+                    oneOfCellFalselyPredicted = True
 
 
             self.corticalColumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
-                                                    oneOfCellCorrectlyPredicted=oneOfCellCorrectlyPredicted, oneOfCellFalsePredicted=oneOfCellFalsePredicted)
+                                                    oneOfCellCorrectlyPredicted=oneOfCellCorrectlyPredicted, oneOfCellFalselyPredicted=oneOfCellFalselyPredicted)
         
         
 #        for cellID in winnerCells:
