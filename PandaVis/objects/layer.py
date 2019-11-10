@@ -3,7 +3,6 @@
 
 from objects.corticalColumn import cCorticalColumn
 from panda3d.core import NodePath, PandaNode, TextNode
-from time import perf_counter
 
 class cLayer:
     ONE_ROW_SIZE = 150
@@ -15,7 +14,6 @@ class cLayer:
         self.nOfCellsPerColumn = nOfCellsPerColumn
         self.corticalColumns = []
         for i in range(nOfColumns):
-            print("column:"+str(i))
             c = cCorticalColumn(name, nOfCellsPerColumn)
             self.corticalColumns.append(c)
 

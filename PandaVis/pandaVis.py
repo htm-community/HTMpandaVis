@@ -53,9 +53,6 @@ class cApp(ShowBase):
             visApp = self
         )
 
-        #self.guiThread = threading.Thread(target = self.gui.update)
-        #self.guiThread.start()
-
         self.client = SocketClient()
         self.client.setGui(self.gui)
         
@@ -69,6 +66,7 @@ class cApp(ShowBase):
        
         self.HTMObjects = {}
         self.allHTMobjectsCreated = False
+        self.oneOfObjectsCreationFinished = False
 
         self.gfxCreationThread= threading.Thread(target=self.gfxCreationWorker, args=())
 
