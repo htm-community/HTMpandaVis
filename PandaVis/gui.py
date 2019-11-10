@@ -34,12 +34,15 @@ class cGUI:
 
         self.ResetCommands()
         self.init = False
+        self.terminating = False
 
         try:
-            with open('guiDefaults.ini', 'r') as file:
+            with open('guiValues.ini', 'r') as file:
                 self.defaults = json.loads(file.read())
         except:
-            self.defaults = {}
+            # guiValues doesn't exist, probably is this the first time run
+            with open('guiDefaults.ini', 'r') as file:
+                self.defaults = json.loads(file.read())
 
 
         self.showProximalSynapses = self.getDefault("proximalSynapses")
@@ -110,8 +113,10 @@ class cGUI:
                     print("Default not for:"+str(o))
 
         self.defaults["mainWinPos"] = self.window.current_location()
-        self.defaults["legendWinPos"] = self.legend.window.current_location()
-        self.defaults["descWinPos"] = self.description.window.current_location()
+        if self.legend is not None:
+            self.defaults["legendWinPos"] = self.legend.window.current_location()
+        if self.description is not None:
+            self.defaults["descWinPos"] = self.description.window.current_location()
 
     def update(self):
 
@@ -205,9 +210,11 @@ class cGUI:
         self.cmdStepForward = False
 
     def Terminate(self): #  event when app exit
+        self.terminating = True
         self.retrieveDefaults()
         try:
-            with open('guiDefaults.ini', 'w') as file:
+            with open('guiValues.ini', 'w') as file:
                 file.write(json.dumps(self.defaults))
         except:
             self.defaults = {}
+            print("Wasn't able to save defaults into file guiValues.ini !!")

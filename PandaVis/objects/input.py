@@ -84,9 +84,9 @@ class cInput:
     def getNode(self):
         return self.__node
 
-    def resetHighlight(self):
+    def resetProximalFocus(self):
         for i in self.inputBits:
-            i.resetHighLight()
+            i.resetProximalFocus()
     
     def updateWireframe(self, value):
         

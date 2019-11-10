@@ -1,1 +1,3 @@
 *.pyc
+PandaVis/guiValues.ini
+.idea/

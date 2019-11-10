@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from direct.showbase.ShowBase import ShowBase
@@ -11,7 +10,7 @@ from objects.htmObject import cHTM
 from gui import cGUI # Graphical user interface
 from environment import cEnvironment # handles everything about the environment
 from interaction import cInteraction # handles keys, user interaction etc..
-import threading
+from direct.stdpy import threading
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -69,10 +68,15 @@ class cApp(ShowBase):
         self.accept(self.win.getWindowEvent(), self.interaction.onWindowEvent)
        
         self.HTMObjects = {}
+        self.allHTMobjectsCreated = False
+
+        self.gfxCreationThread= threading.Thread(target=self.gfxCreationWorker, args=())
+
 
     def updateHTMstate(self):
-        if self.client.stateDataArrived:
+        if self.client.stateDataArrived or self.oneOfObjectsCreationFinished:
             self.client.stateDataArrived = False
+            self.oneOfObjectsCreationFinished = False
             printLog("Data change! Updating HTM state", verbosityMedium)
 
             serverObjs = self.client.serverData.HTMObjects
@@ -88,6 +92,7 @@ class cApp(ShowBase):
 
                     # create inputs
                     for inp in serverObjs[obj].inputs:
+                        printLog("Creating input: " + str(inp), verbosityHigh)
                         newObj.CreateInput(
                             name=inp,
                             count=serverObjs[obj].inputs[inp].count,
@@ -95,7 +100,7 @@ class cApp(ShowBase):
                         )
                     # create layers
                     for lay in serverObjs[obj].layers:
-                        print(lay)
+                        printLog("Creating layer: " + str(lay), verbosityHigh)
                         newObj.CreateLayer(
                             name=lay,
                             nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,
@@ -105,10 +110,13 @@ class cApp(ShowBase):
                         )
 
                     self.HTMObjects[obj] = newObj
+
+                    self.gfxCreationThread.start()
                 # update HTM object
 
                 # go through all incoming inputs
                 for i in serverObjs[obj].inputs:  # dict
+                    printLog("Updating state of input: " + str(i), verbosityHigh)
                     # find matching input in local structure
 
                     self.HTMObjects[obj].inputs[i].UpdateState(
@@ -118,12 +126,15 @@ class cApp(ShowBase):
 
                 # go through all incoming layers
                 for l in serverObjs[obj].layers:  # dict
-                    # find matching layer in local structure
-                    self.HTMObjects[obj].layers[l].UpdateState(
-                        serverObjs[obj].layers[l].activeColumns,
-                        serverObjs[obj].layers[l].winnerCells,
-                        serverObjs[obj].layers[l].predictiveCells
-                    )
+                    if self.HTMObjects[obj].layers[l].gfxCreationFinished:
+                        printLog("Updating state of layer: " + str(l), verbosityHigh)
+                        # find matching layer in local structure
+                        self.HTMObjects[obj].layers[l].UpdateState(
+                            serverObjs[obj].layers[l].activeColumns,
+                            serverObjs[obj].layers[l].winnerCells,
+                            serverObjs[obj].layers[l].predictiveCells,
+                            newStep = True
+                        )
 
         if self.client.proximalDataArrived:
             printLog("Proximal data arrived, updating synapses!", verbosityMedium)
@@ -182,16 +193,33 @@ class cApp(ShowBase):
                             serverObjs[obj].layers[l].distalInputs
                         )
 
+
     def update(self, task):
 
         self.gui.update()
         self.interaction.Update()
         self.updateHTMstate()
-        # update environment - e.g. controlling drawing style in runtime
 
         return task.cont
 
+    def gfxCreationWorker(self):
 
+        while(True):
+            # finishing HTM objects creation on the run
+            if not self.allHTMobjectsCreated:
+                allFinished = True
+                for obj in self.HTMObjects:
+                    if not self.HTMObjects[obj].gfxCreationFinished:
+                        allFinished = False
+                        self.HTMObjects[obj].CreateGfxProgressively()
+
+                        if self.HTMObjects[obj].gfxCreationFinished:  # it just finished GFX creation
+                            self.oneOfObjectsCreationFinished = True
+                if allFinished:
+                    self.allHTMobjectsCreated = True
+                    break
+            if self.gui.terminating:
+                break
 
 if __name__ == "__main__":
     app = cApp()

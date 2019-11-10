@@ -32,10 +32,17 @@ class cCorticalColumn:
             n = cCell(self)
             self.cells.append(n)
 
-        self.oneOfCellActive = False
-        self.bursting = False
         self.parentLayer = nameOfLayer
         self.transparency = 1.0
+        self.gfxCreated = False
+        self.LodDistance1Stored = 100.0
+        self.LodDistance2Stored = 5000.0
+
+        self.bursting = False
+        self.active = False
+        self.oneOfCellPredictive = False
+        self.oneOfCellCorrectlyPredicted = False
+        self.oneOfCellFalsePredicted = False
 
     def CreateGfx(self, loader, idx):
         #                __node
@@ -83,30 +90,48 @@ class cCorticalColumn:
             z += 1+CELL_OFFSET
             n.getNode().reparentTo(self.__cellsNodePath)
 
+        self.gfxCreated = True
+
     def LODUpdateSwitch(self, lodDistance, lodDistance2):
+        self.lodDistance1Stored = lodDistance
+        self.lodDistance2Stored = lodDistance2
+
         self.lod.clearSwitches()
         self.lod.addSwitch(lodDistance, 0.0)
         self.lod.addSwitch(lodDistance2, lodDistance)
 
-    def UpdateState(self, bursting, activeColumn, oneOfCellActive,oneOfCellPredictive):
+    def LODUpdateSwitch_long(self):
+        self.lod.clearSwitches()
+        self.lod.addSwitch(self.lodDistance2Stored, 0.0)
+        self.lod.addSwitch(self.lodDistance2Stored, self.lodDistance2Stored)
+
+    def LODUpdateSwitch_normal(self):
+        self.LODUpdateSwitch(self.lodDistance1Stored, self.lodDistance2Stored)
+
+    def UpdateState(self, bursting, activeColumn, oneOfCellPredictive, oneOfCellCorrectlyPredicted, oneOfCellFalsePredicted):
 
         self.bursting = bursting
         self.active = activeColumn
-        self.oneOfCellActive = oneOfCellActive
         self.oneOfCellPredictive = oneOfCellPredictive
+        self.oneOfCellCorrectlyPredicted = oneOfCellCorrectlyPredicted
+        self.oneOfCellFalsePredicted = oneOfCellFalsePredicted
 
         # update column box color (for LOD in distance look)
-        if self.oneOfCellActive and self.oneOfCellPredictive:
+        if self.oneOfCellCorrectlyPredicted:
             COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED
+            self.__columnBox.setColor(col)
+        elif self.oneOfCellFalsePredicted:
+            COL_COLUMN_ONEOFCELLFALSE_PREDICTED.setW(self.transparency)
+            col = COL_COLUMN_ONEOFCELLFALSE_PREDICTED
             self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
             COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLPREDICTIVE
             self.__columnBox.setColor(col)
-        elif self.oneOfCellActive:
-            COL_COLUMN_ONEOFCELLACTIVE.setW(self.transparency)
-            col = COL_COLUMN_ONEOFCELLACTIVE
+        elif self.active:
+            COL_COLUMN_ACTIVE.setW(self.transparency)
+            col = COL_COLUMN_ACTIVE
             self.__columnBox.setColor(col)
         else:
             COL_COLUMN_INACTIVE.setW(self.transparency)
@@ -158,7 +183,7 @@ class cCorticalColumn:
 
         for i in range(len(synapsesDiv)):  # for each input object
 
-            inputs[inputObjects[i]].resetHighlight()  # clear color highlight
+            inputs[inputObjects[i]].resetProximalFocus()  # clear color highlight
 
             for y in range(
                 len(synapsesDiv[i])
@@ -184,7 +209,7 @@ class cCorticalColumn:
                     # highlight
                     inputs[inputObjects[i]].inputBits[
                         y
-                    ].setHighlight()  # highlight connected bits
+                    ].setProximalFocus()  # highlight connected bits
 
                     prim = GeomLines(Geom.UHStatic)
                     prim.addVertices(0, 1)
@@ -207,7 +232,7 @@ class cCorticalColumn:
         for cell in self.cells:
             cell.setTransparency(transparency)
 
-        self.UpdateState(self.bursting, self.active, self.oneOfCellActive, self.oneOfCellPredictive)
+        self.UpdateState(self.bursting, self.active, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalsePredicted)
 
     def DestroyProximalSynapses(self):
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
@@ -221,7 +246,7 @@ class cCorticalColumn:
     def getDescription(self):
         txt = ""
         txt += "Active:" + str(self.active)+"\n"
-        txt += "One of cell is active:" + str(self.oneOfCellActive)+"\n"
         txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
-
+        txt += "One of cell correctly predicted:" + str(self.oneOfCellCorrectlyPredicted) + "\n"
+        txt += "One of cell false predicted:" + str(self.oneOfCellFalsePredicted) + "\n"
         return txt

@@ -32,6 +32,8 @@ class cCell:
         self.predictive = False
         self.presynapticFocus = False
         self.focused = False
+        self.correctlyPredicted = False
+        self.falsePredicted = False
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
 
@@ -52,17 +54,36 @@ class cCell:
 
         self.UpdateState(False, False)
 
-    def UpdateState(self, active, predictive, focused=False, presynapticFocus=False):
-        
+    def UpdateState(self, active, predictive, focused=False, presynapticFocus=False, newStep = False):
+
+        # determine if previous prediction was correct or not
+        if newStep:
+            if self.predictive:#was predicted last step
+                if active:#now active
+                    self.correctlyPredicted = True
+                    self.falsePredicted = False
+                else:
+                    self.correctlyPredicted = False
+                    self.falsePredicted = True
+            else: # wasn't predictive previous step, so can't be correct or false
+                self.correctlyPredicted = False
+                self.falsePredicted = False
+
         self.active = active
         self.predictive = predictive
         self.focused = focused
+        if self.focused:# if we have this cell focused, modify LOD to long distance
+            self.column.LODUpdateSwitch_long()
+
         self.presynapticFocus = presynapticFocus
         
         if self.focused:
             self.__node.setColor(COL_CELL_FOCUSED)
-        elif self.predictive and self.active:
+        elif self.correctlyPredicted:
             col = COL_CELL_CORRECTLY_PREDICTED
+            self.__node.setColor(col)
+        elif self.falsePredicted:
+            col = COL_CELL_FALSE_PREDICTED
             self.__node.setColor(col)
         elif self.predictive:
             col = COL_CELL_PREDICTIVE
@@ -79,19 +100,16 @@ class cCell:
             self.__node.setColor(col)
 
     def setFocus(self):
-        print("setFocus")
         self.UpdateState(self.active, self.predictive, True)  #no change except focus
 
     def resetFocus(self):
-        print("resetFocus")
         self.UpdateState(self.active, self.predictive, False)  #reset focus
+        self.column.LODUpdateSwitch_normal()
 
     def setPresynapticFocus(self):
-        print("setPresyn")
         self.UpdateState(self.active, self.predictive, self.focused, True)  # no change except presynaptic focus
 
     def resetPresynapticFocus(self):
-        print("resetPresyn")
         self.UpdateState(self.active, self.predictive, self.focused, False)  # reset presynaptic focus
 
     def setTransparency(self, transparency):
@@ -181,6 +199,8 @@ class cCell:
         txt = ""
         txt += "Active:" + str(self.active)+"\n"
         txt += "Predictive:" + str(self.predictive)+"\n"
+        txt += "Correctly predicted:" + str(self.correctlyPredicted)+"\n"
+        txt += "False predicted:" + str(self.falsePredicted)+"\n"
 
         return txt
 

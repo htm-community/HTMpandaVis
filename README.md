@@ -29,8 +29,11 @@ That is also main idea, anybody can take his own current computation script, sli
 
 # How to install on Linux
 
-Python 3.6 is recommended.
-Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) for other installation instructions)
+Python >3.6 is recommended.
+Also using one of the python environment managers is recommended,
+like [Anaconda](https://www.anaconda.com/distribution/)
+
+Install htm.core (here building from source, see [repo readme](https://github.com/htm-community/htm.core) if you need other installation instructions)
 ```
 sudo apt-get install cmake
 git clone https://github.com/htm-community/htm.core.git
@@ -39,12 +42,9 @@ python3 setup.py install --user --force
 
 Install prerequisities & clone pandaVis
 ```
-python3 -m pip install numpy
-python3 -m pip install matplotlib
-python3 -m pip install panda3d
-python3 -m pip install pysimplegui 
+sudo apt-get install python3-tk
 
-(sudo apt-get install python3-tk - this is probably not needed, not sure)
+python3 -m pip install -r requirements.txt
 
 git clone https://github.com/htm-community/HTMpandaVis.git
 ```
@@ -61,3 +61,6 @@ Run client - pandaVis tool
 cd HTMpandaVis/PandaVis
 python3 pandaVis.py
 ```
+
+# How to use with your computation script
+TODO soon

@@ -173,7 +173,7 @@ class cInteraction:
             print(self.myHandler.getEntries())
             pickedObj = pickedObj.findNetTag("clickable")
             print(pickedObj)
-            if not pickedObj.isEmpty():
+            if not pickedObj.isEmpty() and self.base.allHTMobjectsCreated:
                 self.HandlePickedObject(pickedObj)
 
 
@@ -257,8 +257,9 @@ class cInteraction:
 
             desc = "path:\n"
             desc += str(self.gui.focusedPath)+"\n"
+            desc += "\n---CELL:\n"
             desc += self.gui.focusedCell.getDescription()
-            desc += "column:\n"
+            desc += "\n---COLUMN:\n"
             desc += self.gui.focusedCell.column.getDescription()
 
             self.gui.UpdateDescription(desc)
@@ -269,7 +270,11 @@ class cInteraction:
     def Update(self):
         
         self.UpdateCameraMovement()
-        
+
+        # check that all HTM objects are loaded completely, only then you can call methods on them
+        if not self.base.allHTMobjectsCreated:
+            return
+
         if self.gui.wireframeChanged and len(self.base.HTMObjects) > 0:
             self.gui.wireframeChanged = False
             if not self.gui.wireframe:
