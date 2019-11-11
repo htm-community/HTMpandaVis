@@ -63,4 +63,63 @@ python3 pandaVis.py
 ```
 
 # How to use with your computation script
-TODO soon
+1. **import packages for pandaVis**
+```
+from pandaComm.pandaServer import PandaServer
+from pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
+```
+2. **Create pandaServer intance and start it at init of your script**
+```
+pandaServer = PandaServer() # globally for example
+
+#in init phase of your script
+pandaServer.Start()
+BuildPandaSystem()
+```
+3. **Announce that script finished**
+
+Call this method when your script is terminated. Needed to ensure that threads in pandaServer and the client itself are quit properly.
+```
+pandaServer.MainThreadQuitted()
+```
+4. **Build your HTM system**
+
+There is need to specify what is your HTM system architecture. It is simple done by using python dicts like following:
+```
+def BuildPandaSystem():
+    global serverData
+    serverData = ServerData()
+    serverData.HTMObjects["HTM1"] = dataHTMObject()
+    serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
+    serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
+
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(
+        default_parameters["sp"]["columnCount"],
+        default_parameters["tm"]["cellsPerColumn"],
+    )
+    serverData.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
+        "SL_Consumption",
+        "SL_TimeOfDay",
+    ]
+```
+This means that we have 1 *HTM object* containing one *SensoryLayer* and two inputs *SL_Consumption* and *SL_TimeOfDay* connected to layer as proximal inputs.
+
+5. **Update values each cycle**
+
+Fill in values that you want to visualize in each execution cycle, like:
+```
+serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
+serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.size
+# and so on for other objects....
+
+pandaServer.NewStateDataReady()# say to pandaServer that it has new data
+```
+6. **Block your execution like following, if you want to control the run/stepping from pandaVis**
+```
+while not pandaServer.runInLoop and not pandaServer.runOneStep:
+    pass
+pandaServer.runOneStep = False
+```
+See example in "HotgymExample" folder for implementation.
+Also see "/pandaComm/dataExchange.py" file for details what can be sent to client.
