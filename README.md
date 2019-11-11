@@ -1,7 +1,7 @@
 # HTMpandaVis
 **See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
 
-Screenshots for visualization of the "hotgym" example
+Screenshots for visualization of the [2D recognition project](https://discourse.numenta.org/t/2d-object-recognition-project/5465/92)
 ![img1](img1.png)
 ![img2](img2.png)
 ![img2](img3.png)
