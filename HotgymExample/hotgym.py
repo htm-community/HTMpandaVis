@@ -189,8 +189,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaServer.NewStateDataReady()
 
         print("One step finished")
-        #while not pandaServer.runInLoop and not pandaServer.runOneStep:
-        #    pass
+        while not pandaServer.runInLoop and not pandaServer.runOneStep:
+            pass
         pandaServer.runOneStep = False
         print("Proceeding one step...")
 
