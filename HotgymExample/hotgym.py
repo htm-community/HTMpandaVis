@@ -2,6 +2,7 @@ import csv
 import datetime
 import os
 import numpy as np
+import random
 import math
 
 # Panda vis
@@ -13,56 +14,54 @@ from htm.encoders.rdse import RDSE, RDSE_Parameters
 from htm.encoders.date import DateEncoder
 from htm.bindings.algorithms import SpatialPooler
 from htm.bindings.algorithms import TemporalMemory
-from htm.algorithms.anomaly_likelihood import AnomalyLikelihood
+from htm.algorithms.anomaly_likelihood import \
+    AnomalyLikelihood  # FIXME use TM.anomaly instead, but it gives worse results than the py.AnomalyLikelihood now
 from htm.bindings.algorithms import Predictor
+
+from htm.algorithms.anomaly import Anomaly
 
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
 
-pandaServer = PandaServer()
-
 default_parameters = {
-  # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
- 'enc': {
-      "value" :
-         {'resolution': 0.88, 'size': 700, 'sparsity': 0.02},
-      "time": 
-         {'timeOfDay': (30, 1), 'weekend': 21}
- },
- 'predictor': {'sdrc_alpha': 0.1},
- 'sp': {'boostStrength': 3.0,
-        'columnCount': 1638,
-        'localAreaDensity': 0.04395604395604396,
-        'potentialPct': 0.85,
-        'synPermActiveInc': 0.04,
-        'synPermConnected': 0.13999999999999999,
-        'synPermInactiveDec': 0.006},
- 'tm': {'activationThreshold': 17,
-        'cellsPerColumn': 13,
-        'initialPerm': 0.21,
-        'maxSegmentsPerCell': 128,
-        'maxSynapsesPerSegment': 64,
-        'minThreshold': 10,
-        'newSynapseCount': 32,
-        'permanenceDec': 0.1,
-        'permanenceInc': 0.1},
- 'anomaly': {
-   'likelihood': 
-       {#'learningPeriod': int(math.floor(self.probationaryPeriod / 2.0)),
-        #'probationaryPeriod': self.probationaryPeriod-default_parameters["anomaly"]["likelihood"]["learningPeriod"],
-        'probationaryPct': 0.1,
-        'reestimationPeriod': 100} #These settings are copied from NAB
- }
+    # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
+    'enc': {
+        "value":
+            {'resolution': 0.88, 'size': 700, 'sparsity': 0.02},
+        "time":
+            {'timeOfDay': (30, 1), 'weekend': 21}
+    },
+    'predictor': {'sdrc_alpha': 0.1},
+    'sp': {'boostStrength': 3.0,
+           'columnCount': 1638,
+           'localAreaDensity': 0.04395604395604396,
+           'potentialPct': 0.85,
+           'synPermActiveInc': 0.04,
+           'synPermConnected': 0.13999999999999999,
+           'synPermInactiveDec': 0.006},
+    'tm': {'activationThreshold': 17,
+           'cellsPerColumn': 13,
+           'initialPerm': 0.21,
+           'maxSegmentsPerCell': 128,
+           'maxSynapsesPerSegment': 64,
+           'minThreshold': 10,
+           'newSynapseCount': 32,
+           'permanenceDec': 0.1,
+           'permanenceInc': 0.1},
+    'anomaly': {
+        'likelihood':
+            {  # 'learningPeriod': int(math.floor(self.probationaryPeriod / 2.0)),
+                # 'probationaryPeriod': self.probationaryPeriod-default_parameters["anomaly"]["likelihood"]["learningPeriod"],
+                'probationaryPct': 0.1,
+                'reestimationPeriod': 100}  # These settings are copied from NAB
+    }
 }
 
+pandaServer = PandaServer()
 
 def main(parameters=default_parameters, argv=None, verbose=True):
-
-    modelParams = parameters
-
     if verbose:
         import pprint
-
         print("Parameters:")
         pprint.pprint(parameters, indent=4)
         print("")
@@ -78,17 +77,15 @@ def main(parameters=default_parameters, argv=None, verbose=True):
             records.append(record)
 
     # Make the Encoders.  These will convert input data into binary representations.
-    dateEncoder = DateEncoder(
-        timeOfDay=parameters["enc"]["time"]["timeOfDay"],
-        weekend=parameters["enc"]["time"]["weekend"],
-    )
+    dateEncoder = DateEncoder(timeOfDay=parameters["enc"]["time"]["timeOfDay"],
+                              weekend=parameters["enc"]["time"]["weekend"])
 
     scalarEncoderParams = RDSE_Parameters()
     scalarEncoderParams.size = parameters["enc"]["value"]["size"]
     scalarEncoderParams.sparsity = parameters["enc"]["value"]["sparsity"]
     scalarEncoderParams.resolution = parameters["enc"]["value"]["resolution"]
     scalarEncoder = RDSE(scalarEncoderParams)
-    encodingWidth = dateEncoder.size + scalarEncoder.size
+    encodingWidth = (dateEncoder.size + scalarEncoder.size)
     enc_info = Metrics([encodingWidth], 999999999)
 
     # Make the HTM.  SpatialPooler & TemporalMemory & associated tools.
@@ -104,9 +101,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         synPermActiveInc=spParams["synPermActiveInc"],
         synPermConnected=spParams["synPermConnected"],
         boostStrength=spParams["boostStrength"],
-        wrapAround=True,
+        wrapAround=True
     )
-
     sp_info = Metrics(sp.getColumnDimensions(), 999999999)
 
     tmParams = parameters["tm"]
@@ -122,23 +118,19 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         permanenceDecrement=tmParams["permanenceDec"],
         predictedSegmentDecrement=0.0,
         maxSegmentsPerCell=tmParams["maxSegmentsPerCell"],
-        maxSynapsesPerSegment=tmParams["maxSynapsesPerSegment"],
+        maxSynapsesPerSegment=tmParams["maxSynapsesPerSegment"]
     )
     tm_info = Metrics([tm.numberOfCells()], 999999999)
 
     # setup likelihood, these settings are used in NAB
     anParams = parameters["anomaly"]["likelihood"]
-    probationaryPeriod = int(
-        math.floor(float(anParams["probationaryPct"]) * len(records))
-    )
+    probationaryPeriod = int(math.floor(float(anParams["probationaryPct"]) * len(records)))
     learningPeriod = int(math.floor(probationaryPeriod / 2.0))
-    anomaly_history = AnomalyLikelihood(
-        learningPeriod=learningPeriod,
-        estimationSamples=probationaryPeriod - learningPeriod,
-        reestimationPeriod=anParams["reestimationPeriod"],
-    )
+    anomaly_history = AnomalyLikelihood(learningPeriod=learningPeriod,
+                                        estimationSamples=probationaryPeriod - learningPeriod,
+                                        reestimationPeriod=anParams["reestimationPeriod"])
 
-    predictor = Predictor(steps=[1, 5], alpha=parameters["predictor"]["sdrc_alpha"])
+    predictor = Predictor(steps=[1, 5], alpha=parameters["predictor"]['sdrc_alpha'])
     predictor_resolution = 1
 
     # Iterate through every datum in the dataset, record the inputs & outputs.
@@ -171,7 +163,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         sp_info.addData(activeColumns)
 
         # Execute Temporal Memory algorithm over active mini-columns.
-        #tm.compute(activeColumns, learn=True)
+        # tm.compute(activeColumns, learn=True)
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
 
@@ -197,37 +189,36 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaServer.NewStateDataReady()
 
         print("One step finished")
-        while not pandaServer.runInLoop and not pandaServer.runOneStep:
-            pass
+        #while not pandaServer.runInLoop and not pandaServer.runOneStep:
+        #    pass
         pandaServer.runOneStep = False
         print("Proceeding one step...")
 
         # ------------------HTMpandaVis----------------------
 
+        tm.activateCells(activeColumns, True)
 
-        tm.activateCells(activeColumns,True)
-        
         tm_info.addData(tm.getActiveCells().flatten())
 
         activeCells = tm.getActiveCells()
-        print("ACTIVE"+str(len(activeCells.sparse)))
+        print("ACTIVE" + str(len(activeCells.sparse)))
 
         # Predict what will happen, and then train the predictor based on what just happened.
-        pdf = predictor.infer(count, tm.getActiveCells())
+        pdf = predictor.infer(tm.getActiveCells())
         for n in (1, 5):
             if pdf[n]:
                 predictions[n].append(np.argmax(pdf[n]) * predictor_resolution)
             else:
-                predictions[n].append(float("nan"))
-        predictor.learn(
-            count, tm.getActiveCells(), int(consumption / predictor_resolution)
-        )
+                predictions[n].append(float('nan'))
 
-        anomalyLikelihood = anomaly_history.anomalyProbability(consumption, tm.anomaly)
-        anomaly.append(tm.anomaly)
+        rawAnomaly = Anomaly.calculateRawAnomaly(activeColumns,
+                                                 tm.cellsToColumns(predictiveCellsSDR))
+        print("aaa" + str(rawAnomaly))
+        anomalyLikelihood = anomaly_history.anomalyProbability(consumption, rawAnomaly) # need to use different calculation as we are not calling sp.compute(..)
+        anomaly.append(rawAnomaly)
         anomalyProb.append(anomalyLikelihood)
 
-
+        predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
 
     # Print information & statistics about the state of the HTM.
     print("Encoded Input", enc_info)
@@ -242,22 +233,21 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     # Shift the predictions so that they are aligned with the input they predict.
     for n_steps, pred_list in predictions.items():
         for x in range(n_steps):
-            pred_list.insert(0, float("nan"))
+            pred_list.insert(0, float('nan'))
             pred_list.pop()
 
     # Calculate the predictive accuracy, Root-Mean-Squared
     accuracy = {1: 0, 5: 0}
     accuracy_samples = {1: 0, 5: 0}
+
     for idx, inp in enumerate(inputs):
-        for (
-            n
-        ) in predictions:  # For each [N]umber of time steps ahead which was predicted.
+        for n in predictions:  # For each [N]umber of time steps ahead which was predicted.
             val = predictions[n][idx]
             if not math.isnan(val):
                 accuracy[n] += (inp - val) ** 2
                 accuracy_samples[n] += 1
     for n in sorted(predictions):
-        accuracy[n] = (accuracy[n] / accuracy_samples[n]) ** 0.5
+        accuracy[n] = (accuracy[n] / accuracy_samples[n]) ** .5
         print("Predictive Error (RMS)", n, "steps ahead:", accuracy[n])
 
     # Show info about the anomaly (mean & std)
@@ -276,39 +266,19 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         plt.title("Predictions")
         plt.xlabel("Time")
         plt.ylabel("Power Consumption")
-        plt.plot(
-            np.arange(len(inputs)),
-            inputs,
-            "red",
-            np.arange(len(inputs)),
-            predictions[1],
-            "blue",
-            np.arange(len(inputs)),
-            predictions[5],
-            "green",
-        )
-        plt.legend(
-            labels=(
-                "Input",
-                "1 Step Prediction, Shifted 1 step",
-                "5 Step Prediction, Shifted 5 steps",
-            )
-        )
+        plt.plot(np.arange(len(inputs)), inputs, 'red',
+                 np.arange(len(inputs)), predictions[1], 'blue',
+                 np.arange(len(inputs)), predictions[5], 'green', )
+        plt.legend(labels=('Input', '1 Step Prediction, Shifted 1 step', '5 Step Prediction, Shifted 5 steps'))
 
         plt.subplot(2, 1, 2)
         plt.title("Anomaly Score")
         plt.xlabel("Time")
         plt.ylabel("Power Consumption")
         inputs = np.array(inputs) / max(inputs)
-        plt.plot(
-            np.arange(len(inputs)),
-            inputs,
-            "red",
-            np.arange(len(inputs)),
-            anomaly,
-            "blue",
-        )
-        plt.legend(labels=("Input", "Anomaly Score"))
+        plt.plot(np.arange(len(inputs)), inputs, 'red',
+                 np.arange(len(inputs)), anomaly, 'blue', )
+        plt.legend(labels=('Input', 'Anomaly Score'))
         plt.show()
 
     return -accuracy[5]
