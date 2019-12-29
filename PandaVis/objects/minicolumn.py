@@ -25,7 +25,7 @@ def printLog(txt, verbosity=verbosityLow):
         print(txt)
 
 
-class cCorticalColumn:
+class cMinicolumn:
     def __init__(self, nameOfLayer, nOfCellsPerColumn):
         self.cells = []
         for i in range(nOfCellsPerColumn):

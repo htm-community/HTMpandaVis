@@ -145,10 +145,10 @@ class cCell:
                 cellID = presynCellID % layer.nOfCellsPerColumn
                 colID = (int)(presynCellID / layer.nOfCellsPerColumn)
 
-                if colID < len(layer.corticalColumns):
-                    presynCell = layer.corticalColumns[colID].cells[cellID] # it is within current layer
+                if colID < len(layer.minicolumns):
+                    presynCell = layer.minicolumns[colID].cells[cellID] # it is within current layer
                 else: # it is for external distal input
-                    cellID = presynCellID - len(layer.corticalColumns)*layer.nOfCellsPerColumn
+                    cellID = presynCellID - len(layer.minicolumns)*layer.nOfCellsPerColumn
                     for inputObj in inputObjects:
 
                         if inputObj in HTMObject.inputs:
@@ -159,12 +159,12 @@ class cCell:
                                 cellID -= HTMObject.inputs[inputObj].count
 
                         elif inputObj in HTMObject.layers:
-                            if cellID < HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].corticalColumns):
+                            if cellID < HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].minicolumns):
 
-                                presynCell = HTMObject.layers[inputObj].corticalColumns[(int)(cellID / HTMObject.layers[inputObj].nOfCellsPerColumn)].cells[cellID % HTMObject.layers[inputObj].nOfCellsPerColumn]
+                                presynCell = HTMObject.layers[inputObj].minicolumns[(int)(cellID / HTMObject.layers[inputObj].nOfCellsPerColumn)].cells[cellID % HTMObject.layers[inputObj].nOfCellsPerColumn]
                                 break
                             else: # not this one
-                                cellID -= HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].corticalColumns)
+                                cellID -= HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].minicolumns)
 
                 presynCell.setPresynapticFocus()  # highlight presynapctic cells
         

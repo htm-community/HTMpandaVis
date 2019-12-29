@@ -154,7 +154,7 @@ class cApp(ShowBase):
                         proximalSynapses = syn[1]
 
                         # update columns with proximal Synapses
-                        self.HTMObjects[obj].layers[l].corticalColumns[
+                        self.HTMObjects[obj].layers[l].minicolumns[
                             columnID
                         ].CreateProximalSynapses(
                             serverObjs[obj].layers[l].proximalInputs,
@@ -182,7 +182,7 @@ class cApp(ShowBase):
                         distalSynapses = syn[2]
 
                         # update columns with proximal Synapses
-                        self.HTMObjects[obj].layers[l].corticalColumns[
+                        self.HTMObjects[obj].layers[l].minicolumns[
                             columnID
                         ].cells[cellID].CreateDistalSynapses(
                             self.HTMObjects[obj],

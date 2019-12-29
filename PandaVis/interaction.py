@@ -225,7 +225,7 @@ class cInteraction:
 
             HTMObj = self.base.HTMObjects[focusedHTMObject]
             Layer = HTMObj.layers[focusedLayer]
-            newCellFocus = Layer.corticalColumns[parentId].cells[thisId]
+            newCellFocus = Layer.minicolumns[parentId].cells[thisId]
             self.focusedPath = [focusedHTMObject, focusedLayer]
 
 
@@ -237,8 +237,8 @@ class cInteraction:
             self.gui.focusedCell = self.focusedCell
             self.gui.focusedPath = self.focusedPath
             
-            self.gui.columnID = Layer.corticalColumns.index(self.gui.focusedCell.column)
-            self.gui.cellID = Layer.corticalColumns[self.gui.columnID].cells.index(self.gui.focusedCell)
+            self.gui.columnID = Layer.minicolumns.index(self.gui.focusedCell.column)
+            self.gui.cellID = Layer.minicolumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
             # -------- proximal and distal synapses -----------------------
             if self.gui.showProximalSynapses:

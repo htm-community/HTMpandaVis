@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from objects.corticalColumn import cCorticalColumn
+from objects.minicolumn import cMinicolumn
 from panda3d.core import NodePath, PandaNode, TextNode
 
 class cLayer:
@@ -12,10 +12,10 @@ class cLayer:
 
         self.name = name
         self.nOfCellsPerColumn = nOfCellsPerColumn
-        self.corticalColumns = []
+        self.minicolumns = []
         for i in range(nOfColumns):
-            c = cCorticalColumn(name, nOfCellsPerColumn)
-            self.corticalColumns.append(c)
+            c = cMinicolumn(name, nOfCellsPerColumn)
+            self.minicolumns.append(c)
 
         # for creation of GFX
         self.offset_y = 0
@@ -51,7 +51,7 @@ class cLayer:
         createdCols = 0
         currentlyCreatedCols = 0
         allFinished = True
-        for c in self.corticalColumns:
+        for c in self.minicolumns:
             if not c.gfxCreated:
                 c.CreateGfx(self.loader, self.offset_idx)
                 self.offset_idx += 1
@@ -76,67 +76,67 @@ class cLayer:
                 self.gfxCreationFinished = True
                 self.text.setText(self.name)
         else:
-            self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.corticalColumns)))+" %)")
+            self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.minicolumns)))+" %)")
 
     def UpdateState(self, activeColumns, winnerCells, predictiveCells, newStep = False):
 
-        # print("COLUMNS SIZE:"+str(len(self.corticalColumns)))
+        # print("COLUMNS SIZE:"+str(len(self.minicolumns)))
         print("winners:"+str(winnerCells))
         print("predictive:"+str(predictiveCells))
         
-        for colID in range(len(self.corticalColumns)):# go through all columns    
+        for colID in range(len(self.minicolumns)):# go through all columns
             oneOfCellPredictive=False
             oneOfCellCorrectlyPredicted = False
             oneOfCellFalselyPredicted = False
 
-            for cellID in range(len(self.corticalColumns[colID].cells)): # for each cell in column
+            for cellID in range(len(self.minicolumns[colID].cells)): # for each cell in column
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in winnerCells
                 isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
 
                 if isPredictive:
                     oneOfCellPredictive=True
 
-                self.corticalColumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive, newStep=newStep)
+                self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive, newStep=newStep)
 
                 #get correct/false prediction info
-                if self.corticalColumns[colID].cells[cellID].correctlyPredicted:
+                if self.minicolumns[colID].cells[cellID].correctlyPredicted:
                     oneOfCellCorrectlyPredicted = True
 
-                if self.corticalColumns[colID].cells[cellID].falselyPredicted:
+                if self.minicolumns[colID].cells[cellID].falselyPredicted:
                     oneOfCellFalselyPredicted = True
 
 
-            self.corticalColumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
+            self.minicolumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
                                                     oneOfCellCorrectlyPredicted=oneOfCellCorrectlyPredicted, oneOfCellFalselyPredicted=oneOfCellFalselyPredicted)
         
         
 #        for cellID in winnerCells:
-#            self.corticalColumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = False)
+#            self.minicolumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = False)
 #        
 #        for cellID in predictiveCells:
-#            self.corticalColumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = True)
+#            self.minicolumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = True)
         
 
     def updateWireframe(self, value):
-        for col in self.corticalColumns:
+        for col in self.minicolumns:
             col.updateWireframe(value)
             
     def getNode(self):
         return self.__node
 
     def DestroyProximalSynapses(self):
-        for col in self.corticalColumns:
+        for col in self.minicolumns:
             col.DestroyProximalSynapses()
     
     def DestroyDistalSynapses(self):
-        for col in self.corticalColumns:
+        for col in self.minicolumns:
             col.DestroyDistalSynapses()
             
     def setTransparency(self,transparency):
         self.transparency = transparency
-        for col in self.corticalColumns:
+        for col in self.minicolumns:
             col.setTransparency(transparency)
 
     def LODUpdateSwitch(self, lodDistance, lodDistance2):
-        for col in self.corticalColumns:
+        for col in self.minicolumns:
             col.LODUpdateSwitch(lodDistance, lodDistance2)
