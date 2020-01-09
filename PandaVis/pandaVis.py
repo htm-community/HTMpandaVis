@@ -77,6 +77,7 @@ class cApp(ShowBase):
             self.oneOfObjectsCreationFinished = False
             printLog("Data change! Updating HTM state", verbosityMedium)
 
+            self.gui.setIteration(self.client.serverData.iterationNo)
             serverObjs = self.client.serverData.HTMObjects
 
             # if we get HTM data objects, iterate over received data
@@ -129,9 +130,11 @@ class cApp(ShowBase):
                         # find matching layer in local structure
                         self.HTMObjects[obj].layers[l].UpdateState(
                             serverObjs[obj].layers[l].activeColumns,
+                            serverObjs[obj].layers[l].activeCells,
                             serverObjs[obj].layers[l].winnerCells,
                             serverObjs[obj].layers[l].predictiveCells,
-                            newStep = True
+                            newStep = True,
+                            showPredictionCorrectness=self.gui.showPredictionCorrectness
                         )
 
         if self.client.proximalDataArrived:

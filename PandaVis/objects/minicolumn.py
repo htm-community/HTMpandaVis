@@ -32,6 +32,7 @@ class cMinicolumn:
             n = cCell(self)
             self.cells.append(n)
 
+        self.idx = -1
         self.parentLayer = nameOfLayer
         self.transparency = 1.0
         self.gfxCreated = False
@@ -55,6 +56,8 @@ class cMinicolumn:
         )  # NodePath(PandaNode('column'))# loader.loadModel("models/box")
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(1, 1, 1)
+
+        self.idx = idx
 
         # self.__node.setTag('clickable',str(idx))#to be able to click on it
 
@@ -125,6 +128,10 @@ class cMinicolumn:
             COL_COLUMN_ONEOFCELLFALSELY_PREDICTED.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLFALSELY_PREDICTED
             self.__columnBox.setColor(col)
+        elif self.active and self.oneOfCellPredictive:
+            COL_COLUMN_ACTIVE_AND_ONEOFCELLPREDICTIVE.setW(self.transparency)
+            col = COL_COLUMN_ACTIVE_AND_ONEOFCELLPREDICTIVE
+            self.__columnBox.setColor(col)
         elif self.oneOfCellPredictive:
             COL_COLUMN_ONEOFCELLPREDICTIVE.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLPREDICTIVE
@@ -133,6 +140,7 @@ class cMinicolumn:
             COL_COLUMN_ACTIVE.setW(self.transparency)
             col = COL_COLUMN_ACTIVE
             self.__columnBox.setColor(col)
+
         else:
             COL_COLUMN_INACTIVE.setW(self.transparency)
             col = COL_COLUMN_INACTIVE
@@ -249,6 +257,7 @@ class cMinicolumn:
 
     def getDescription(self):
         txt = ""
+        txt += "ID:" + str(self.idx) + "\n"
         txt += "Active:" + str(self.active)+"\n"
         txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
         txt += "One of cell correctly predicted:" + str(self.oneOfCellCorrectlyPredicted) + "\n"
