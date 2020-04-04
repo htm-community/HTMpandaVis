@@ -213,7 +213,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
         rawAnomaly = Anomaly.calculateRawAnomaly(activeColumns,
                                                  tm.cellsToColumns(predictiveCellsSDR))
-        print("aaa" + str(rawAnomaly))
+        print("rawAnomaly:" + str(rawAnomaly))
         anomalyLikelihood = anomaly_history.anomalyProbability(consumption, rawAnomaly) # need to use different calculation as we are not calling sp.compute(..)
         anomaly.append(rawAnomaly)
         anomalyProb.append(anomalyLikelihood)
