@@ -44,9 +44,9 @@ Install prerequisities & clone pandaVis
 ```
 sudo apt-get install python3-tk
 
-python3 -m pip install -r requirements.txt
-
 git clone https://github.com/htm-community/HTMpandaVis.git
+
+python3 -m pip install -r requirements.txt
 ```
 # How to run
 
