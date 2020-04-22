@@ -10,7 +10,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Colors import *
 
 data = {'active cell': ['patch', COL_CELL_ACTIVE],
+        'winner cell': ['patch', COL_CELL_WINNER],
         'predictive cell': ['patch', COL_CELL_PREDICTIVE],
+        'active&predictive cell': ['patch', COL_CELL_ACTIVE_AND_PREDICTIVE],
         'focused cell': ['patch', COL_CELL_FOCUSED],
         'inactive cell': ['patch', COL_CELL_INACTIVE],
         'correctly predicted cell': ['patch', COL_CELL_CORRECTLY_PREDICTED],
@@ -19,6 +21,7 @@ data = {'active cell': ['patch', COL_CELL_ACTIVE],
         'column with one of cells correctly predicted': ['patch', COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED],
         'column with one of cells falsely predicted': ['patch', COL_COLUMN_ONEOFCELLFALSELY_PREDICTED],
         'column with one of cells predictive': ['patch', COL_COLUMN_ONEOFCELLPREDICTIVE],
+        'active column & with one of cells predictive': ['patch', COL_COLUMN_ACTIVE_AND_ONEOFCELLPREDICTIVE],
         'inactive column': ['patch', COL_COLUMN_INACTIVE],
         'overlapping input bit': ['patch', IN_BIT_OVERLAPPING],
         'inactive proximal synapses': ['line', COL_PROXIMAL_SYNAPSES_INACTIVE],
@@ -29,7 +32,7 @@ data = {'active cell': ['patch', COL_CELL_ACTIVE],
 
 
 class cLegendWindow:
-    def __init__(self,showProximalSynapses, showDistalSynapses, showInputOverlapWithPrevStep, winPos):
+    def __init__(self,showProximalSynapses, showDistalSynapses, showInputOverlapWithPrevStep, winPos, showPredictionCorrectness):
         # ------------------------------- PASTE YOUR MATPLOTLIB CODE HERE -----------------------------
         self.figure_canvas_agg = None
 
@@ -41,9 +44,10 @@ class cLegendWindow:
         for i in data.keys():
 
             # don't show colors that can't be shown by settings
-            if (not showProximalSynapses and (data[i][1] == COL_PROXIMAL_SYNAPSES_INACTIVE or data[i][1] == COL_PROXIMAL_SYNAPSES_ACTIVE)) or \
-                (not showDistalSynapses and (data[i][1] == COL_DISTAL_SYNAPSES_INACTIVE or data[i][1] == COL_DISTAL_SYNAPSES_ACTIVE)) or \
-                (not showInputOverlapWithPrevStep and data[i][1] == IN_BIT_OVERLAPPING):
+            if (not showProximalSynapses and (i in ['inactive proximal synapses','active proximal synapses']) or \
+                not showDistalSynapses and (i in ['inactive distal synapses','active distal synapses']) or \
+                not showInputOverlapWithPrevStep and i == 'overlapping input bit') or \
+                not showPredictionCorrectness and (i in ['correctly predicted cell','falsely predicted cell','column with one of cells correctly predicted', 'column with one of cells falsely predicted']):
                 print("deleted:" + str(i) + ":" + str(data[i][1]))
                 continue
 

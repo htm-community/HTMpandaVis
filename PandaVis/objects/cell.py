@@ -30,17 +30,20 @@ class cCell:
     def __init__(self, column):
         self.active = False
         self.predictive = False
+        self.winner = False
         self.presynapticFocus = False
         self.focused = False
         self.correctlyPredicted = False
         self.falselyPredicted = False
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
+        self.idx = -1
 
     def CreateGfx(
         self, loader, idx
     ):  # idx is neccesary to be able to track it down for mouse picking
 
+        self.idx = idx
         self.__node = loader.loadModel("models/cube")
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)
@@ -52,13 +55,13 @@ class cCell:
         cnodePath = self.__node.attachNewNode(CollisionNode("cnode"))
         cnodePath.node().addSolid(collBox)
 
-        self.UpdateState(False, False)
+        self.UpdateState(False, False, False)
 
-    def UpdateState(self, active, predictive, focused=False, presynapticFocus=False, newStep = False):
+    def UpdateState(self, active, predictive, winner, focused=False, presynapticFocus=False, newStep = False, showPredictionCorrectness = True):
 
         # determine if previous prediction was correct or not
         if newStep:
-            if self.predictive:#was predicted last step
+            if self.predictive and showPredictionCorrectness:#was predicted last step
                 if active:#now active
                     self.correctlyPredicted = True
                     self.falselyPredicted = False
@@ -71,7 +74,9 @@ class cCell:
 
         self.active = active
         self.predictive = predictive
+        self.winner = winner
         self.focused = focused
+
         if self.focused:# if we have this cell focused, modify LOD to long distance
             self.column.LODUpdateSwitch_long()
 
@@ -84,6 +89,12 @@ class cCell:
             self.__node.setColor(col)
         elif self.falselyPredicted:
             col = COL_CELL_FALSELY_PREDICTED
+            self.__node.setColor(col)
+        elif self.winner:
+            col = COL_CELL_WINNER
+            self.__node.setColor(col)
+        elif self.predictive and self.active:
+            col = COL_CELL_ACTIVE_AND_PREDICTIVE
             self.__node.setColor(col)
         elif self.predictive:
             col = COL_CELL_PREDICTIVE
@@ -100,22 +111,22 @@ class cCell:
             self.__node.setColor(col)
 
     def setFocus(self):
-        self.UpdateState(self.active, self.predictive, True)  #no change except focus
+        self.UpdateState(self.active, self.predictive, self.winner, True)  #no change except focus
 
     def resetFocus(self):
-        self.UpdateState(self.active, self.predictive, False)  #reset focus
+        self.UpdateState(self.active, self.predictive, self.winner, False)  #reset focus
         self.column.LODUpdateSwitch_normal()
 
     def setPresynapticFocus(self):
-        self.UpdateState(self.active, self.predictive, self.focused, True)  # no change except presynaptic focus
+        self.UpdateState(self.active, self.predictive, self.winner, self.focused, True)  # no change except presynaptic focus
 
     def resetPresynapticFocus(self):
-        self.UpdateState(self.active, self.predictive, self.focused, False)  # reset presynaptic focus
+        self.UpdateState(self.active, self.predictive, self.winner, self.focused, False)  # reset presynaptic focus
 
     def setTransparency(self, transparency):
         self.transparency = transparency
 
-        self.UpdateState(self.active, self.predictive, self.focused, self.presynapticFocus)
+        self.UpdateState(self.active, self.predictive, self.winner, self.focused, self.presynapticFocus)
         
     def updateWireframe(self,value):
         if value:
@@ -203,7 +214,9 @@ class cCell:
 
     def getDescription(self):
         txt = ""
+        txt += "ID:" + str(self.idx) + "  ABS ID:"+ str(len(self.column.cells)*self.column.idx + self.idx) +"\n"
         txt += "Active:" + str(self.active)+"\n"
+        txt += "Winner:" + str(self.winner) + "\n"
         txt += "Predictive:" + str(self.predictive)+"\n"
         txt += "Correctly predicted:" + str(self.correctlyPredicted)+"\n"
         txt += "Falsely predicted:" + str(self.falselyPredicted)+"\n"

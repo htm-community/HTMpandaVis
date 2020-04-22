@@ -3,6 +3,8 @@ from panda3d.core import LColor
 
 COL_CELL_ACTIVE = LColor(1.0, 0.0, 0.0, 1.0)#red
 COL_CELL_PREDICTIVE = LColor(0.0, 0.0, 1.0, 1.0)#blue
+COL_CELL_WINNER = LColor(1.0, 0.5, 0.0, 1.0)#orange
+COL_CELL_ACTIVE_AND_PREDICTIVE = LColor(1.0, 0.0, 1.0, 1.0)#violet
 COL_CELL_FOCUSED = LColor(1.0, 1.0, 0.0, 1.0) # yellow
 COL_CELL_INACTIVE = LColor(1.0, 1.0, 1.0, 1.0)#white
 COL_CELL_CORRECTLY_PREDICTED = LColor(0.0, 1.0, 0.0, 1.0)#green
@@ -14,6 +16,7 @@ COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED = LColor(0.0, 1.0, 0.0, 1.0) # green
 COL_COLUMN_ONEOFCELLFALSELY_PREDICTED = LColor(1.0, 0.7, 0.7, 1.0)#pink
 
 COL_COLUMN_ONEOFCELLPREDICTIVE = LColor(0.0, 0.0, 1.0, 1.0) # blue
+COL_COLUMN_ACTIVE_AND_ONEOFCELLPREDICTIVE = LColor(1.0, 0.0, 1.0, 1.0)#violet
 COL_COLUMN_INACTIVE = LColor(1.0, 1.0, 1.0, 1.0) # white
 
 COL_PROXIMAL_SYNAPSES_INACTIVE = LColor(1.0, 1.0, 1.0, 1.0)#white

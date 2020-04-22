@@ -114,6 +114,10 @@ class SocketClient:
             elif self._gui.cmdStop:
                 send_one_message(s, PackData(CLIENT_CMD.CMD_STOP))
                 printLog("STOP req", verbosityHigh)
+            if self._gui.gotoReq >= 0:
+                send_one_message(s, PackData(CLIENT_CMD.CMD_GOTO, self._gui.gotoReq))
+                printLog("GOTO req", verbosityHigh)
+                self._gui.gotoReq = -1
             elif self._gui.cmdStepForward:
                 send_one_message(s, PackData(CLIENT_CMD.CMD_STEP_FWD))
                 printLog("STEP", verbosityHigh)

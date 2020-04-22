@@ -78,11 +78,11 @@ class cLayer:
         else:
             self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.minicolumns)))+" %)")
 
-    def UpdateState(self, activeColumns, winnerCells, predictiveCells, newStep = False):
+    def UpdateState(self, activeColumns, activeCells, winnerCells, predictiveCells, newStep = False, showPredictionCorrectness = False):
 
         # print("COLUMNS SIZE:"+str(len(self.minicolumns)))
-        print("winners:"+str(winnerCells))
-        print("predictive:"+str(predictiveCells))
+        #print("winners:"+str(winnerCells))
+        #print("predictive:"+str(predictiveCells))
         
         for colID in range(len(self.minicolumns)):# go through all columns
             oneOfCellPredictive=False
@@ -90,20 +90,22 @@ class cLayer:
             oneOfCellFalselyPredicted = False
 
             for cellID in range(len(self.minicolumns[colID].cells)): # for each cell in column
-                isActive = cellID+(colID*self.nOfCellsPerColumn) in winnerCells
+                isActive = cellID+(colID*self.nOfCellsPerColumn) in activeCells
+                isWinner = cellID + (colID * self.nOfCellsPerColumn) in winnerCells
                 isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
 
                 if isPredictive:
                     oneOfCellPredictive=True
 
-                self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive, newStep=newStep)
+                self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive,winner = isWinner, newStep=newStep, showPredictionCorrectness = showPredictionCorrectness)
 
-                #get correct/false prediction info
-                if self.minicolumns[colID].cells[cellID].correctlyPredicted:
-                    oneOfCellCorrectlyPredicted = True
+                if showPredictionCorrectness:
+                    #get correct/false prediction info
+                    if self.minicolumns[colID].cells[cellID].correctlyPredicted:
+                        oneOfCellCorrectlyPredicted = True
 
-                if self.minicolumns[colID].cells[cellID].falselyPredicted:
-                    oneOfCellFalselyPredicted = True
+                    if self.minicolumns[colID].cells[cellID].falselyPredicted:
+                        oneOfCellFalselyPredicted = True
 
 
             self.minicolumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,

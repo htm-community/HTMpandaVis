@@ -19,6 +19,8 @@ class ServerData(object):
 
         self.HTMObjects = {}  # dataHTMObject
 
+        self.iterationNo = 0
+
         self.compensateSize = []  # to compensate size by dummy bytes
 
 
@@ -42,6 +44,7 @@ class dataLayer(object):
 
         self.activeColumns = []  # currently active columns (sparse) in this layer
         self.winnerCells = []
+        self.activeCells = []
         self.predictiveCells = []
 
         # array - [[columnID_a,[destinationID_a1,destinationID_a2,...]],[columnID_b,[destinationID_b1,destinationID_b2,...]]]
@@ -77,6 +80,7 @@ class CLIENT_CMD(Enum):
     CMD_GET_STATE_DATA = 4
     CMD_GET_PROXIMAL_DATA = 5
     CMD_GET_DISTAL_DATA = 6
+    CMD_GOTO = 7
 
 
 class SERVER_CMD(Enum):
