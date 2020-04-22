@@ -3,6 +3,18 @@
 from panda3d.core import NodePath, PandaNode, TextNode
 from objects.inputBit import cInputBit
 
+verbosityLow = 0
+verbosityMedium = 1
+verbosityHigh = 2
+FILE_VERBOSITY = (
+    verbosityHigh
+)  # change this to change printing verbosity of this file
+
+
+def printLog(txt, verbosity=verbosityLow):
+    if FILE_VERBOSITY >= verbosity:
+        print(txt)
+
 
 class cInput:
     def __init__(self, baseApp, name, count, rows):
@@ -70,6 +82,7 @@ class cInput:
         #      print("Given data for input does not match number of bits in input!")
         #      print("A:"+str(self.count)+" B:"+str(len(data)))
         #      return
+        printLog("In UpdateState(): " + str(self.name), verbosityHigh)
 
         self.__textValNodePath.getNode(0).setText(text)
 
@@ -81,6 +94,8 @@ class cInput:
 
         for i in range(len(self.inputBits)):  # update all states
             self.inputBits[i].UpdateState()
+
+        printLog("Leaving UpdateState()")
 
     def getNode(self):
         return self.__node

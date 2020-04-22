@@ -5,12 +5,15 @@ from direct.showbase.ShowBase import ShowBase
 from pandaComm.client import SocketClient
 import math
 
-
+import time
 from objects.htmObject import cHTM
 from gui import cGUI # Graphical user interface
 from environment import cEnvironment # handles everything about the environment
 from interaction import cInteraction # handles keys, user interaction etc..
 from direct.stdpy import threading
+
+import faulthandler; faulthandler.enable()
+
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -205,6 +208,8 @@ class cApp(ShowBase):
 
     def gfxCreationWorker(self):
 
+        time.sleep(5) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
+        printLog("Starting GFX worker thread")
         while(True):
             # finishing HTM objects creation on the run
             if not self.allHTMobjectsCreated:
@@ -218,9 +223,11 @@ class cApp(ShowBase):
                             self.oneOfObjectsCreationFinished = True
                 if allFinished:
                     self.allHTMobjectsCreated = True
+                    printLog("GFX worker: all objects finished")
                     break
             if self.gui.terminating:
                 break
+        printLog("GFX worker: quit")
 
 if __name__ == "__main__":
     app = cApp()
