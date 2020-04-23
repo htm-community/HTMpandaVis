@@ -78,7 +78,7 @@ class cLayer:
         else:
             self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.minicolumns)))+" %)")
 
-    def UpdateState(self, activeColumns, activeCells, winnerCells, predictiveCells, newStep = False, showPredictionCorrectness = False):
+    def UpdateState(self, activeColumns, activeCells, winnerCells, predictiveCells, newStep = False, showPredictionCorrectness = False, showBursting = False):
 
         # print("COLUMNS SIZE:"+str(len(self.minicolumns)))
         #print("winners:"+str(winnerCells))
@@ -88,6 +88,7 @@ class cLayer:
             oneOfCellPredictive=False
             oneOfCellCorrectlyPredicted = False
             oneOfCellFalselyPredicted = False
+            nOfActiveCells = 0
 
             for cellID in range(len(self.minicolumns[colID].cells)): # for each cell in column
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in activeCells
@@ -96,6 +97,10 @@ class cLayer:
 
                 if isPredictive:
                     oneOfCellPredictive=True
+
+                if isActive:
+                    nOfActiveCells = nOfActiveCells + 1
+
 
                 self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive,winner = isWinner, newStep=newStep, showPredictionCorrectness = showPredictionCorrectness)
 
@@ -107,8 +112,12 @@ class cLayer:
                     if self.minicolumns[colID].cells[cellID].falselyPredicted:
                         oneOfCellFalselyPredicted = True
 
+            if showBursting:
+                bursting = nOfActiveCells == self.nOfCellsPerColumn #if all cells in column are active -> the column is bursting
+            else:
+                bursting = False
 
-            self.minicolumns[colID].UpdateState(bursting=False, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
+            self.minicolumns[colID].UpdateState(bursting=bursting, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
                                                     oneOfCellCorrectlyPredicted=oneOfCellCorrectlyPredicted, oneOfCellFalselyPredicted=oneOfCellFalselyPredicted)
         
         

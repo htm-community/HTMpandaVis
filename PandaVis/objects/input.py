@@ -7,7 +7,7 @@ verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = (
-    verbosityHigh
+    verbosityLow
 )  # change this to change printing verbosity of this file
 
 

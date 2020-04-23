@@ -49,6 +49,7 @@ class cGUI:
         self.showDistalSynapses = self.getDefault("distalSynapses")
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
         self.showPredictionCorrectness = self.getDefault("predictionCorrectness")
+        self.showBursting = self.getDefault("showBursting")
 
         self.wireframeChanged = True
         self.wireframe = self.getDefault("wireFrame")
@@ -76,6 +77,7 @@ class cGUI:
                   [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
                   [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Show prediction correctness', key="predictionCorrectness", enable_events=True)],
+                  [sg.Checkbox('Show bursting', key="showBursting", enable_events=True)],
                   [sg.Checkbox('Wireframe mode', key="wireFrame", enable_events=True)],
                   [sg.Checkbox('Show legend', key="legend", enable_events=True)],
                   [sg.Checkbox('Show description', key="desc", enable_events=True)],
@@ -140,7 +142,7 @@ class cGUI:
             print("Legend updated")
             if self.legend is not None:
                 self.legend.window.close()
-            self.legend = cLegendWindow(self.showProximalSynapses, self.showDistalSynapses, self.showInputOverlapWithPrevStep, self.getDefault("legendWinPos"),self.showPredictionCorrectness)
+            self.legend = cLegendWindow(self.showProximalSynapses, self.showDistalSynapses, self.showInputOverlapWithPrevStep, self.getDefault("legendWinPos"),self.showPredictionCorrectness, self.showBursting)
 
             self.legend.window.Read(timeout=0)
             self.legend.draw_figure()
@@ -185,7 +187,7 @@ class cGUI:
                     self.LODvalue2 = values["LODSlider2"]
 
                     self.LODChanged = True
-            elif event in ["proximalSynapses", "distalSynapses", "inputPrevStepOverlap", "predictionCorrectness"]:
+            elif event in ["proximalSynapses", "distalSynapses", "inputPrevStepOverlap", "predictionCorrectness","showBursting"]:
                 self.updateLegend = True
 
             elif event == "legend":
@@ -209,6 +211,7 @@ class cGUI:
             self.showDistalSynapses = values["distalSynapses"]
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]
+            self.showBursting = values["showBursting"]
 
             self.showLegend = values["legend"]
             self.showDescription = values["desc"]

@@ -1,6 +1,8 @@
 from panda3d.core import LColor
 
 
+COL_SEPARATOR = LColor(0.0, 0.0, 0.0, 0.0)#none
+
 COL_CELL_ACTIVE = LColor(1.0, 0.0, 0.0, 1.0)#red
 COL_CELL_PREDICTIVE = LColor(0.0, 0.0, 1.0, 1.0)#blue
 COL_CELL_WINNER = LColor(1.0, 0.5, 0.0, 1.0)#orange
@@ -12,6 +14,7 @@ COL_CELL_FALSELY_PREDICTED = LColor(1.0, 0.7, 0.7, 1.0)#pink
 COL_CELL_PRESYNAPTIC_FOCUS = LColor(0.5, 0.8, 1.0, 1.0)# bright blue
 
 COL_COLUMN_ACTIVE = LColor(1.0, 0.0, 0.0, 1.0) # red
+COL_COLUMN_BURSTING = LColor(0.8, 1.0, 0.0, 1.0) # yellow-green
 COL_COLUMN_ONEOFCELLCORRECTLY_PREDICTED = LColor(0.0, 1.0, 0.0, 1.0) # green
 COL_COLUMN_ONEOFCELLFALSELY_PREDICTED = LColor(1.0, 0.7, 0.7, 1.0)#pink
 

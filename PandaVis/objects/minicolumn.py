@@ -128,6 +128,10 @@ class cMinicolumn:
             COL_COLUMN_ONEOFCELLFALSELY_PREDICTED.setW(self.transparency)
             col = COL_COLUMN_ONEOFCELLFALSELY_PREDICTED
             self.__columnBox.setColor(col)
+        elif self.bursting:
+            COL_COLUMN_BURSTING.setW(self.transparency)
+            col = COL_COLUMN_BURSTING
+            self.__columnBox.setColor(col)
         elif self.active and self.oneOfCellPredictive:
             COL_COLUMN_ACTIVE_AND_ONEOFCELLPREDICTIVE.setW(self.transparency)
             col = COL_COLUMN_ACTIVE_AND_ONEOFCELLPREDICTIVE

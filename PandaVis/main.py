@@ -137,7 +137,8 @@ class cApp(ShowBase):
                             serverObjs[obj].layers[l].winnerCells,
                             serverObjs[obj].layers[l].predictiveCells,
                             newStep = True,
-                            showPredictionCorrectness=self.gui.showPredictionCorrectness
+                            showPredictionCorrectness=self.gui.showPredictionCorrectness,
+                            showBursting = self.gui.showBursting
                         )
 
         if self.client.proximalDataArrived:
