@@ -222,6 +222,18 @@ class cGUI:
     def UpdateDescription(self, txt):
         if self.description is not None:
             self.description.updateText(txt)
+    def UpdateCellDescription(self):
+
+        if self.focusedCell is None:
+            return
+        desc = "path:\n"
+        desc += str(self.focusedPath) + "\n"
+        desc += "\n---CELL:\n"
+        desc += self.focusedCell.getDescription()
+        desc += "\n---COLUMN:\n"
+        desc += self.focusedCell.column.getDescription()
+
+        self.UpdateDescription(desc);
 
     def ResetCommands(self):
         self.cmdRun = False

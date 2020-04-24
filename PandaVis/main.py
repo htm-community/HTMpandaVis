@@ -75,9 +75,14 @@ class cApp(ShowBase):
 
 
     def updateHTMstate(self):
+
+        cellDataWasUpdated = False
+
         if self.client.stateDataArrived or self.oneOfObjectsCreationFinished:
             self.client.stateDataArrived = False
             self.oneOfObjectsCreationFinished = False
+            cellDataWasUpdated = True
+
             printLog("Data change! Updating HTM state", verbosityMedium)
 
             self.gui.setIteration(self.client.serverData.iterationNo)
@@ -197,6 +202,9 @@ class cApp(ShowBase):
                             distalSynapses,
                             serverObjs[obj].layers[l].distalInputs
                         )
+        if cellDataWasUpdated:
+            self.interaction.UpdateProximalAndDistalData()
+            self.gui.UpdateCellDescription()
 
 
     def update(self, task):

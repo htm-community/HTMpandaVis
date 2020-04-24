@@ -251,10 +251,14 @@ class cMinicolumn:
         self.UpdateState(self.bursting, self.active, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalselyPredicted)
 
     def DestroyProximalSynapses(self):
+        if not self.gfxCreated:
+            return
         for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
             syn.removeNode()
     
     def DestroyDistalSynapses(self):
+        if not self.gfxCreated:
+            return
         for cell in self.cells:
             cell.DestroyDistalSynapses()
             cell.resetPresynapticFocus()  # also reset distal focus

@@ -240,32 +240,28 @@ class cInteraction:
             self.gui.columnID = Layer.minicolumns.index(self.gui.focusedCell.column)
             self.gui.cellID = Layer.minicolumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
-            # -------- proximal and distal synapses -----------------------
-            if self.gui.showProximalSynapses:
-                self.client.reqProximalData()
-            else:
-                for obj in self.base.HTMObjects.values():
-                    obj.DestroyProximalSynapses()
+            self.UpdateProximalAndDistalData()
 
-            if self.gui.showDistalSynapses:  # destroy synapses if they not to be shown
-                self.client.reqDistalData()
-            else:
-                for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
-                    obj.DestroyDistalSynapses()
-            # -----------------------------------------------------------
-
-            desc = "path:\n"
-            desc += str(self.gui.focusedPath)+"\n"
-            desc += "\n---CELL:\n"
-            desc += self.gui.focusedCell.getDescription()
-            desc += "\n---COLUMN:\n"
-            desc += self.gui.focusedCell.column.getDescription()
-
-            self.gui.UpdateDescription(desc)
+            self.gui.UpdateCellDescription()
             
         elif obj.getName() == "basement":
             self.testRoutine()
-            
+
+    def UpdateProximalAndDistalData(self):
+        # -------- proximal and distal synapses -----------------------
+        if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
+            self.client.reqProximalData()
+        else:
+            for obj in self.base.HTMObjects.values():
+                obj.DestroyProximalSynapses()
+
+        if self.gui.showDistalSynapses and self.gui.focusedCell is not None:  # destroy synapses if they not to be shown
+            self.client.reqDistalData()
+        else:
+            for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
+                obj.DestroyDistalSynapses()
+        # -----------------------------------------------------------
+
     def Update(self):
         
         self.UpdateCameraMovement()
