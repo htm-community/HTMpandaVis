@@ -149,6 +149,9 @@ class cCell:
         printLog("HTM inputs:"+str(HTMObject.inputs))
         printLog("HTM layers:" + str(HTMObject.layers))
 
+        for inputObj in inputObjects:
+            HTMObject.inputs[inputObj].resetPresynapticFocus()
+
         for segment in data:
 
             for presynCellID in segment:
@@ -177,7 +180,7 @@ class cCell:
                             else: # not this one
                                 cellID -= HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].minicolumns)
 
-                presynCell.setPresynapticFocus()  # highlight presynapctic cells
+                presynCell.setPresynapticFocus()  # highlight presynaptic cells
         
                 form = GeomVertexFormat.getV3()
                 vdata = GeomVertexData("DistalSynapseLine", form, Geom.UHStatic)

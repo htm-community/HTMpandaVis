@@ -103,16 +103,13 @@ class cInput:
     def resetProximalFocus(self):
         for i in self.inputBits:
             i.resetProximalFocus()
-    
+
+    def resetPresynapticFocus(self):
+        for i in self.inputBits:
+            i.resetPresynapticFocus()
+
     def updateWireframe(self, value):
         
         for i in self.inputBits:
             i.updateWireframe(value)
 
-    def setPresynapticFocus(self):
-        #TODO
-        return
-
-    def resetPresynapticFocus(self):
-        #TODO
-        return

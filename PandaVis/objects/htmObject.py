@@ -62,18 +62,24 @@ class cHTM:
     def DestroyProximalSynapses(self):
         for ly in self.layers.values():
             ly.DestroyProximalSynapses()
+
+        for inp in self.inputs.values():
+                inp.resetProximalFocus()
             
     def DestroyDistalSynapses(self):
         for ly in self.layers.values():
             ly.DestroyDistalSynapses()
+
+        for inp in self.inputs.values():
+            inp.resetPresynapticFocus()
         
     def updateWireframe(self, value):
         for ly in self.layers.values():
             ly.updateWireframe(value)
         for i in self.inputs.values():
             i.updateWireframe(value)
-    def CreateGfxProgressively(self):
 
+    def CreateGfxProgressively(self):
         allFinished = True
         for ly in self.layers:
             if not self.layers[ly].gfxCreationFinished:
