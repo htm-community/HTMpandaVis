@@ -11,7 +11,7 @@ sys.path.append(
 import socket, pickle, struct
 import _thread
 import time
-from pandaComm.dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
+from PandaVis.pandaComm.dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
 
 
 verbosityLow = 0

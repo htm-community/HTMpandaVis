@@ -9,14 +9,15 @@ Created on Mon Aug 26 09:22:19 2019
 import socket, pickle, struct
 from socket import error as SocketError
 import threading
-from pandaComm.dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
+from PandaVis.pandaComm.dataExchange import ServerData, CLIENT_CMD, SERVER_CMD
 import numpy
+import time
 
 verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = (
-    verbosityMedium
+    verbosityHigh
 )  # change this to change printing verbosity of this file
 
 
@@ -59,8 +60,11 @@ def recv_one_message(sock):
 class PandaServer:
     def __init__(self):
         self.serverData = ServerData()
-        self.runOneStep = False
-        self.runInLoop = False
+        self.cmdRunOneStep = False
+        self.cmdRunInLoop = False
+        self.cmdGotoIteration = False
+        self.gotoIteration = 0
+        self.currentIteration = 0
         self.newStateDataReadyForVis = False
         self.mainThreadQuitted = False
 
@@ -118,8 +122,10 @@ class PandaServer:
 
                     rxData = pickle.loads(rxRawData)
 
+                    #self.serverData = ServerData() # clear server data to start with blank structure
+
                     if rxData[0] == CLIENT_CMD.CMD_GET_STATE_DATA:
-                        printLog("State data requested", verbosityHigh)
+                        #printLog("State data requested", verbosityHigh)
                         if self.newStateDataReadyForVis:
                         
                             send_one_message(
@@ -131,7 +137,7 @@ class PandaServer:
                             send_one_message(
                                 conn, PackData(SERVER_CMD.NA, [])
                             )  # we dont have any new data for client
-                            printLog("But no new data available", verbosityHigh)
+                            #printLog("But no new data available", verbosityHigh)
 
                     elif rxData[0] == CLIENT_CMD.CMD_GET_PROXIMAL_DATA:
                         printLog("Proximal data req by client", verbosityMedium)
@@ -194,7 +200,7 @@ class PandaServer:
                         reqCellID = requestedColumn*cellsPerColumn + requestedCell
                         
                         printLog("Requested cell ID:"+str(reqCellID),verbosityMedium)
-                        # TODO winner cells
+
                         tm = self.temporalMemories[HTMObjectName]
 
                         presynCells = getPresynapticCellsForCell(tm,reqCellID)
@@ -209,18 +215,25 @@ class PandaServer:
                         send_one_message(
                             conn, PackData(SERVER_CMD.SEND_DISTAL_DATA, self.serverData)
                         )
-                        
-                        # TODO predictive cells
+
                         
                     elif rxData[0] == CLIENT_CMD.CMD_RUN:
-                        self.runInLoop = True
+                        self.cmdRunInLoop = True
                         printLog("RUN", verbosityHigh)
                     elif rxData[0] == CLIENT_CMD.CMD_STOP:
-                        self.runInLoop = False
+                        self.cmdRunInLoop = False
                         printLog("STOP", verbosityHigh)
                     elif rxData[0] == CLIENT_CMD.CMD_STEP_FWD:
-                        self.runOneStep = True
+                        self.cmdRunOneStep = True
                         printLog("STEP", verbosityHigh)
+                    elif rxData[0] == CLIENT_CMD.CMD_GOTO:
+                        self.cmdGotoIteration = True
+                        self.gotoIteration = rxData[1]
+                        printLog("GOTO:"+str(self.gotoIteration), verbosityHigh)
+
+                        if self.serverData.iterationNo >= self.gotoIteration: # handle when current iteration is above or equal requested
+                            self.cmdGotoIteration = False
+
                     elif rxData[0] == CLIENT_CMD.QUIT:
                         printLog("Client quitted!")
                         # quitServer=True
@@ -250,7 +263,20 @@ class PandaServer:
         printLog("Server quit")
         conn.close()
 
+    def BlockExecution(self):
+        if self.cmdGotoIteration:
+          if self.gotoIteration <= self.currentIteration:
+              self.cmdGotoIteration = False
+
+        if not self.cmdGotoIteration:
+            printLog("One step finished")
+            while not self.cmdRunInLoop and not self.cmdRunOneStep and not self.cmdGotoIteration:
+              pass
+            self.cmdRunOneStep = False
+            printLog("Proceeding one step...")
+
 def getPresynapticCellsForCell(tm, cellID):
+    start_time = time.time()
     segments = tm.connections.segmentsForCell(cellID)
                     
     synapses = []
@@ -264,6 +290,8 @@ def getPresynapticCellsForCell(tm, cellID):
             presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
     
         res += [presynapticCells]
+
+    printLog("getPresynapticCellsForCell() took %s seconds " % (time.time() - start_time), verbosityHigh)
     return res
 
 class ServerThread(threading.Thread):

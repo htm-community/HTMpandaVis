@@ -1,3 +1,6 @@
 *.pyc
 PandaVis/guiValues.ini
 .idea/
+build/*
+dist/*
+*.egg-info/*
