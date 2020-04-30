@@ -47,6 +47,9 @@ sudo apt-get install python3-tk
 git clone https://github.com/htm-community/HTMpandaVis.git
 
 python3 -m pip install -r requirements.txt
+
+ #this installs pandaComm package for use with custom computation script
+python3 setup.py 
 ```
 # How to run
 
@@ -65,8 +68,8 @@ python3 pandaVis.py
 # How to use with your computation script
 1. **import packages for pandaVis**
 ```
-from pandaComm.pandaServer import PandaServer
-from pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
+from PandaVis.pandaComm.server import PandaServer
+from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
 ```
 2. **Create pandaServer intance and start it at init of your script**
 ```
@@ -115,11 +118,9 @@ serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.s
 
 pandaServer.NewStateDataReady()# say to pandaServer that it has new data
 ```
-6. **Block your execution like following, if you want to control the run/stepping from pandaVis**
+6. **Block your execution with following method, if you want to control the run/stepping from pandaVis**
 ```
-while not pandaServer.runInLoop and not pandaServer.runOneStep:
-    pass
-pandaServer.runOneStep = False
+pandaServer.BlockExecution()
 ```
 See example in "HotgymExample" folder for implementation.
-Also see "/pandaComm/dataExchange.py" file for details what can be sent to client.
+Also see "/pandaComm/dataExchange.py" file for details what can be communicated.
