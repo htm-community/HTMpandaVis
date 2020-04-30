@@ -6,8 +6,8 @@ import random
 import math
 
 # Panda vis
-from pandaComm.pandaServer import PandaServer
-from pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
+from PandaVis.pandaComm.server import PandaServer
+from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
 
 from htm.bindings.sdr import SDR, Metrics
 from htm.encoders.rdse import RDSE, RDSE_Parameters
@@ -138,6 +138,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     anomaly = []
     anomalyProb = []
     predictions = {1: [], 5: []}
+    iterationNo = 0
     for count, record in enumerate(records):
 
         # Convert date string into Python date object.
@@ -167,31 +168,34 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
 
-        # ------------------HTMpandaVis----------------------
+        pandaServer.currentIteration = iterationNo  # update server's iteration number
+        # do not update if we are running GOTO iteration command
+        if (not pandaServer.cmdGotoIteration or (
+                pandaServer.cmdGotoIteration and pandaServer.gotoIteration == pandaServer.currentIteration)):
+            # ------------------HTMpandaVis----------------------
+            # fill up values
+            serverData.iterationNo = pandaServer.currentIteration
 
-        # fill up values
-        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
-        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
-        serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.size
+            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
+            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.size
 
-        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
-        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
-        serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].count = dateBits.size
+            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
+            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
+            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].count = dateBits.size
 
-        serverData.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
-        serverData.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
-        serverData.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
+            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
+            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
+            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
 
-        pandaServer.serverData = serverData
+            pandaServer.serverData = serverData
 
-        pandaServer.spatialPoolers["HTM1"] = sp
-        pandaServer.temporalMemories["HTM1"] = tm
-        pandaServer.NewStateDataReady()
+            pandaServer.spatialPoolers["HTM1"] = sp
+            pandaServer.temporalMemories["HTM1"] = tm
+            pandaServer.NewStateDataReady()
 
         print("One step finished")
-        while not pandaServer.runInLoop and not pandaServer.runOneStep:
-            pass
-        pandaServer.runOneStep = False
+        pandaServer.BlockExecution()
         print("Proceeding one step...")
 
         # ------------------HTMpandaVis----------------------
@@ -219,6 +223,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         anomalyProb.append(anomalyLikelihood)
 
         predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
+
+        iterationNo = iterationNo + 1
 
     # Print information & statistics about the state of the HTM.
     print("Encoded Input", enc_info)
