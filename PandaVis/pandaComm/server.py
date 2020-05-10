@@ -161,7 +161,7 @@ class PandaServer:
                         connectedSynapses = numpy.zeros(
                             sp.getNumInputs(), dtype=numpy.int32
                         )
-                        sp.getConnectedSynapses(requestedCol, connectedSynapses)
+                        sp.getPermanence(requestedCol, connectedSynapses, sp.getSynPermConnected())#sp.getConnectedSynapses(requestedCol, connectedSynapses)
 
                         self.serverData.HTMObjects[HTMObjectName].layers[
                             layerName
