@@ -39,7 +39,7 @@ class cInput:
         text.setText(self.name)
 
         textNodePath = self.__node.attachNewNode(text)
-        textNodePath.setScale(2)
+        textNodePath.setScale(5)
         textNodePath.setPos(0, -5, 0)
 
         # value string that represents what is encoded into SDR
@@ -47,7 +47,7 @@ class cInput:
         textVal.setText("no value")
 
         self.__textValNodePath = self.__node.attachNewNode(textVal)
-        self.__textValNodePath.setScale(2)
+        self.__textValNodePath.setScale(5)
         self.__textValNodePath.setPos(
             0, -5 + (self.rows * 3) / 2, 3 * self.count / self.rows
         )

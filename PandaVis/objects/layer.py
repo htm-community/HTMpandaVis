@@ -34,7 +34,7 @@ class cLayer:
         self.text.setText(self.name)
 
         textNodePath = self.__node.attachNewNode(self.text)
-        textNodePath.setScale(2)
+        textNodePath.setScale(5)
 
         textNodePath.setPos(0, -5, 0)
 

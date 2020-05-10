@@ -138,6 +138,8 @@ class cInteraction:
         for obj in self.base.HTMObjects.values():
             obj.DestroyDistalSynapses()
 
+        self.focusedCell.resetFocus()  # reset previous
+
     def onMouseEvent(self, event, press):
         printLog("Mouse event:" + str(event), verbosityHigh)
         if event == "right":
