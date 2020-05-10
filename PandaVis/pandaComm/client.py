@@ -54,8 +54,10 @@ def send_one_message(sock, data):
 
 
 def recv_one_message(sock):
-    lengthbuf = sock.recv(4)
-    length, = struct.unpack("!I", lengthbuf)
+    buffer = sock.recv(4)
+    if len(buffer)!=4:
+        raise BrokenPipeError("Size of sock.recv was not 4 bytes!");
+    length, = struct.unpack("!I", buffer)
     return sock.recv(length)
 
 
@@ -76,6 +78,12 @@ class SocketClient:
 
         self._gui = None
 
+        self.HOST = "localhost"
+        self.PORT = 50007
+
+        self.socket = None
+        self.connected = False
+
     def setGui(self, gui):
         self._gui = gui
 
@@ -86,79 +94,96 @@ class SocketClient:
             
     def RunThread(self):
 
-        HOST = "localhost"
-        PORT = 50007
         # Create a socket connection, keep trying if no success
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(5)
-        connected = False
-
-        while not connected:
-            try:
-                s.connect((HOST, PORT))
-                connected = True
-            except Exception:
-                time.sleep(1)
-                continue
-
-        printLog("Connected to server:" + HOST + ":" + str(PORT), verbosityLow)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(5)
+        self.connected = False
 
         # s.send(SocketClient.PackData(CLIENT_CMD.REQ_DATA))
         while not self.terminateClientThread:
-            printLog("Sending REQ", verbosityHigh)
-            send_one_message(s, PackData(CLIENT_CMD.CMD_GET_STATE_DATA))
 
-            if self._gui.cmdRun:
-                send_one_message(s, PackData(CLIENT_CMD.CMD_RUN))
-                printLog("RUN req", verbosityHigh)
-            elif self._gui.cmdStop:
-                send_one_message(s, PackData(CLIENT_CMD.CMD_STOP))
-                printLog("STOP req", verbosityHigh)
-            if self._gui.gotoReq >= 0:
-                send_one_message(s, PackData(CLIENT_CMD.CMD_GOTO, self._gui.gotoReq))
-                printLog("GOTO req", verbosityHigh)
-                self._gui.gotoReq = -1
-            elif self._gui.cmdStepForward:
-                send_one_message(s, PackData(CLIENT_CMD.CMD_STEP_FWD))
-                printLog("STEP", verbosityHigh)
-            elif self._reqProximalData:
-                self._reqProximalData=False
-                send_one_message(
-                    s,
-                    PackData(
-                        CLIENT_CMD.CMD_GET_PROXIMAL_DATA,
-                        [self._gui.focusedPath, self._gui.columnID],
-                    ),
-                )
-                printLog(
-                    "GET proximal data for col:" + str(self._gui.focusedCell.column),
-                    verbosityHigh,
-                )
-            elif self._reqDistalData:
-                self._reqDistalData=False
-                send_one_message(
-                    s,
-                    PackData(
-                        CLIENT_CMD.CMD_GET_DISTAL_DATA,
-                        [self._gui.focusedPath, self._gui.columnID, self._gui.cellID],
-                    ),
-                )
-                printLog(
-                    "GET distal for cell: " + str(self._gui.cellID) + " on column: "+str(self._gui.columnID),
-                    verbosityHigh,
-                )
+            if not self.connected:#try to reconnect each time (if server fails it can be restarted)
+                self.ConnectToServer()
 
-            self._gui.ResetCommands()
+            try:
+                printLog("Sending REQ", verbosityHigh)
+                send_one_message(self.socket, PackData(CLIENT_CMD.CMD_GET_STATE_DATA))
 
-            printLog("Data begin receiving", verbosityHigh)
-            self.ReceiveData(s)
-            printLog("Data received", verbosityHigh)
+                if self._gui.cmdRun:
+                    send_one_message(self.socket, PackData(CLIENT_CMD.CMD_RUN))
+                    printLog("RUN req", verbosityHigh)
+                elif self._gui.cmdStop:
+                    send_one_message(self.socket, PackData(CLIENT_CMD.CMD_STOP))
+                    printLog("STOP req", verbosityHigh)
+                if self._gui.gotoReq >= 0:
+                    send_one_message(self.socket, PackData(CLIENT_CMD.CMD_GOTO, self._gui.gotoReq))
+                    printLog("GOTO req", verbosityHigh)
+                    self._gui.gotoReq = -1
+                elif self._gui.cmdStepForward:
+                    send_one_message(self.socket, PackData(CLIENT_CMD.CMD_STEP_FWD))
+                    printLog("STEP", verbosityHigh)
+                elif self._reqProximalData:
+                    self._reqProximalData=False
+                    send_one_message(
+                        self.socket,
+                        PackData(
+                            CLIENT_CMD.CMD_GET_PROXIMAL_DATA,
+                            [self._gui.focusedPath, self._gui.columnID],
+                        ),
+                    )
+                    printLog(
+                        "GET proximal data for col:" + str(self._gui.focusedCell.column),
+                        verbosityHigh,
+                    )
+                elif self._reqDistalData:
+                    self._reqDistalData=False
+                    send_one_message(
+                        self.socket,
+                        PackData(
+                            CLIENT_CMD.CMD_GET_DISTAL_DATA,
+                            [self._gui.focusedPath, self._gui.columnID, self._gui.cellID],
+                        ),
+                    )
+                    printLog(
+                        "GET distal for cell: " + str(self._gui.cellID) + " on column: "+str(self._gui.columnID),
+                        verbosityHigh,
+                    )
+
+                self._gui.ResetCommands()
+
+                printLog("Data begin receiving", verbosityHigh)
+                self.ReceiveData(self.socket)
+                printLog("Data received", verbosityHigh)
+
+            except (ConnectionResetError, BrokenPipeError):
+                printLog("Connection was reset, probably by server side.")
+                self.connected = False
+                continue
 
         # send that we as a client are quitting
-        send_one_message(s, PackData(CLIENT_CMD.QUIT))
+        if self.connected:
+            send_one_message(self.socket, PackData(CLIENT_CMD.QUIT))
 
-        s.close()
+        self.socket.close()
         printLog("ClientThread terminated")
+
+    def ConnectToServer(self):
+        printLog("Continuously trying connect to server...")
+        while not self.connected:
+            try:
+                try:
+                    self.socket.connect((self.HOST, self.PORT))
+                    self.connected = True
+                except (TimeoutError,ConnectionRefusedError, ConnectionAbortedError):
+                    time.sleep(1)
+                    continue
+            except Exception as e:
+                printLog("Exception while trying connect to server:")
+                printLog(str(e))
+                time.sleep(5)
+                continue
+
+        printLog("Connected to server:" + self.HOST + ":" + str(self.PORT), verbosityLow)
 
     def ReceiveData(self, s):
         rxRawData = b""
