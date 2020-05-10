@@ -47,6 +47,7 @@ class dataLayer(object):
         self.activeCells = []
         self.predictiveCells = []
 
+        #contains values of permanences
         # array - [[columnID_a,[destinationID_a1,destinationID_a2,...]],[columnID_b,[destinationID_b1,destinationID_b2,...]]]
         self.proximalSynapses = (
             []

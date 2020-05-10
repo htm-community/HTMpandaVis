@@ -199,8 +199,8 @@ class cMinicolumn:
 
             for y in range(
                 len(synapsesDiv[i])
-            ):  # go through every synapse and check activity
-                if synapsesDiv[i][y] == 1:
+            ):  # go through every synapse and check if its connected (we are comparing permanences)
+                if synapsesDiv[i][y] != 0.0:
 
                     form = GeomVertexFormat.getV3()
                     vdata = GeomVertexData("ProximalSynapseLine", form, Geom.UHStatic)

@@ -159,7 +159,7 @@ class PandaServer:
                         # SP - proximal synapses
                         sp = self.spatialPoolers[HTMObjectName]
                         connectedSynapses = numpy.zeros(
-                            sp.getNumInputs(), dtype=numpy.int32
+                            sp.getNumInputs(), dtype=numpy.float32
                         )
                         sp.getPermanence(requestedCol, connectedSynapses, sp.getSynPermConnected())#sp.getConnectedSynapses(requestedCol, connectedSynapses)
 
