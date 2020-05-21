@@ -18,7 +18,7 @@ verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = (
-    verbosityMedium
+    verbosityHigh
 )  # change this to change printing verbosity of this file
 SLOW_DEBUG = False
 
@@ -220,6 +220,7 @@ class SocketClient:
                 self.serverData = rxData[1]
                 self.stateDataArrived = True
                 printLog("Data income", verbosityMedium)
+
             elif rxData[0] == SERVER_CMD.SEND_PROXIMAL_DATA:
                 self.serverData = rxData[1]
                 self.proximalDataArrived = True

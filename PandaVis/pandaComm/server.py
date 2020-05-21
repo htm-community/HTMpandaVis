@@ -71,7 +71,7 @@ class PandaServer:
         self.serverThread = ServerThread(self, 1, "ServerThread-1")
 
         self.spatialPoolers = {}  # two level dict, {'HTMobject' : {'layer' : spatialPoolerInstance}}
-        self.temporalMemories = {}  #two level dict, {'HTMobject' : {'layer' : temporalMemoryInstance}}
+        self.temporalMemories = {}  # two level dict, {'HTMobject' : {'layer' : temporalMemoryInstance}}
 
     def Start(self):
         self.serverThread.start()
@@ -105,7 +105,7 @@ class PandaServer:
                 conn.settimeout(5)
                 printLog("Connected by" + str(addr))
                 clientConnected = True
-                self.newStateDataReadyForVis = True
+                newClient = True
             except socket.timeout:
                 continue
 
@@ -122,11 +122,12 @@ class PandaServer:
 
                     rxData = pickle.loads(rxRawData)
 
-                    #self.serverData = ServerData() # clear server data to start with blank structure
+                    # self.serverData = ServerData() # clear server data to start with blank structure
 
                     if rxData[0] == CLIENT_CMD.CMD_GET_STATE_DATA:
-                        #printLog("State data requested", verbosityHigh)
-                        if self.newStateDataReadyForVis:
+                        # printLog("State data requested", verbosityHigh)
+                        if self.newStateDataReadyForVis or newClient:
+                            newClient = False
 
                             send_one_message(
                                 conn, PackData(SERVER_CMD.SEND_STATE_DATA, self.serverData)
@@ -137,7 +138,7 @@ class PandaServer:
                             send_one_message(
                                 conn, PackData(SERVER_CMD.NA, [])
                             )  # we dont have any new data for client
-                            #printLog("But no new data available", verbosityHigh)
+                            # printLog("But no new data available", verbosityHigh)
 
                     elif rxData[0] == CLIENT_CMD.CMD_GET_PROXIMAL_DATA:
                         printLog("Proximal data req by client", verbosityMedium)
@@ -161,7 +162,8 @@ class PandaServer:
                         connectedSynapses = numpy.zeros(
                             sp.getNumInputs(), dtype=numpy.float32
                         )
-                        sp.getPermanence(requestedCol, connectedSynapses, sp.getSynPermConnected())#sp.getConnectedSynapses(requestedCol, connectedSynapses)
+                        sp.getPermanence(requestedCol, connectedSynapses,
+                                         sp.getSynPermConnected())  # sp.getConnectedSynapses(requestedCol, connectedSynapses)
 
                         self.ClearNonStaticData()  # clear previous data (e.g. for other layers)
 
@@ -173,12 +175,12 @@ class PandaServer:
                             "Sending:"
                             + str(
                                 self.serverData.HTMObjects[HTMObjectName]
-                                .layers[layerName]
-                                .proximalSynapses
+                                    .layers[layerName]
+                                    .proximalSynapses
                             ),
                             verbosityHigh,
                         )
-                            
+
                         send_one_message(
                             conn, PackData(SERVER_CMD.SEND_PROXIMAL_DATA, self.serverData)
                         )
@@ -197,34 +199,35 @@ class PandaServer:
                         layerName = rxData[1][0][1]
                         requestedColumn = int(rxData[1][1])
                         requestedCell = int(rxData[1][2])
-                        
+
                         cellsPerColumn = self.serverData.HTMObjects[HTMObjectName].layers[layerName].cellsPerColumn
-                        reqCellID = requestedColumn*cellsPerColumn + requestedCell
-                        
-                        printLog("Requested cell ID:"+str(reqCellID),verbosityMedium)
+                        reqCellID = requestedColumn * cellsPerColumn + requestedCell
+
+                        printLog("Requested cell ID:" + str(reqCellID), verbosityMedium)
 
                         if not layerName in self.temporalMemories[HTMObjectName]:
                             printLog("This layer doesn't have TM, can't request distal connections.. skipping")
                             continue
                         tm = self.temporalMemories[HTMObjectName][layerName]
 
-                        presynCells = getPresynapticCellsForCell(tm,reqCellID)
-                        
-                        #printLog("PRESYN CELLS:"+str(presynCells))
-                        #winners = tm.getWinnerCells()
-                        
-                        #print(winners)
+                        presynCells = getPresynapticCellsForCell(tm, reqCellID)
 
-                        self.ClearNonStaticData() # clear previous data (e.g. for other layers)
+                        # printLog("PRESYN CELLS:"+str(presynCells))
+                        # winners = tm.getWinnerCells()
+
+                        # print(winners)
+
+                        self.ClearNonStaticData()  # clear previous data (e.g. for other layers)
 
                         self.serverData.HTMObjects[HTMObjectName].layers[
                             layerName
-                        ].distalSynapses = [[requestedColumn,requestedCell,presynCells]]#sending just one pack for one cell
+                        ].distalSynapses = [
+                            [requestedColumn, requestedCell, presynCells]]  # sending just one pack for one cell
                         send_one_message(
                             conn, PackData(SERVER_CMD.SEND_DISTAL_DATA, self.serverData)
                         )
 
-                        
+
                     elif rxData[0] == CLIENT_CMD.CMD_RUN:
                         self.cmdRunInLoop = True
                         printLog("RUN", verbosityHigh)
@@ -237,9 +240,9 @@ class PandaServer:
                     elif rxData[0] == CLIENT_CMD.CMD_GOTO:
                         self.cmdGotoIteration = True
                         self.gotoIteration = rxData[1]
-                        printLog("GOTO:"+str(self.gotoIteration), verbosityHigh)
+                        printLog("GOTO:" + str(self.gotoIteration), verbosityHigh)
 
-                        if self.serverData.iterationNo >= self.gotoIteration: # handle when current iteration is above or equal requested
+                        if self.serverData.iterationNo >= self.gotoIteration:  # handle when current iteration is above or equal requested
                             self.cmdGotoIteration = False
 
                     elif rxData[0] == CLIENT_CMD.QUIT:
@@ -271,7 +274,8 @@ class PandaServer:
         printLog("Server quit")
         conn.close()
 
-    def ClearNonStaticData(self):# we need to clean up previous data, for example last time distal connections was requested, but now state data is requested
+    def ClearNonStaticData(
+            self):  # we need to clean up previous data, for example last time distal connections was requested, but now state data is requested
 
         for obj in self.serverData.HTMObjects.values():
             for ly in obj.layers.values():
@@ -288,34 +292,36 @@ class PandaServer:
 
     def BlockExecution(self):
         if self.cmdGotoIteration:
-          if self.gotoIteration <= self.currentIteration:
-              self.cmdGotoIteration = False
+            if self.gotoIteration <= self.currentIteration:
+                self.cmdGotoIteration = False
 
         if not self.cmdGotoIteration:
             printLog("One step finished")
             while not self.cmdRunInLoop and not self.cmdRunOneStep and not self.cmdGotoIteration:
-              pass
+                pass
             self.cmdRunOneStep = False
             printLog("Proceeding one step...")
+
 
 def getPresynapticCellsForCell(tm, cellID):
     start_time = time.time()
     segments = tm.connections.segmentsForCell(cellID)
-                    
+
     synapses = []
     res = []
     for seg in segments:
         for syn in tm.connections.synapsesForSegment(seg):
             synapses += [syn]
- 
+
         presynapticCells = []
         for syn in synapses:
             presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
-    
+
         res += [presynapticCells]
 
     printLog("getPresynapticCellsForCell() took %s seconds " % (time.time() - start_time), verbosityHigh)
     return res
+
 
 class ServerThread(threading.Thread):
     def __init__(self, serverInstance, threadID, name):
