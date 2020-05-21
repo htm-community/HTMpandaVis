@@ -112,8 +112,9 @@ class cLayer:
                     if self.minicolumns[colID].cells[cellID].falselyPredicted:
                         oneOfCellFalselyPredicted = True
 
-            if showBursting:
+            if showBursting and self.nOfCellsPerColumn>1: # not for layers with only 1 cell/column
                 bursting = nOfActiveCells == self.nOfCellsPerColumn #if all cells in column are active -> the column is bursting
+
             else:
                 bursting = False
 
@@ -151,3 +152,7 @@ class cLayer:
     def LODUpdateSwitch(self, lodDistance, lodDistance2):
         for col in self.minicolumns:
             col.LODUpdateSwitch(lodDistance, lodDistance2)
+
+    def resetPresynapticFocus(self):
+        for col in self.minicolumns:
+            col.resetPresynapticFocus()

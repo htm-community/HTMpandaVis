@@ -34,7 +34,7 @@ def PackData(cmd, data=[]):
     # protocol must be specified to be able to work with py2 on server side
     rawData = pickle.dumps(d, protocol=2)
 
-    if len(rawData) % 4096 == 0:  # if length of data is multiple of chunck size
+    if len(rawData) % 4096 == 0:  # if length of data is multiple of chunk size
         # increase the data by 1 byte to prevent it - it causes problems in recv function
         # on the client side - because client doesn't know how long data to expect
         if isinstance(data, ServerData):
@@ -42,7 +42,7 @@ def PackData(cmd, data=[]):
             d = [cmd, data]
             rawData = pickle.dumps(d)  # , protocol=2)
         else:
-            printLog("Packed data is multiple of chunck size, but not known instance")
+            printLog("Packed data is multiple of chunk size, but not known instance")
 
     return rawData
 
@@ -84,6 +84,8 @@ class SocketClient:
         self.socket = None
         self.connected = False
 
+        self.tmrReq = 0
+
     def setGui(self, gui):
         self._gui = gui
 
@@ -106,22 +108,24 @@ class SocketClient:
                 self.ConnectToServer()
 
             try:
-                printLog("Sending REQ", verbosityHigh)
+               # if time.time() - self.tmrReq > 1: # each 1 sec make request
+                printLog("Sending REQ", verbosityMedium)
                 send_one_message(self.socket, PackData(CLIENT_CMD.CMD_GET_STATE_DATA))
+                    #self.tmrReq = time.time()
 
                 if self._gui.cmdRun:
                     send_one_message(self.socket, PackData(CLIENT_CMD.CMD_RUN))
-                    printLog("RUN req", verbosityHigh)
+                    printLog("RUN req", verbosityMedium)
                 elif self._gui.cmdStop:
                     send_one_message(self.socket, PackData(CLIENT_CMD.CMD_STOP))
-                    printLog("STOP req", verbosityHigh)
-                if self._gui.gotoReq >= 0:
+                    printLog("STOP req", verbosityMedium)
+                elif self._gui.gotoReq >= 0:
                     send_one_message(self.socket, PackData(CLIENT_CMD.CMD_GOTO, self._gui.gotoReq))
-                    printLog("GOTO req", verbosityHigh)
+                    printLog("GOTO req", verbosityMedium)
                     self._gui.gotoReq = -1
                 elif self._gui.cmdStepForward:
                     send_one_message(self.socket, PackData(CLIENT_CMD.CMD_STEP_FWD))
-                    printLog("STEP", verbosityHigh)
+                    printLog("STEP", verbosityMedium)
                 elif self._reqProximalData:
                     self._reqProximalData=False
                     send_one_message(
@@ -133,7 +137,7 @@ class SocketClient:
                     )
                     printLog(
                         "GET proximal data for col:" + str(self._gui.focusedCell.column),
-                        verbosityHigh,
+                        verbosityMedium,
                     )
                 elif self._reqDistalData:
                     self._reqDistalData=False
@@ -146,7 +150,7 @@ class SocketClient:
                     )
                     printLog(
                         "GET distal for cell: " + str(self._gui.cellID) + " on column: "+str(self._gui.columnID),
-                        verbosityHigh,
+                        verbosityMedium,
                     )
 
                 self._gui.ResetCommands()
@@ -186,12 +190,18 @@ class SocketClient:
         printLog("Connected to server:" + self.HOST + ":" + str(self.PORT), verbosityLow)
 
     def ReceiveData(self, s):
+
+        # wait till the previous data is processed! (in the Update() thread)
+        while self.stateDataArrived or self.proximalDataArrived or self.distalDataArrived:
+            continue
+
         rxRawData = b""
+
         try:
             rxRawData = recv_one_message(s)
 
             printLog("lenRaw:" + str(len(rxRawData)), verbosityHigh)
-            printLog(rxRawData, verbosityHigh)
+            #printLog(rxRawData, verbosityHigh)
 
             if len(rxRawData) == 0:
                 printLog("Received data are empty!", verbosityHigh)
@@ -204,19 +214,21 @@ class SocketClient:
             if len(rxData) > 1:
                 printLog("RCV data:" + str(rxData[1]), verbosityHigh)
 
+
+
             if rxData[0] == SERVER_CMD.SEND_STATE_DATA:
                 self.serverData = rxData[1]
                 self.stateDataArrived = True
-                printLog("Data income", verbosityHigh)
+                printLog("Data income", verbosityMedium)
             elif rxData[0] == SERVER_CMD.SEND_PROXIMAL_DATA:
                 self.serverData = rxData[1]
                 self.proximalDataArrived = True
-                printLog("proximal data arrived", verbosityHigh)
+                printLog("proximal data arrived", verbosityMedium)
 
             elif rxData[0] == SERVER_CMD.SEND_DISTAL_DATA:
                 self.serverData = rxData[1]
                 self.distalDataArrived = True
-                printLog("distal data arrived", verbosityHigh)
+                printLog("distal data arrived", verbosityMedium)
             
 
             elif rxData[0] == SERVER_CMD.NA:

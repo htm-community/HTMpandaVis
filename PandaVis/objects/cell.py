@@ -149,8 +149,14 @@ class cCell:
         printLog("HTM inputs:"+str(HTMObject.inputs))
         printLog("HTM layers:" + str(HTMObject.layers))
 
+        #input object could be either input or layer instance
         for inputObj in inputObjects:
-            HTMObject.inputs[inputObj].resetPresynapticFocus()
+            if inputObj in HTMObject.inputs:
+                HTMObject.inputs[inputObj].resetPresynapticFocus()
+            elif inputObj in HTMObject.layers:
+                HTMObject.layers[inputObj].resetPresynapticFocus()
+            else:
+                raise SyntaxError("Wrongly defined distal input to the layer! Input name:" + str(inputObj))
 
         for segment in data:
 

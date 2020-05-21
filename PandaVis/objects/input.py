@@ -89,8 +89,13 @@ class cInput:
         for i in range(len(self.inputBits)):
             self.inputBits[i].active = False
 
-        for i in data:  # data contains indicies of what bits are "ON"
-            self.inputBits[i].active = True
+        try:
+            for i in data:  # data contains indicies of what bits are "ON"
+                self.inputBits[i].active = True
+        except IndexError:
+            print(data)
+            print(len(self.inputBits))
+            raise Exception()
 
         for i in range(len(self.inputBits)):  # update all states
             self.inputBits[i].UpdateState()

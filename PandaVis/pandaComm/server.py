@@ -17,7 +17,7 @@ verbosityLow = 0
 verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = (
-    verbosityHigh
+    verbosityMedium
 )  # change this to change printing verbosity of this file
 
 
@@ -70,8 +70,8 @@ class PandaServer:
 
         self.serverThread = ServerThread(self, 1, "ServerThread-1")
 
-        self.spatialPoolers = {}  # dict of pairs layer:spatialPooler
-        self.temporalMemories = {}  # dict of pairs layer:temporalMemory
+        self.spatialPoolers = {}  # two level dict, {'HTMobject' : {'layer' : spatialPoolerInstance}}
+        self.temporalMemories = {}  #two level dict, {'HTMobject' : {'layer' : temporalMemoryInstance}}
 
     def Start(self):
         self.serverThread.start()
@@ -127,7 +127,7 @@ class PandaServer:
                     if rxData[0] == CLIENT_CMD.CMD_GET_STATE_DATA:
                         #printLog("State data requested", verbosityHigh)
                         if self.newStateDataReadyForVis:
-                        
+
                             send_one_message(
                                 conn, PackData(SERVER_CMD.SEND_STATE_DATA, self.serverData)
                             )
@@ -157,11 +157,13 @@ class PandaServer:
                             verbosityMedium,
                         )
                         # SP - proximal synapses
-                        sp = self.spatialPoolers[HTMObjectName]
+                        sp = self.spatialPoolers[HTMObjectName][layerName]
                         connectedSynapses = numpy.zeros(
                             sp.getNumInputs(), dtype=numpy.float32
                         )
                         sp.getPermanence(requestedCol, connectedSynapses, sp.getSynPermConnected())#sp.getConnectedSynapses(requestedCol, connectedSynapses)
+
+                        self.ClearNonStaticData()  # clear previous data (e.g. for other layers)
 
                         self.serverData.HTMObjects[HTMObjectName].layers[
                             layerName
@@ -201,14 +203,20 @@ class PandaServer:
                         
                         printLog("Requested cell ID:"+str(reqCellID),verbosityMedium)
 
-                        tm = self.temporalMemories[HTMObjectName]
+                        if not layerName in self.temporalMemories[HTMObjectName]:
+                            printLog("This layer doesn't have TM, can't request distal connections.. skipping")
+                            continue
+                        tm = self.temporalMemories[HTMObjectName][layerName]
 
                         presynCells = getPresynapticCellsForCell(tm,reqCellID)
                         
-                        print("PRESYN CELLS:"+str(presynCells))
+                        #printLog("PRESYN CELLS:"+str(presynCells))
                         #winners = tm.getWinnerCells()
                         
                         #print(winners)
+
+                        self.ClearNonStaticData() # clear previous data (e.g. for other layers)
+
                         self.serverData.HTMObjects[HTMObjectName].layers[
                             layerName
                         ].distalSynapses = [[requestedColumn,requestedCell,presynCells]]#sending just one pack for one cell
@@ -262,6 +270,21 @@ class PandaServer:
 
         printLog("Server quit")
         conn.close()
+
+    def ClearNonStaticData(self):# we need to clean up previous data, for example last time distal connections was requested, but now state data is requested
+
+        for obj in self.serverData.HTMObjects.values():
+            for ly in obj.layers.values():
+                ly.proximalSynapses = {}
+                ly.distalSynapses = {}
+
+                ly.activeColumns = []  # currently active columns (sparse) in this layer
+                ly.activeCells = []
+                ly.winnerCells = []
+                ly.predictiveCells = []
+
+            for inp in obj.inputs.values():
+                inp.bits = []
 
     def BlockExecution(self):
         if self.cmdGotoIteration:

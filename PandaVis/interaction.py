@@ -236,6 +236,12 @@ class cInteraction:
             self.focusedCell = newCellFocus
             self.focusedCell.setFocus()
 
+            # unfocus all
+            for obj in self.base.HTMObjects.values():
+                obj.DestroyProximalSynapses()
+            for obj in self.base.HTMObjects.values():
+                obj.DestroyDistalSynapses()
+
             self.gui.focusedCell = self.focusedCell
             self.gui.focusedPath = self.focusedPath
             
@@ -257,7 +263,8 @@ class cInteraction:
             for obj in self.base.HTMObjects.values():
                 obj.DestroyProximalSynapses()
 
-        if self.gui.showDistalSynapses and self.gui.focusedCell is not None:  # destroy synapses if they not to be shown
+        #do not request distal data if we don't want to show them or if this layer doesn't have TM
+        if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
             self.client.reqDistalData()
         else:
             for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown

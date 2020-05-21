@@ -11,6 +11,9 @@ from gui import cGUI # Graphical user interface
 from environment import cEnvironment # handles everything about the environment
 from interaction import cInteraction # handles keys, user interaction etc..
 from direct.stdpy import threading
+from panda3d.core import loadPrcFileData
+
+loadPrcFileData('', 'win-size 1600 900')
 
 import faulthandler; faulthandler.enable()
 
@@ -79,9 +82,6 @@ class cApp(ShowBase):
         cellDataWasUpdated = False
 
         if self.client.stateDataArrived or self.oneOfObjectsCreationFinished:
-            self.client.stateDataArrived = False
-            self.oneOfObjectsCreationFinished = False
-            cellDataWasUpdated = True
 
             printLog("Data change! Updating HTM state", verbosityMedium)
 
@@ -146,9 +146,13 @@ class cApp(ShowBase):
                             showBursting = self.gui.showBursting
                         )
 
+            self.client.stateDataArrived = False
+            self.oneOfObjectsCreationFinished = False
+            cellDataWasUpdated = True
+
         if self.client.proximalDataArrived:
             printLog("Proximal data arrived, updating synapses!", verbosityMedium)
-            self.client.proximalDataArrived = False
+
             serverObjs = self.client.serverData.HTMObjects
 
             for obj in serverObjs:
@@ -156,11 +160,11 @@ class cApp(ShowBase):
                 self.HTMObjects[obj].DestroyProximalSynapses()
 
                 for l in serverObjs[obj].layers:  # dict
-                    printLog(serverObjs[obj].layers[l].proximalSynapses, verbosityHigh)
+                    printLog("data len:"+str(len(serverObjs[obj].layers[l].proximalSynapses)), verbosityHigh)
                     for syn in serverObjs[obj].layers[l].proximalSynapses:  # array
 
                         printLog("Layer:" + str(l), verbosityMedium)
-                        printLog("proximalSynapses:" + str(syn), verbosityHigh)
+                        printLog("proximalSynapses len:" + str(len(syn)), verbosityHigh)
 
                         columnID = syn[0]
                         proximalSynapses = syn[1]
@@ -173,9 +177,10 @@ class cApp(ShowBase):
                             self.HTMObjects[obj].inputs,
                             proximalSynapses,
                         )
+            self.client.proximalDataArrived = False
+
         if self.client.distalDataArrived:
             printLog("Distal data arrived, updating synapses!", verbosityMedium)
-            self.client.distalDataArrived = False
             serverObjs = self.client.serverData.HTMObjects
 
             for obj in serverObjs:
@@ -183,17 +188,17 @@ class cApp(ShowBase):
                 self.HTMObjects[obj].DestroyDistalSynapses()
 
                 for l in serverObjs[obj].layers:  # dict
-                    printLog(serverObjs[obj].layers[l].distalSynapses, verbosityHigh)
+                    printLog("len:"+str(len(serverObjs[obj].layers[l].distalSynapses)), verbosityHigh)
                     for syn in serverObjs[obj].layers[l].distalSynapses:  # array
 
                         printLog("Layer:" + str(l), verbosityMedium)
-                        printLog("distalSynapses:" + str(syn), verbosityHigh)
+                        printLog("distalSynapses len:" + str(len(syn)), verbosityHigh)
 
                         columnID = syn[0]
                         cellID = syn[1]
                         distalSynapses = syn[2]
 
-                        # update columns with proximal Synapses
+                        # update columns with distal Synapses
                         self.HTMObjects[obj].layers[l].minicolumns[
                             columnID
                         ].cells[cellID].CreateDistalSynapses(
@@ -202,6 +207,9 @@ class cApp(ShowBase):
                             distalSynapses,
                             serverObjs[obj].layers[l].distalInputs
                         )
+
+            self.client.distalDataArrived = False
+
         if cellDataWasUpdated:
             self.interaction.UpdateProximalAndDistalData()
             self.gui.UpdateCellDescription()

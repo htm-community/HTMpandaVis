@@ -168,7 +168,7 @@ class cMinicolumn:
     # -- Create proximal synapses
     # inputObjects - list of names of inputs(areas)
     # inputs - panda vis input object
-    # synapses - list of the second points of synapses (first point is this cortical column)
+    # synapses - list of the second points of synapses (first point is this minicolumn)
     # NOTE: synapses are now DENSE
     def CreateProximalSynapses(self, inputObjects, inputs, synapses):
 
@@ -261,6 +261,13 @@ class cMinicolumn:
             return
         for cell in self.cells:
             cell.DestroyDistalSynapses()
+
+        self.resetPresynapticFocus()
+
+    def resetPresynapticFocus(self):
+        if not self.gfxCreated:
+            return
+        for cell in self.cells:
             cell.resetPresynapticFocus()  # also reset distal focus
 
     def getDescription(self):
