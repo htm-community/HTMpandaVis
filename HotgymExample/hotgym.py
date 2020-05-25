@@ -6,8 +6,11 @@ import random
 import math
 
 # Panda vis
-from PandaVis.pandaComm.server import PandaServer
-from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
+#from PandaVis.pandaComm.server import PandaServer
+#from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
+from pandaBaker.pandaBaker import PandaBaker
+from pandaBaker.pandaBaker import cHTMObject, cLayer, cInput
+
 
 from htm.bindings.sdr import SDR, Metrics
 from htm.encoders.rdse import RDSE, RDSE_Parameters
@@ -57,7 +60,7 @@ default_parameters = {
     }
 }
 
-pandaServer = PandaServer()
+pandaBaker = PandaBaker('/home/zz/Desktop/test1.db')
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
@@ -133,6 +136,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     predictor = Predictor(steps=[1, 5], alpha=parameters["predictor"]['sdrc_alpha'])
     predictor_resolution = 1
 
+    BuildPandaSystem(sp,tm, parameters["enc"]["value"]["size"],dateEncoder.size)
+
     # Iterate through every datum in the dataset, record the inputs & outputs.
     inputs = []
     anomaly = []
@@ -168,35 +173,23 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
 
-        pandaServer.currentIteration = iterationNo  # update server's iteration number
-        # do not update if we are running GOTO iteration command
-        if (not pandaServer.cmdGotoIteration or (
-                pandaServer.cmdGotoIteration and pandaServer.gotoIteration == pandaServer.currentIteration)):
-            # ------------------HTMpandaVis----------------------
-            # fill up values
-            serverData.iterationNo = pandaServer.currentIteration
 
-            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
-            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
-            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.size
+        # ------------------HTMpandaVis----------------------
+        # fill up values
 
-            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
-            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
-            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].count = dateBits.size
+        pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+        pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
 
-            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
-            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
-            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
+        pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
+        pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
 
-            pandaServer.serverData = serverData
+        pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
+        pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
+        pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
 
-            pandaServer.spatialPoolers["HTM1"] = sp
-            pandaServer.temporalMemories["HTM1"] = tm
-            pandaServer.NewStateDataReady()
+        pandaBaker.StoreIteration(iterationNo)
 
-        print("One step finished")
-        pandaServer.BlockExecution()
-        print("Proceeding one step...")
+        print(iterationNo)
 
         # ------------------HTMpandaVis----------------------
 
@@ -225,6 +218,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
 
         iterationNo = iterationNo + 1
+
+    pandaBaker.CommitBatch()
 
     # Print information & statistics about the state of the HTM.
     print("Encoded Input", enc_info)
@@ -290,32 +285,25 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     return -accuracy[5]
 
 
-def BuildPandaSystem():
-    global serverData
-    serverData = ServerData()
-    serverData.HTMObjects["HTM1"] = dataHTMObject()
-    serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
-    serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
+def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
 
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(
-        default_parameters["sp"]["columnCount"],
-        default_parameters["tm"]["cellsPerColumn"],
-    )
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
+    pandaBaker.HTMObjects["HTM1"] = cHTMObject()
+    pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"] = cInput(consumptionBits_size)
+    pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = cInput(dateBits_size)
+
+    pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"] = cLayer(sp,tm)
+    pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
         "SL_Consumption",
         "SL_TimeOfDay",
     ]
 
+    pandaBaker.PrepareDatabase()
 
 if __name__ == "__main__":
     try:
-        pandaServer.Start()
-        BuildPandaSystem()
-
         #while True:  # run infinitely
         main()
 
     except KeyboardInterrupt:
         print("Keyboard interrupt")
-        pandaServer.MainThreadQuitted()
     print("Script finished")
