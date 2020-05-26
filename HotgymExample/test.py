@@ -1,7 +1,19 @@
-from pandaBaker.pandaBaker import PandaBaker
-from pandaBaker.pandaBaker import cHTMObject, cLayer, cInput
+from pandaBaker.pandaBakeReader import PandaBakeReader
+from pandaBaker.dataStructs import cHTMObject,cLayer,cInput
 
-pandaBaker = PandaBaker('/home/zz/Desktop/test1.db')
+pandaBakeReader = PandaBakeReader("C:\\Users\\43010600\\Desktop\\test1.db")
 
-pandaBaker.OpenDatabase()
-pandaBaker.TestSelect()
+##pandaBaker.HTMObjects["HTM1"] = cHTMObject()
+##pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"] = cInput(10)
+##pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = cInput(10)
+##
+##pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"] = cLayer(None,None)
+##pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
+##    "SL_Consumption",
+##    "SL_TimeOfDay",
+##]
+##
+##pandaBaker.PrepareDatabase()
+    
+pandaBakeReader.OpenDatabase()
+print(pandaBakeReader.db.getTableNames())

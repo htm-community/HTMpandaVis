@@ -4,3 +4,4 @@ PandaVis/guiValues.ini
 build/*
 dist/*
 *.egg-info/*
+*.log
