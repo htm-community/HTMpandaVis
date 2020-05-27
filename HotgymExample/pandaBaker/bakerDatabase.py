@@ -3,7 +3,8 @@
 import sqlite3
 import numpy as np
 
-# defining new SQLITE datatype to be able to store numpy array
+# defining new SQLITE datatype to be able to store numpy array types
+#--------------------------------------------------------------------FLOAT ARRAY
 def adapt_array(arr):
     return arr.tobytes()
 
@@ -12,7 +13,15 @@ def convert_array(text):
 
 sqlite3.register_adapter(np.array, adapt_array)
 sqlite3.register_converter("array", convert_array)
+#--------------------------------------------------------------------SDR (SPARSE, contains active indicies)
+def adapt_sdr(arr):
+    return arr.tobytes()
 
+def convert_sdr(text):
+    return np.frombuffer(text,dtype=np.uint32)
+
+sqlite3.register_adapter(np.array, adapt_sdr)
+sqlite3.register_converter("sdr", convert_sdr)
 
 class Database(object):
     def __init__(self,filePath):

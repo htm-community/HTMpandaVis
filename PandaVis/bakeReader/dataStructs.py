@@ -1,32 +1,47 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-def SpatialPoolerParams(sp):
-    if sp is None:
-        return None
+def Params(sp, tm):
 
-    sp_inputDims_x = sp.getInputDimensions()[0]
-    sp_inputDims_y = sp.getInputDimensions()[1] if len(sp.getInputDimensions()) > 1 else 0
-    sp_columnDimensions_x = sp.getColumnDimensions()[0]
-    sp_columnDimensions_y = sp.getColumnDimensions()[1] if len(sp.getColumnDimensions()) > 1 else 0
+    spPars={}
+    tmPars={}
+    if sp is not None:
 
-    pars = {'sp_inputDimensions_x': sp_inputDims_x,'sp_inputDimensions_y': sp_inputDims_y,
-            'sp_columnDimensions_x': sp_columnDimensions_x, 'sp_columnDimensions_y': sp_columnDimensions_y,
-            'sp_potentialPct': sp.getPotentialPct(), 'sp_potentialRadius': sp.getPotentialRadius(),
-            'sp_globalInhibition': sp.getGlobalInhibition(), 'sp_localAreaDensity': sp.getLocalAreaDensity(),
-            'sp_synPermInactiveDec': sp.getSynPermInactiveDec(), 'sp_synPermActiveInc': sp.getSynPermActiveInc(),
-            'sp_synPermConnected': sp.getSynPermConnected(), 'sp_boostStrength': sp.getBoostStrength(),
-            'sp_wrapAround': sp.getWrapAround()}
-    return pars
+        sp_inputDims_x = sp.getInputDimensions()[0]
+        sp_inputDims_y = sp.getInputDimensions()[1] if len(sp.getInputDimensions()) > 1 else 0
+        sp_columnDimensions_x = sp.getColumnDimensions()[0]
+        sp_columnDimensions_y = sp.getColumnDimensions()[1] if len(sp.getColumnDimensions()) > 1 else 0
+
+        spPars = {'sp_inputDimensions_x': sp_inputDims_x,'sp_inputDimensions_y': sp_inputDims_y,
+                'sp_columnDimensions_x': sp_columnDimensions_x, 'sp_columnDimensions_y': sp_columnDimensions_y,
+                'sp_potentialPct': sp.getPotentialPct(), 'sp_potentialRadius': sp.getPotentialRadius(),
+                'sp_globalInhibition': sp.getGlobalInhibition(), 'sp_localAreaDensity': sp.getLocalAreaDensity(),
+                'sp_synPermInactiveDec': sp.getSynPermInactiveDec(), 'sp_synPermActiveInc': sp.getSynPermActiveInc(),
+                'sp_synPermConnected': sp.getSynPermConnected(), 'sp_boostStrength': sp.getBoostStrength(),
+                'sp_wrapAround': sp.getWrapAround()}
+
+    if tm is not None:
+
+        tmPars = {'tm_activationThreshold': tm.getActivationThreshold(),
+                    'tm_cellsPerColumn': tm.getCellsPerColumn(),
+                    'tm_initialPerm': tm.getInitialPermanence(),
+                    'tm_maxSegmentsPerCell': tm.getMaxSegmentsPerCell(),
+                    'tm_maxSynapsesPerSegment': tm.getMaxSynapsesPerSegment(),
+                    'tm_minThreshold': tm.getMinThreshold(),
+                    'tm_newSynapseCount': tm.getMaxNewSynapseCount(),
+                    'tm_permanenceDec': tm.getPermanenceDecrement(),
+                    'tm_permanenceInc': tm.getPermanenceIncrement()
+                }
+
+    return {**spPars, **tmPars}
 
 class cLayer(object):
     def __init__(self, sp=None, tm=None):
         # static vars ----------------------------------------------------------------------
         self.sp = sp
-        self.spParams = SpatialPoolerParams(self.sp)
-
         self.tm = tm
-        #self.tmParams = TemporalMemoryParams(self.tm)
+
+        self.params = Params(self.sp, self.tm)
 
         # to what inputs are the synapses connected
         self.proximalInputs = []  # [inputName1,inputName2,...]

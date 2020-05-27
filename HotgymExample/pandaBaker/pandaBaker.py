@@ -42,7 +42,7 @@ class PandaBaker(object):
         for ly in self.layers:
             tableName = 'par_layers_'+ly
             self.db.CreateTable(tableName, "name TEXT, value REAL")
-            self.db.InsertParameters(tableName, self.layers[ly].spParams)
+            self.db.InsertParameters(tableName, self.layers[ly].params)
             #create table for defining to what inputs these layers are connected
             for pi in self.layers[ly].proximalInputs:
                 self.db.Insert("connections", [pi, ly, 'proximal'])
@@ -52,12 +52,12 @@ class PandaBaker(object):
         # DYNAMIC tables creation -----------------------------------------------------------------------------
 
         for inp in self.inputs:
-            self.db.CreateTable('inputs_'+inp, "iteration INTEGER, value TEXT, data ARRAY")
+            self.db.CreateTable('inputs_'+inp, "iteration INTEGER, value TEXT, data SDR")
         for ly in self.layers:
-            self.db.CreateTable('layer_activeColumns_'+ly, "iteration INTEGER, data ARRAY")
-            self.db.CreateTable('layer_predictiveCells_'+ly, "iteration INTEGER, data ARRAY")
-            self.db.CreateTable('layer_winnerCells_'+ly, "iteration INTEGER, data ARRAY")
-            self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data ARRAY")
+            self.db.CreateTable('layer_activeColumns_'+ly, "iteration INTEGER, data SDR")
+            self.db.CreateTable('layer_predictiveCells_'+ly, "iteration INTEGER, data SDR")
+            self.db.CreateTable('layer_winnerCells_'+ly, "iteration INTEGER, data SDR")
+            self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data SDR")
 
         self.db.conn.commit()
 

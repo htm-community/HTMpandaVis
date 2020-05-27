@@ -38,7 +38,7 @@ class BakeReader(object):
             for p in pars:
                 dictPars[p['name']] = p['value']
 
-            self.layers[ly].spParams = dictPars   # assign parameter dict to the layer
+            self.layers[ly].params = dictPars   # assign parameter dict to the layer
             Log("Layer parameters loaded:"+str(dictPars))
 
         #fill all inputs 
@@ -48,13 +48,13 @@ class BakeReader(object):
             Log("Loaded input : " + row['name'])
 
 
-    def LoadInput(self, input, iteration):
-        tableName = "inputs_"+input
+    def LoadInput(self, inp, iteration):
+        tableName = "inputs_"+inp
 
         row = self.db.SelectByIteration(tableName,iteration)
 
-        self.inputs[input].bits = row['data']
-        self.inputs[input].stringValue = row['value']
+        self.inputs[inp].bits = row['data']
+        self.inputs[inp].stringValue = row['value']
 
     def LoadActiveColumns(self, layer, iteration):
         tableName = "layer_activeColumns_"+layer
@@ -74,10 +74,6 @@ class BakeReader(object):
     def LoadActiveCells(self, layer, iteration):
         tableName = "layer_activeCells_"+layer
         row = self.db.SelectByIteration(tableName,iteration)
-
-        print(row)
-        print(row[0])
-        print(row['data'])
         self.layers[layer].activeCells = row['data']
 
 

@@ -95,6 +95,7 @@ class cGUI:
 
     def setIteration(self, iterationNo):
         self.window["iteration"].update("Iteration no.:"+str(iterationNo))
+
     def getDefault(self, key):
         try:
             return self.defaults[key]
@@ -222,6 +223,7 @@ class cGUI:
     def UpdateDescription(self, txt):
         if self.description is not None:
             self.description.updateText(txt)
+
     def UpdateCellDescription(self):
 
         if self.focusedCell is None:

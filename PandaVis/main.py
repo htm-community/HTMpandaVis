@@ -79,22 +79,67 @@ class cApp(ShowBase):
         #----
         self.firstTime = True
         self.dataChange = False
-        self.iteration = 100
+
+        self.BuildStructure()
+
+        self.iteration = 0
+
+    def BuildStructure(self):
+
+        self.bakeReader.OpenDatabase()
+        self.bakeReader.BuildStructure()
+
+        obj = "HTM1"
+        if obj not in self.HTMObjects:
+
+            printLog("HTM object creation! Name:" + str(obj))
+            # create HTM object
+            newObj = cHTM(self, self.loader, obj)
+            newObj.getNode().reparentTo(self.render)
+
+            # create inputs
+            for inp in self.bakeReader.inputs:
+                printLog("Creating input: " + str(inp), verbosityHigh)
+                print(self.bakeReader.inputs[inp])
+                newObj.CreateInput(
+                    name=inp,
+                    count=self.bakeReader.inputs[inp].size,
+                    rows=int(math.sqrt(self.bakeReader.inputs[inp].size)),
+                )
+            # create layers
+            for lay in self.bakeReader.layers:
+                printLog("Creating layer: " + str(lay), verbosityHigh)
+                newObj.CreateLayer(
+                    name=lay,
+                    nOfColumnsPerLayer=int(self.bakeReader.layers[lay].params['sp_columnDimensions_x']),
+                    nOfCellsPerColumn=int(self.bakeReader.layers[lay].params['tm_cellsPerColumn']),
+                )
+
+            self.HTMObjects[obj] = newObj
+
+            self.gfxCreationThread.start()
+
+
+    def LoadIteration(self, iteration):
+        self.iteration = iteration
+
+        for obj in self.HTMObjects:
+            for inp in self.HTMObjects[obj].inputs:
+                self.bakeReader.LoadInput(inp, iteration)
+
+            for ly in self.HTMObjects[obj].layers:
+                self.bakeReader.LoadActiveColumns(ly, iteration)
+                self.bakeReader.LoadWinnerCells(ly, iteration)
+                self.bakeReader.LoadPredictiveCells(ly, iteration)
+                self.bakeReader.LoadActiveCells(ly, iteration)
+
+        self.dataChange = True
 
     def updateHTMstate(self):
 
-        if self.firstTime:
-            self.bakeReader.OpenDatabase()
-            self.bakeReader.BuildStructure()
-
-            self.bakeReader.LoadActiveColumns('SensoryLayer', self.iteration)
-            self.bakeReader.LoadWinnerCells('SensoryLayer', self.iteration)
-            self.bakeReader.LoadPredictiveCells('SensoryLayer', self.iteration)
-            self.bakeReader.LoadActiveCells('SensoryLayer', self.iteration)
-
-            self.firstTime = False
-            self.dataChange = True
-            return
+        if self.gui.gotoReq>=0:
+            self.LoadIteration(self.gui.gotoReq)
+            self.gui.gotoReq = -1
 
         cellDataWasUpdated = False
 
@@ -103,38 +148,7 @@ class cApp(ShowBase):
             printLog("Data change! Updating HTM state", verbosityMedium)
 
             self.gui.setIteration(self.iteration)
-
             obj = "HTM1"
-            if obj not in self.HTMObjects:
-
-                printLog("New HTM object arrived! Name:" + str(obj))
-                # create HTM object
-                newObj = cHTM(self, self.loader, obj)
-                newObj.getNode().reparentTo(self.render)
-
-                # create inputs
-                for inp in self.bakeReader.inputs:
-                    printLog("Creating input: " + str(inp), verbosityHigh)
-                    print(self.bakeReader.inputs[inp])
-                    newObj.CreateInput(
-                        name=inp,
-                        count=self.bakeReader.inputs[inp].size,
-                        rows=int(math.sqrt(self.bakeReader.inputs[inp].size)),
-                    )
-                # create layers
-                for lay in self.bakeReader.layers:
-                    printLog("Creating layer: " + str(lay), verbosityHigh)
-                    newObj.CreateLayer(
-                        name=lay,
-                        nOfColumnsPerLayer=int(self.bakeReader.layers[lay].spParams['sp_columnDimensions_x']),
-                        nOfCellsPerColumn=1,
-                    )
-
-                self.HTMObjects[obj] = newObj
-
-                self.gfxCreationThread.start()
-                # update HTM object
-
             # go through all incoming inputs
             for i in self.bakeReader.inputs:  # dict
                 printLog("Updating state of input: " + str(i), verbosityHigh)
@@ -162,6 +176,8 @@ class cApp(ShowBase):
 
             self.oneOfObjectsCreationFinished = False
             cellDataWasUpdated = True
+
+            self.dataChange = False
 
         # if self.client.proximalDataArrived:
         #     printLog("Proximal data arrived, updating synapses!", verbosityMedium)
