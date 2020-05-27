@@ -9,7 +9,7 @@ import math
 #from PandaVis.pandaComm.server import PandaServer
 #from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
 from pandaBaker.pandaBaker import PandaBaker
-from pandaBaker.pandaBaker import cHTMObject, cLayer, cInput
+from pandaBaker.pandaBaker import cLayer, cInput
 
 
 from htm.bindings.sdr import SDR, Metrics
@@ -177,15 +177,16 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         # ------------------HTMpandaVis----------------------
         # fill up values
 
-        pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
-        pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
+        pandaBaker.inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+        pandaBaker.inputs["SL_Consumption"].bits = consumptionBits.sparse
 
-        pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
-        pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
+        pandaBaker.inputs["SL_TimeOfDay"].stringValue = record[0]
+        pandaBaker.inputs["SL_TimeOfDay"].bits = dateBits.sparse
 
-        pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
-        pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
-        pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
+        pandaBaker.layers["SensoryLayer"].activeColumns = activeColumns.sparse
+        pandaBaker.layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
+        pandaBaker.layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
+        pandaBaker.layers["SensoryLayer"].activeCells = tm.getActiveCells().sparse
 
         pandaBaker.StoreIteration(iterationNo)
 
@@ -287,12 +288,11 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
 def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
 
-    pandaBaker.HTMObjects["HTM1"] = cHTMObject()
-    pandaBaker.HTMObjects["HTM1"].inputs["SL_Consumption"] = cInput(consumptionBits_size)
-    pandaBaker.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = cInput(dateBits_size)
+    pandaBaker.inputs["SL_Consumption"] = cInput(consumptionBits_size)
+    pandaBaker.inputs["SL_TimeOfDay"] = cInput(dateBits_size)
 
-    pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"] = cLayer(sp,tm)
-    pandaBaker.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
+    pandaBaker.layers["SensoryLayer"] = cLayer(sp,tm)
+    pandaBaker.layers["SensoryLayer"].proximalInputs = [
         "SL_Consumption",
         "SL_TimeOfDay",
     ]

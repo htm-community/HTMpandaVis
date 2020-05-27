@@ -2,7 +2,7 @@
 
 from direct.showbase.ShowBase import ShowBase
 
-from pandaComm.client import SocketClient
+from bakeReader.bakeReader import BakeReader
 import math
 
 import time
@@ -59,8 +59,8 @@ class cApp(ShowBase):
             visApp = self
         )
 
-        self.client = SocketClient()
-        self.client.setGui(self.gui)
+        self.bakeReader = BakeReader('/home/zz/Desktop/test1.db')
+        self.bakeReader.setGui(self.gui)
         
         self.interaction = cInteraction(self)
         
@@ -76,139 +76,152 @@ class cApp(ShowBase):
 
         self.gfxCreationThread= threading.Thread(target=self.gfxCreationWorker, args=())
 
+        #----
+        self.firstTime = True
+        self.dataChange = False
+        self.iteration = 100
 
     def updateHTMstate(self):
 
+        if self.firstTime:
+            self.bakeReader.OpenDatabase()
+            self.bakeReader.BuildStructure()
+
+            self.bakeReader.LoadActiveColumns('SensoryLayer', self.iteration)
+            self.bakeReader.LoadWinnerCells('SensoryLayer', self.iteration)
+            self.bakeReader.LoadPredictiveCells('SensoryLayer', self.iteration)
+            self.bakeReader.LoadActiveCells('SensoryLayer', self.iteration)
+
+            self.firstTime = False
+            self.dataChange = True
+            return
+
         cellDataWasUpdated = False
 
-        if self.client.stateDataArrived or self.oneOfObjectsCreationFinished:
+        if self.dataChange or self.oneOfObjectsCreationFinished:
 
             printLog("Data change! Updating HTM state", verbosityMedium)
 
-            self.gui.setIteration(self.client.serverData.iterationNo)
-            serverObjs = self.client.serverData.HTMObjects
+            self.gui.setIteration(self.iteration)
 
-            # if we get HTM data objects, iterate over received data
-            for obj in serverObjs:
+            obj = "HTM1"
+            if obj not in self.HTMObjects:
 
-                if not obj in self.HTMObjects:  # its new HTM object
-                    printLog("New HTM object arrived! Name:" + str(obj))
-                    # create HTM object
-                    newObj = cHTM(self, self.loader, obj)
-                    newObj.getNode().reparentTo(self.render)
+                printLog("New HTM object arrived! Name:" + str(obj))
+                # create HTM object
+                newObj = cHTM(self, self.loader, obj)
+                newObj.getNode().reparentTo(self.render)
 
-                    # create inputs
-                    for inp in serverObjs[obj].inputs:
-                        printLog("Creating input: " + str(inp), verbosityHigh)
-                        newObj.CreateInput(
-                            name=inp,
-                            count=serverObjs[obj].inputs[inp].count,
-                            rows=int(math.sqrt(serverObjs[obj].inputs[inp].count)),
-                        )
-                    # create layers
-                    for lay in serverObjs[obj].layers:
-                        printLog("Creating layer: " + str(lay), verbosityHigh)
-                        newObj.CreateLayer(
-                            name=lay,
-                            nOfColumnsPerLayer=serverObjs[obj].layers[lay].columnCount,
-                            nOfCellsPerColumn=serverObjs[obj]
-                            .layers[lay]
-                            .cellsPerColumn,
-                        )
-
-                    self.HTMObjects[obj] = newObj
-
-                    self.gfxCreationThread.start()
-                # update HTM object
-
-                # go through all incoming inputs
-                for i in serverObjs[obj].inputs:  # dict
-                    printLog("Updating state of input: " + str(i), verbosityHigh)
-                    # find matching input in local structure
-
-                    self.HTMObjects[obj].inputs[i].UpdateState(
-                        serverObjs[obj].inputs[i].bits,
-                        serverObjs[obj].inputs[i].stringValue,
+                # create inputs
+                for inp in self.bakeReader.inputs:
+                    printLog("Creating input: " + str(inp), verbosityHigh)
+                    print(self.bakeReader.inputs[inp])
+                    newObj.CreateInput(
+                        name=inp,
+                        count=self.bakeReader.inputs[inp].size,
+                        rows=int(math.sqrt(self.bakeReader.inputs[inp].size)),
+                    )
+                # create layers
+                for lay in self.bakeReader.layers:
+                    printLog("Creating layer: " + str(lay), verbosityHigh)
+                    newObj.CreateLayer(
+                        name=lay,
+                        nOfColumnsPerLayer=int(self.bakeReader.layers[lay].spParams['sp_columnDimensions_x']),
+                        nOfCellsPerColumn=1,
                     )
 
-                # go through all incoming layers
-                for l in serverObjs[obj].layers:  # dict
-                    if self.HTMObjects[obj].layers[l].gfxCreationFinished:
-                        printLog("Updating state of layer: " + str(l), verbosityHigh)
-                        # find matching layer in local structure
-                        self.HTMObjects[obj].layers[l].UpdateState(
-                            serverObjs[obj].layers[l].activeColumns,
-                            serverObjs[obj].layers[l].activeCells,
-                            serverObjs[obj].layers[l].winnerCells,
-                            serverObjs[obj].layers[l].predictiveCells,
-                            newStep = True,
-                            showPredictionCorrectness=self.gui.showPredictionCorrectness,
-                            showBursting = self.gui.showBursting
-                        )
+                self.HTMObjects[obj] = newObj
 
-            self.client.stateDataArrived = False
+                self.gfxCreationThread.start()
+                # update HTM object
+
+            # go through all incoming inputs
+            for i in self.bakeReader.inputs:  # dict
+                printLog("Updating state of input: " + str(i), verbosityHigh)
+                # find matching input in local structure
+
+                self.HTMObjects[obj].inputs[i].UpdateState(
+                    self.bakeReader.inputs[i].bits,
+                    self.bakeReader.inputs[i].stringValue,
+                )
+
+            # go through all incoming layers
+            for l in self.bakeReader.layers:  # dict
+                if self.HTMObjects[obj].layers[l].gfxCreationFinished:
+                    printLog("Updating state of layer: " + str(l), verbosityHigh)
+                    # find matching layer in local structure
+                    self.HTMObjects[obj].layers[l].UpdateState(
+                        self.bakeReader.layers[l].activeColumns,
+                        self.bakeReader.layers[l].activeCells,
+                        self.bakeReader.layers[l].winnerCells,
+                        self.bakeReader.layers[l].predictiveCells,
+                        newStep = True,
+                        showPredictionCorrectness=self.gui.showPredictionCorrectness,
+                        showBursting = self.gui.showBursting
+                    )
+
             self.oneOfObjectsCreationFinished = False
             cellDataWasUpdated = True
 
-        if self.client.proximalDataArrived:
-            printLog("Proximal data arrived, updating synapses!", verbosityMedium)
-
-            serverObjs = self.client.serverData.HTMObjects
-
-            for obj in serverObjs:
-
-                self.HTMObjects[obj].DestroyProximalSynapses()
-
-                for l in serverObjs[obj].layers:  # dict
-                    printLog("data len:"+str(len(serverObjs[obj].layers[l].proximalSynapses)), verbosityHigh)
-                    for syn in serverObjs[obj].layers[l].proximalSynapses:  # array
-
-                        printLog("Layer:" + str(l), verbosityMedium)
-                        printLog("proximalSynapses len:" + str(len(syn)), verbosityHigh)
-
-                        columnID = syn[0]
-                        proximalSynapses = syn[1]
-
-                        # update columns with proximal Synapses
-                        self.HTMObjects[obj].layers[l].minicolumns[
-                            columnID
-                        ].CreateProximalSynapses(
-                            serverObjs[obj].layers[l].proximalInputs,
-                            self.HTMObjects[obj].inputs,
-                            proximalSynapses,
-                        )
-            self.client.proximalDataArrived = False
-
-        if self.client.distalDataArrived:
-            printLog("Distal data arrived, updating synapses!", verbosityMedium)
-            serverObjs = self.client.serverData.HTMObjects
-
-            for obj in serverObjs:
-
-                self.HTMObjects[obj].DestroyDistalSynapses()
-
-                for l in serverObjs[obj].layers:  # dict
-                    printLog("len:"+str(len(serverObjs[obj].layers[l].distalSynapses)), verbosityHigh)
-                    for syn in serverObjs[obj].layers[l].distalSynapses:  # array
-
-                        printLog("Layer:" + str(l), verbosityMedium)
-                        printLog("distalSynapses len:" + str(len(syn)), verbosityHigh)
-
-                        columnID = syn[0]
-                        cellID = syn[1]
-                        distalSynapses = syn[2]
-
-                        # update columns with distal Synapses
-                        self.HTMObjects[obj].layers[l].minicolumns[
-                            columnID
-                        ].cells[cellID].CreateDistalSynapses(
-                            self.HTMObjects[obj],
-                            self.HTMObjects[obj].layers[l],
-                            distalSynapses,
-                            serverObjs[obj].layers[l].distalInputs
-                        )
-
-            self.client.distalDataArrived = False
+        # if self.client.proximalDataArrived:
+        #     printLog("Proximal data arrived, updating synapses!", verbosityMedium)
+        #
+        #     serverObjs = self.client.serverData.HTMObjects
+        #
+        #     for obj in serverObjs:
+        #
+        #         self.HTMObjects[obj].DestroyProximalSynapses()
+        #
+        #         for l in serverObjs[obj].layers:  # dict
+        #             printLog("data len:"+str(len(serverObjs[obj].layers[l].proximalSynapses)), verbosityHigh)
+        #             for syn in serverObjs[obj].layers[l].proximalSynapses:  # array
+        #
+        #                 printLog("Layer:" + str(l), verbosityMedium)
+        #                 printLog("proximalSynapses len:" + str(len(syn)), verbosityHigh)
+        #
+        #                 columnID = syn[0]
+        #                 proximalSynapses = syn[1]
+        #
+        #                 # update columns with proximal Synapses
+        #                 self.HTMObjects[obj].layers[l].minicolumns[
+        #                     columnID
+        #                 ].CreateProximalSynapses(
+        #                     serverObjs[obj].layers[l].proximalInputs,
+        #                     self.HTMObjects[obj].inputs,
+        #                     proximalSynapses,
+        #                 )
+        #     self.client.proximalDataArrived = False
+        #
+        # if self.client.distalDataArrived:
+        #     printLog("Distal data arrived, updating synapses!", verbosityMedium)
+        #     serverObjs = self.client.serverData.HTMObjects
+        #
+        #     for obj in serverObjs:
+        #
+        #         self.HTMObjects[obj].DestroyDistalSynapses()
+        #
+        #         for l in serverObjs[obj].layers:  # dict
+        #             printLog("len:"+str(len(serverObjs[obj].layers[l].distalSynapses)), verbosityHigh)
+        #             for syn in serverObjs[obj].layers[l].distalSynapses:  # array
+        #
+        #                 printLog("Layer:" + str(l), verbosityMedium)
+        #                 printLog("distalSynapses len:" + str(len(syn)), verbosityHigh)
+        #
+        #                 columnID = syn[0]
+        #                 cellID = syn[1]
+        #                 distalSynapses = syn[2]
+        #
+        #                 # update columns with distal Synapses
+        #                 self.HTMObjects[obj].layers[l].minicolumns[
+        #                     columnID
+        #                 ].cells[cellID].CreateDistalSynapses(
+        #                     self.HTMObjects[obj],
+        #                     self.HTMObjects[obj].layers[l],
+        #                     distalSynapses,
+        #                     serverObjs[obj].layers[l].distalInputs
+        #                 )
+        #
+        #     self.client.distalDataArrived = False
 
         if cellDataWasUpdated:
             self.interaction.UpdateProximalAndDistalData()

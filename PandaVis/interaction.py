@@ -27,7 +27,7 @@ class cInteraction:
         self.speedBoost = False
         
         self.gui = base.gui
-        self.client = base.client
+        self.bakeReader = base.bakeReader
         
     """Updates the camera based on the keyboard input. Once this is
       done, then the CellManager's update function is called."""
@@ -199,7 +199,7 @@ class cInteraction:
     def CloseApp(self):
 
         printLog("CLOSE app event")
-        self.client.terminateClientThread = True
+        self.bakeReader.Close()
         self.base.gui.Terminate() # terminate GUI windows
 
         __import__("sys").exit(0)
