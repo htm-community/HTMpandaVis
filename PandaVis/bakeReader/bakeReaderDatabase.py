@@ -78,6 +78,8 @@ class Database(object):
     def getTableNames(self):
 
         result = self.curs.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+        if(len(result)==0):
+            raise RuntimeError("The database is empty!")
         table_names = sorted(list(zip(*result))[0])
 
         return table_names
@@ -95,6 +97,14 @@ class Database(object):
         self.curs.execute("SELECT * FROM " + tableName + " WHERE iteration=(?);",(iteration,))
         self.conn.commit()
         data = self.curs.fetchone()
+
+        return data
+
+    def SelectByRowId(self, tableName, rowId):
+
+        self.curs.execute("SELECT * FROM " + tableName + " WHERE rowid=(?);",(rowId,))
+        self.conn.commit()
+        data = self.curs.fetchone()#row id is unique
 
         return data
 

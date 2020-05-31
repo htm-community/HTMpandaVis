@@ -8,11 +8,14 @@ def Params(sp, tm):
     if sp is not None:
 
         sp_inputDims_x = sp.getInputDimensions()[0]
-        sp_inputDims_y = sp.getInputDimensions()[1] if len(sp.getInputDimensions()) > 1 else 0
+        sp_inputDims_y = sp.getInputDimensions()[1] if len(sp.getInputDimensions()) > 1 else 1
         sp_columnDimensions_x = sp.getColumnDimensions()[0]
-        sp_columnDimensions_y = sp.getColumnDimensions()[1] if len(sp.getColumnDimensions()) > 1 else 0
+        sp_columnDimensions_y = sp.getColumnDimensions()[1] if len(sp.getColumnDimensions()) > 1 else 1
+
+        sp_columnCount = sp_columnDimensions_x * sp_columnDimensions_y;
 
         spPars = {'sp_inputDimensions_x': sp_inputDims_x,'sp_inputDimensions_y': sp_inputDims_y,
+                  'sp_columnCount' : sp_columnCount,
                 'sp_columnDimensions_x': sp_columnDimensions_x, 'sp_columnDimensions_y': sp_columnDimensions_y,
                 'sp_potentialPct': sp.getPotentialPct(), 'sp_potentialRadius': sp.getPotentialRadius(),
                 'sp_globalInhibition': sp.getGlobalInhibition(), 'sp_localAreaDensity': sp.getLocalAreaDensity(),
@@ -57,12 +60,12 @@ class cLayer(object):
         self.predictiveCells = np.empty(0)
 
         # proximal synapses - contains values of permanences
-        # array of numpy arrays, e.g. proximalSynapses[0] is numpy array for column ID 0
-        self.proximalSynapses = [np.empty(0)]
+        # dict of numpy arrays, e.g. proximalSynapses[0] is numpy array for column ID 0
+        self.proximalSynapses = {}
 
         # synapses - contains values of permanences
-        # array of numpy arrays, e.g. distalSynapses[0] is numpy array for cell ID 0
-        self.distalSynapses = [np.empty(0)]
+        # dict of numpy arrays, e.g. distalSynapses[0] is numpy array for cell ID 0
+        self.distalSynapses = {}
 
 
 class cInput(object):

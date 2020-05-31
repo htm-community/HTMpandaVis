@@ -15,7 +15,7 @@ class PandaBaker(object):
         self.inputs = {}  # can contain cInput instances
 
         #flags what to bake
-        self.bakeProximalSynapses = False
+        self.bakeProximalSynapses = True
         self.bakeDistalSynapses = False
 
 
@@ -58,6 +58,7 @@ class PandaBaker(object):
             self.db.CreateTable('layer_predictiveCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_winnerCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data SDR")
+            self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data SDR")
 
         self.db.conn.commit()
 
@@ -83,11 +84,11 @@ class PandaBaker(object):
             sp = layer.sp
             if sp is not None and self.bakeProximalSynapses:
 
-                if layer.spParams['sp_columnDimensions_y']==0:
-                    columnCount = layer.spParams['sp_columnDimensions_x']
+                if layer.params['sp_columnDimensions_y']==0:
+                    columnCount = layer.params['sp_columnDimensions_x']
                 else:
                     #two dimensional SP
-                    columnCount = layer.spParams['sp_columnDimensions_x']*layer.spParams['sp_columnDimensions_y']
+                    columnCount = layer.params['sp_columnDimensions_x']*layer.params['sp_columnDimensions_y']
 
                 layer.proximalSynapses = [] # erase
                 for col in range(columnCount):
@@ -98,7 +99,9 @@ class PandaBaker(object):
                     sp.getPermanence(col, synapses,
                                      0.0)#get all permanences
 
-                    layer.proximalSynapses.append(synapses)
+                    #layer.proximalSynapses.append(synapses) no need to store it probably
+                    self.db.InsertDataArray2('layer_proximalSynapses_' + ly,
+                                            iteration, col, synapses)
 
             tm = layer.tm
             #if tm is not None and self.bakeDistalSynapses:

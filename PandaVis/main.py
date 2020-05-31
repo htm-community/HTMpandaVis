@@ -59,7 +59,7 @@ class cApp(ShowBase):
             visApp = self
         )
 
-        self.bakeReader = BakeReader('/home/zz/Desktop/test1.db')
+        self.bakeReader = BakeReader('/media/D/hotgym.db')
         self.bakeReader.setGui(self.gui)
         
         self.interaction = cInteraction(self)
@@ -77,12 +77,12 @@ class cApp(ShowBase):
         self.gfxCreationThread= threading.Thread(target=self.gfxCreationWorker, args=())
 
         #----
-        self.firstTime = True
-        self.dataChange = False
+        self.iterationDataUpdate = False
 
         self.BuildStructure()
 
         self.iteration = 0
+        self.initIterationLoaded = False
 
     def BuildStructure(self):
 
@@ -132,10 +132,15 @@ class cApp(ShowBase):
                 self.bakeReader.LoadWinnerCells(ly, iteration)
                 self.bakeReader.LoadPredictiveCells(ly, iteration)
                 self.bakeReader.LoadActiveCells(ly, iteration)
+                self.bakeReader.LoadProximalSynapses(ly,[0,1], iteration)
 
-        self.dataChange = True
+        self.iterationDataUpdate = True
 
     def updateHTMstate(self):
+
+        if self.allHTMobjectsCreated and not self.initIterationLoaded: # wait till the objects are created, then load iteration 0
+            self.LoadIteration(0)
+            self.initIterationLoaded = True
 
         if self.gui.gotoReq>=0:
             self.LoadIteration(self.gui.gotoReq)
@@ -143,7 +148,8 @@ class cApp(ShowBase):
 
         cellDataWasUpdated = False
 
-        if self.dataChange or self.oneOfObjectsCreationFinished:
+        if self.iterationDataUpdate:
+            self.iterationDataUpdate = False
 
             printLog("Data change! Updating HTM state", verbosityMedium)
 
@@ -175,38 +181,26 @@ class cApp(ShowBase):
                     )
 
             self.oneOfObjectsCreationFinished = False
-            cellDataWasUpdated = True
 
-            self.dataChange = False
+            self.interaction.UpdateProximalAndDistalData()
+            self.gui.UpdateCellDescription()
 
-        # if self.client.proximalDataArrived:
-        #     printLog("Proximal data arrived, updating synapses!", verbosityMedium)
-        #
-        #     serverObjs = self.client.serverData.HTMObjects
-        #
-        #     for obj in serverObjs:
-        #
-        #         self.HTMObjects[obj].DestroyProximalSynapses()
-        #
-        #         for l in serverObjs[obj].layers:  # dict
-        #             printLog("data len:"+str(len(serverObjs[obj].layers[l].proximalSynapses)), verbosityHigh)
-        #             for syn in serverObjs[obj].layers[l].proximalSynapses:  # array
-        #
-        #                 printLog("Layer:" + str(l), verbosityMedium)
-        #                 printLog("proximalSynapses len:" + str(len(syn)), verbosityHigh)
-        #
-        #                 columnID = syn[0]
-        #                 proximalSynapses = syn[1]
-        #
-        #                 # update columns with proximal Synapses
-        #                 self.HTMObjects[obj].layers[l].minicolumns[
-        #                     columnID
-        #                 ].CreateProximalSynapses(
-        #                     serverObjs[obj].layers[l].proximalInputs,
-        #                     self.HTMObjects[obj].inputs,
-        #                     proximalSynapses,
-        #                 )
-        #     self.client.proximalDataArrived = False
+    def ShowProximalSynapses(self, obj, layerName, column):# reads the synapses from the database and show them
+
+            layer = self.bakeReader.layers[layerName]
+
+            self.bakeReader.LoadProximalSynapses(layerName, [column], self.iteration) # load it
+
+            if column not in layer.proximalSynapses:
+                printLog("Don't have proximal data for requested column:"+str(column) + " of layer:"+str(layerName))
+                return
+            self.HTMObjects[obj].layers[layerName].ShowProximalSynapses(column, layer.proximalSynapses[column],
+                                                                       layer.proximalInputs,#names of inputs
+                                                                        self.HTMObjects[obj].inputs,
+                                                                        layer.params['sp_synPermConnected'])
+
+
+
         #
         # if self.client.distalDataArrived:
         #     printLog("Distal data arrived, updating synapses!", verbosityMedium)
@@ -239,9 +233,7 @@ class cApp(ShowBase):
         #
         #     self.client.distalDataArrived = False
 
-        if cellDataWasUpdated:
-            self.interaction.UpdateProximalAndDistalData()
-            self.gui.UpdateCellDescription()
+
 
 
     def update(self, task):
@@ -256,7 +248,7 @@ class cApp(ShowBase):
 
         time.sleep(5) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
         printLog("Starting GFX worker thread")
-        while(True):
+        while True:
             # finishing HTM objects creation on the run
             if not self.allHTMobjectsCreated:
                 allFinished = True

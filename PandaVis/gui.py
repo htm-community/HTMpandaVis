@@ -67,10 +67,12 @@ class cGUI:
         self.showLegend = self.getDefault("legend")
         self.showDescription = self.getDefault("desc")
 
+        self.iteration = 0
+
 
 
         layout = [[sg.Text('Iteration no. 0     ', key = 'iteration')],
-                  [sg.Button('ONE STEP')],
+                  [sg.Button('STEP -1'), sg.Button('STEP +1')],
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.InputText(self.getDefault("iterationGoto"), key="iterationGoto"), sg.Button('GOTO step')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
@@ -94,6 +96,7 @@ class cGUI:
         self.window = sg.Window('Main panel', keep_on_top=True, location=self.getDefault("mainWinPos")).Layout(layout)
 
     def setIteration(self, iterationNo):
+        self.iteration = iterationNo
         self.window["iteration"].update("Iteration no.:"+str(iterationNo))
 
     def getDefault(self, key):
@@ -165,9 +168,15 @@ class cGUI:
 
         if event != '__TIMEOUT__':
 
-            if event == "ONE STEP":
-                self.cmdStepForward = True
-                print("one step")
+            if event == "STEP +1":
+                print("step +1")
+                self.gotoReq = self.iteration + 1
+                self.iteration= self.iteration + 1
+            if event == "STEP -1":
+                print("step -1")
+                if self.iteration > 0:
+                    self.gotoReq = self.iteration - 1
+                    self.iteration= self.iteration - 1
             elif event == "RUN":
                 self.cmdRun = True
             elif event == "STOP":

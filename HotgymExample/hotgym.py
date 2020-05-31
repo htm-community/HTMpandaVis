@@ -60,7 +60,7 @@ default_parameters = {
     }
 }
 
-pandaBaker = PandaBaker('/home/zz/Desktop/test1.db')
+pandaBaker = PandaBaker('/media/D/hotgym.db')
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
@@ -219,6 +219,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
 
         iterationNo = iterationNo + 1
+
+        #pandaBaker.CommitBatch()
 
     pandaBaker.CommitBatch()
 

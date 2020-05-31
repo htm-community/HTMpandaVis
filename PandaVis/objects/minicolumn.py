@@ -166,41 +166,42 @@ class cMinicolumn:
             self.__columnBox.setRenderModeFilled()
             
     # -- Create proximal synapses
-    # inputObjects - list of names of inputs(areas)
-    # inputs - panda vis input object
-    # synapses - list of the second points of synapses (first point is this minicolumn)
+    # inputNames - list of names of inputs(areas)
+    # inputObj - panda vis input object
+    # permanences - list of the second points of synapses (first point is this minicolumn)
     # NOTE: synapses are now DENSE
-    def CreateProximalSynapses(self, inputObjects, inputs, synapses):
+
+    def CreateProximalSynapses(self, inputNames, inputObj, permanences, thresholdConnected):
 
         for child in self.__cellsNodePath.getChildren():
             if child.getName() == "ProximalSynapseLine":
                 child.removeNode()
 
-        printLog("Creating proximal synapses", verbosityMedium)
-        printLog("To inputs called:" + str(inputObjects), verbosityMedium)
-        printLog("Synapses count:" + str(len(synapses)), verbosityMedium)
-        printLog("active:" + str(sum([i for i in synapses])), verbosityHigh)
+        printLog("Creating proximal permanences", verbosityMedium)
+        printLog("To inputObj called:" + str(inputNames), verbosityMedium)
+        printLog("permanences count:" + str(len(permanences)), verbosityMedium)
+        printLog("active:" + str(sum([i for i in permanences])), verbosityHigh)
 
-        # inputs are divided into separate items in list - [input1,input2,input3]
-        # synapses are one united array [1,0,0,1,0,1,0...]
+        # inputObj are divided into separate items in list - [input1,input2,input3]
+        # permanences are one united array [1,0,0,1,0,1,0...]
         # length is the same
 
-        # synapses can be connected to one input or to several inputs
+        # synapses can be connected to one input or to several inputObj
         # if to more than one - split synapses array
         synapsesDiv = []
         offset = 0
-        for inputObj in inputObjects:
-            synapsesDiv.append(synapses[offset : offset + inputs[inputObj].count])
-            offset += inputs[inputObj].count
+        for inputName in inputNames:
+            synapsesDiv.append(permanences[offset : offset + inputObj[inputName].count])
+            offset += inputObj[inputName].count
 
         for i in range(len(synapsesDiv)):  # for each input object
 
-            inputs[inputObjects[i]].resetProximalFocus()  # clear color highlight
+            inputObj[inputNames[i]].resetProximalFocus()  # clear color highlight
 
             for y in range(
                 len(synapsesDiv[i])
             ):  # go through every synapse and check if its connected (we are comparing permanences)
-                if synapsesDiv[i][y] != 0.0:
+                if synapsesDiv[i][y] >= thresholdConnected:
 
                     form = GeomVertexFormat.getV3()
                     vdata = GeomVertexData("ProximalSynapseLine", form, Geom.UHStatic)
@@ -208,18 +209,18 @@ class cMinicolumn:
                     vertex = GeomVertexWriter(vdata, "vertex")
 
                     vertex.addData3f(
-                        inputs[inputObjects[i]]
+                        inputObj[inputNames[i]]
                         .inputBits[y]
                         .getNode()
                         .getPos(self.__node)
                     )
                     vertex.addData3f(0, 0, 0)
                     # vertex.addData3f(self.__node.getPos())
-                    # printLog("Inputs:"+str(i)+"bits:"+str(y))
-                    # printLog(inputs[i].inputBits[y].getNode().getPos(self.__node))
+                    # printLog("inputObj:"+str(i)+"bits:"+str(y))
+                    # printLog(inputObj[i].inputBits[y].getNode().getPos(self.__node))
 
                     # highlight
-                    inputs[inputObjects[i]].inputBits[
+                    inputObj[inputNames[i]].inputBits[
                         y
                     ].setProximalFocus()  # highlight connected bits
 
@@ -238,7 +239,7 @@ class cMinicolumn:
                     
                     nodePath.setRenderModeThickness(2)
                     # color of the line
-                    if inputs[inputObjects[i]].inputBits[y].active:
+                    if inputObj[inputNames[i]].inputBits[y].active:
                         nodePath.setColor(COL_PROXIMAL_SYNAPSES_ACTIVE)
                     else:
                         nodePath.setColor(COL_PROXIMAL_SYNAPSES_INACTIVE)

@@ -256,19 +256,22 @@ class cInteraction:
             self.testRoutine()
 
     def UpdateProximalAndDistalData(self):
+        if self.focusedCell is None:
+            return
         # -------- proximal and distal synapses -----------------------
-        if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
-            self.client.reqProximalData()
-        else:
-            for obj in self.base.HTMObjects.values():
-                obj.DestroyProximalSynapses()
-
-        #do not request distal data if we don't want to show them or if this layer doesn't have TM
-        if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
-            self.client.reqDistalData()
-        else:
-            for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
-                obj.DestroyDistalSynapses()
+        self.base.ShowProximalSynapses(self.focusedPath[0],self.focusedPath[1],self.gui.columnID);
+        # if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
+        #     self.client.reqProximalData()
+        # else:
+        #     for obj in self.base.HTMObjects.values():
+        #         obj.DestroyProximalSynapses()
+        #
+        # #do not request distal data if we don't want to show them or if this layer doesn't have TM
+        # if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
+        #     self.client.reqDistalData()
+        # else:
+        #     for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
+        #         obj.DestroyDistalSynapses()
         # -----------------------------------------------------------
 
     def Update(self):

@@ -136,6 +136,17 @@ class cLayer:
     def getNode(self):
         return self.__node
 
+    def ShowProximalSynapses(self, column, permanences, inputNames, inputObj, thresholdConnected):
+        # update columns with proximal Synapses
+        self.minicolumns[
+            column
+        ].CreateProximalSynapses(
+            inputNames,
+            inputObj,
+            permanences,
+            thresholdConnected
+        )
+
     def DestroyProximalSynapses(self):
         for col in self.minicolumns:
             col.DestroyProximalSynapses()

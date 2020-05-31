@@ -25,7 +25,7 @@ class BakeReader(object):
 
         #build the structure, tables that start with par_
         parTables = [q for q in tableNames if q.startswith("par_") and q!='par_inputs']
-    
+
         #each layer has own par table
         for t in parTables:
             ly = t.split('_')[2]
@@ -47,6 +47,17 @@ class BakeReader(object):
             self.inputs[row['name']] = cInput(row['size'])
             Log("Loaded input : " + row['name'])
 
+            # load connections
+            connections = self.db.SelectAll("connections")
+
+        for con in connections:
+            if con["type"] == "proximal":
+                self.layers[con["layer"]].proximalInputs.append(con["input"])
+                Log("Loaded proximal input for layer: " + str(con["layer"]))
+            elif con["type"] == "distal":
+                self.layers[con["layer"]].distalInputs.append(con["input"])
+                Log("Loaded distal input for layer: " + str(con["layer"]))
+
 
     def LoadInput(self, inp, iteration):
         tableName = "inputs_"+inp
@@ -59,22 +70,37 @@ class BakeReader(object):
     def LoadActiveColumns(self, layer, iteration):
         tableName = "layer_activeColumns_"+layer
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].activeColumns = row['data']
+        self.layers[layer].activeColumns = row['data'] if row['data'] is not None else np.empty(0)
 
     def LoadWinnerCells(self, layer, iteration):
         tableName = "layer_winnerCells_"+layer
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].winnerCells = row['data']
+        self.layers[layer].winnerCells = row['data'] if row['data'] is not None else np.empty(0)
 
     def LoadPredictiveCells(self, layer, iteration):
         tableName = "layer_predictiveCells_"+layer
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].predictiveCells = row['data']
+        self.layers[layer].predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
 
     def LoadActiveCells(self, layer, iteration):
         tableName = "layer_activeCells_"+layer
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].activeCells = row['data']
+        self.layers[layer].activeCells = row['data'] if row['data'] is not None else np.empty(0)
+
+    def LoadProximalSynapses(self, layer, columns, iteration):
+        tableName = "layer_proximalSynapses_"+layer
+        columnCount = self.layers[layer].params["sp_columnCount"]
+        self.layers[layer].proximalSynapses = {} # erase dict
+
+        for col in columns: # what specific columns we want to get
+            # we need to select by rowid, because of speed
+            rowId = iteration * columnCount + col + 1
+            row = self.db.SelectByRowId(tableName, rowId)
+
+            #now check for sure if the data fits
+            if col != row['column'] or iteration != row['iteration']:
+                raise RuntimeError("Data are not valid! Not sorted!")
+            self.layers[layer].proximalSynapses[col] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
 
 
     def setGui(self, gui):
