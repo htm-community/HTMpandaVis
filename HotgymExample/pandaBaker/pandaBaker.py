@@ -6,7 +6,6 @@ from htm.algorithms.anomaly import Anomaly
 import numpy as np
 import os
 import time
-import sqlite3
 
 import multiprocessing as mp
 
@@ -126,15 +125,14 @@ class PandaBaker(object):
                 oneBatchSize = int(columnCount/CPU_CORES)
                 split_startColIdx = [x*oneBatchSize for x in range(CPU_CORES)]
 
+                print(split_startColIdx)
                 # the division can be with remainder so add to the last thread the rest
                 if split_startColIdx[CPU_CORES-1]+oneBatchSize<columnCount-1:
                     remainderCols = columnCount-1 - split_startColIdx[CPU_CORES-1]+oneBatchSize
 
-                self.db.Close()
                 # Setup a list of processes that we want to run
                 processes = [mp.Process(target=self.CalcPresynCells, args=(
-                    'layer_distalSynapses_' + ly,iteration, ly,
-                    split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0) , output)) for x in range(CPU_CORES)]
+                    ly, split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0) , output)) for x in range(CPU_CORES)]
 
                 # Run processes
                 for p in processes:
@@ -150,14 +148,16 @@ class PandaBaker(object):
                 cellCnt = 0
                 segmentsCnt = 0
                 for result in results:
-                    if result is None:
+                     if result is None:
                          continue
-                    cellCnt = cellCnt + result[0]
-                    segmentsCnt = segmentsCnt + result[1]
+                     self.db.InsertDataArray4('layer_distalSynapses_' + ly,
+                      iteration, result[0],result[1],result[2],result[3])
 
-                self.db.Open()
+                     # cellCnt = cellCnt + result[0]
+                    # segmentsCnt = segmentsCnt + result[1]
 
-                Log("Baked distal data for " + str(cellCnt) + " cells in layer " + str(ly) + " ("+str(segmentsCnt)+" segments)")
+
+                #Log("Baked distal data for " + str(cellCnt) + " cells in layer " + str(ly) + " ("+str(segmentsCnt)+"")
                     #self.db.InsertDataArray4('layer_distalSynapses_' + ly,
                                              #iteration, result[0],result[1],result[2],result[3])
 
@@ -178,13 +178,12 @@ class PandaBaker(object):
                 self.previousPredictiveCells[layer] = self.layers[ly].predictiveCells
 
 
-    def CalcPresynCells(self, tableName, iteration, layerName, startCol, colCount, output):
+    def CalcPresynCells(self, layerName, startCol, colCount, output):
 
         layer = self.layers[layerName]
         tm = layer.tm
-        #print("Process start for column range:"+str(startCol)+ " - "+str(startCol+colCount))
-        # need to create own connections to the DB to be thread-safe
-        threadDB = Database(self.db.filePath)
+        print("Process start for column range:"+str(startCol)+ " - "+str(startCol+colCount))
+        hasSomeOutput = False
         cellCnt = 0
         segmentCnt = 0
         for col in range(startCol, startCol+colCount ):
@@ -206,25 +205,19 @@ class PandaBaker(object):
                             presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
 
                         #print("putting")
-                        #output.put([col, cell, segmentNo, np.array(presynapticCells)])
+                        output.put([col, cell, segmentNo, np.array(presynapticCells)])
                         #print("done")
-                        done=False
-                        while(not done):
-                            try:
-                                threadDB.InsertDataArray4(tableName,
-                                                     iteration, col, cell, segmentNo, np.array(presynapticCells))
-                                done = True
-                            except sqlite3.OperationalError:
-                                continue
+
+                        # self.db.InsertDataArray4(tableName,
+                        #                          iteration, col, cell, segmentNo, np.array(presynapticCells))
                         #hasSomeOutput = True
                         segmentNo = segmentNo + 1
 
                     segmentCnt = segmentCnt + segmentNo
                     cellCnt = cellCnt + 1
-        #if not hasSomeOutput:
-        output.put([cellCnt,segmentCnt]) # need to put something, otherwise output.get() hangs forever
-
-        threadDB.Close()
+        if not hasSomeOutput:
+            output.put(None) # need to put something, otherwise output.get() hangs forever
+        print("Finished")
 
 def getPresynapticCellsForCell(tm, cellID):
     start_time = time.time()

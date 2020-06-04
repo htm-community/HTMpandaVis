@@ -30,11 +30,6 @@ class Database(object):
         self.conn.row_factory = sqlite3.Row
         self.curs = self.conn.cursor()
 
-    def Open(self):
-        self.conn = sqlite3.connect(self.filePath, detect_types=sqlite3.PARSE_DECLTYPES)
-        self.conn.row_factory = sqlite3.Row
-        self.curs = self.conn.cursor()
-
     def CreateTable(self, tableName, columns):
 
         query = "CREATE TABLE " + tableName + " (%s);"%columns
