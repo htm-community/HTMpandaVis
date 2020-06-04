@@ -103,6 +103,29 @@ class BakeReader(object):
             self.layers[layer].proximalSynapses[col] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
 
 
+    #cellsPerColumn = self.bakeReader.layers[layerName].params["tm_cellsPerColumn"]
+    #cellID = column*cellsPerColumn + cell
+
+    def LoadDistalSynapses(self, layer, column, cell, iteration):
+        tableName = "layer_distalSynapses_"+layer
+        self.layers[layer].distalSynapses = {} # erase dict
+
+        rows = self.db.SelectDistalData(tableName, iteration, column, cell) # get segments for this cell in this iteration
+
+        segNo = 0
+        for row in rows:# for each segment
+            #now check for sure if the data fits
+            if cell != row['cell'] or iteration != row['iteration']:
+                raise RuntimeError("Data are not valid!")
+            if cell not in self.layers[layer].distalSynapses.keys():
+                self.layers[layer].distalSynapses[cell] = {}
+            self.layers[layer].distalSynapses[cell][segNo] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
+
+            segNo = segNo + 1
+
+        return segNo>0 # true if we got something for this cell
+
+
     def setGui(self, gui):
         self._gui = gui
 

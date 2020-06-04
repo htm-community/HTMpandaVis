@@ -64,7 +64,11 @@ class cLayer(object):
         self.proximalSynapses = {}
 
         # synapses - contains values of permanences
-        # dict of numpy arrays, e.g. distalSynapses[0] is numpy array for cell ID 0
+        # dict of segments
+        # each segments is dict of cell-permanence pairs,
+        # e.g. distalSynapses[0] is dict for cell 0
+        # e.g. distalSynapses[0][0] is numpy array of permanences for segment 0
+        # note: cells indexes are sparse
         self.distalSynapses = {}
 
 

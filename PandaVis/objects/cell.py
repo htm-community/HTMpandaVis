@@ -160,7 +160,7 @@ class cCell:
 
         for segment in data:
 
-            for presynCellID in segment:
+            for presynCellID in data[segment]:
                 
                 cellID = presynCellID % layer.nOfCellsPerColumn
                 colID = (int)(presynCellID / layer.nOfCellsPerColumn)

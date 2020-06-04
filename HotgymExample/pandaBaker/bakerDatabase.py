@@ -25,8 +25,13 @@ sqlite3.register_converter("sdr", convert_sdr)
 
 class Database(object):
     def __init__(self,filePath):
-
+        self.filePath = filePath
         self.conn = sqlite3.connect(filePath,detect_types=sqlite3.PARSE_DECLTYPES)
+        self.conn.row_factory = sqlite3.Row
+        self.curs = self.conn.cursor()
+
+    def Open(self):
+        self.conn = sqlite3.connect(self.filePath, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = sqlite3.Row
         self.curs = self.conn.cursor()
 
@@ -74,6 +79,9 @@ class Database(object):
     def InsertDataArray3(self, tableName, a, b, c, d):
         self.curs.execute("INSERT INTO " + tableName + " VALUES (?,?,?,?);", (a, b, c, d,))
 
+    # insert into five column table
+    def InsertDataArray4(self, tableName, a, b, c, d, e):
+        self.curs.execute("INSERT INTO " + tableName + " VALUES (?,?,?,?,?);", (a, b, c, d, e,))
 
 
 
@@ -101,6 +109,8 @@ class Database(object):
         return data
 
 
+    def Close(self):
+        self.conn.close()
 
 
 

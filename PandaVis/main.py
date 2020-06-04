@@ -201,40 +201,25 @@ class cApp(ShowBase):
                                                                        layer.proximalInputs,#names of inputs
                                                                         self.HTMObjects[obj].inputs,
                                                                         layer.params['sp_synPermConnected'])
+    def ShowDistalSynapses(self, obj, layerName, column, cell):
+
+        layer = self.bakeReader.layers[layerName]
 
 
+        gotSomeData = self.bakeReader.LoadDistalSynapses(layerName, column, cell, self.iteration)  # load it
 
-        #
-        # if self.client.distalDataArrived:
-        #     printLog("Distal data arrived, updating synapses!", verbosityMedium)
-        #     serverObjs = self.client.serverData.HTMObjects
-        #
-        #     for obj in serverObjs:
-        #
-        #         self.HTMObjects[obj].DestroyDistalSynapses()
-        #
-        #         for l in serverObjs[obj].layers:  # dict
-        #             printLog("len:"+str(len(serverObjs[obj].layers[l].distalSynapses)), verbosityHigh)
-        #             for syn in serverObjs[obj].layers[l].distalSynapses:  # array
-        #
-        #                 printLog("Layer:" + str(l), verbosityMedium)
-        #                 printLog("distalSynapses len:" + str(len(syn)), verbosityHigh)
-        #
-        #                 columnID = syn[0]
-        #                 cellID = syn[1]
-        #                 distalSynapses = syn[2]
-        #
-        #                 # update columns with distal Synapses
-        #                 self.HTMObjects[obj].layers[l].minicolumns[
-        #                     columnID
-        #                 ].cells[cellID].CreateDistalSynapses(
-        #                     self.HTMObjects[obj],
-        #                     self.HTMObjects[obj].layers[l],
-        #                     distalSynapses,
-        #                     serverObjs[obj].layers[l].distalInputs
-        #                 )
-        #
-        #     self.client.distalDataArrived = False
+        if not gotSomeData:
+            printLog("Don't have any distal synapses to show for this cell.")
+            return
+
+        self.HTMObjects[obj].layers[layerName].minicolumns[
+            column
+        ].cells[cell].CreateDistalSynapses(
+            self.HTMObjects[obj],
+            self.HTMObjects[obj].layers[layerName],
+            layer.distalSynapses[cell],
+            layer.distalInputs
+        )
 
 
 

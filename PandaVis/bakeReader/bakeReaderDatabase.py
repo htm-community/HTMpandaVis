@@ -92,11 +92,12 @@ class Database(object):
 
         return data
 
+    # used on tables where iteration is unique value
     def SelectByIteration(self, tableName, iteration):
 
         self.curs.execute("SELECT * FROM " + tableName + " WHERE iteration=(?);",(iteration,))
         self.conn.commit()
-        data = self.curs.fetchone()
+        data = self.curs.fetchone() # returns single row
 
         return data
 
@@ -105,6 +106,14 @@ class Database(object):
         self.curs.execute("SELECT * FROM " + tableName + " WHERE rowid=(?);",(rowId,))
         self.conn.commit()
         data = self.curs.fetchone()#row id is unique
+
+        return data
+
+    def SelectDistalData(self, tableName, iteration, column, cell):
+
+        self.curs.execute("SELECT * FROM " + tableName + " WHERE iteration = (?) AND column = (?) AND cell = (?);", (iteration,column,cell,))
+        self.conn.commit()
+        data = self.curs.fetchall()
 
         return data
 

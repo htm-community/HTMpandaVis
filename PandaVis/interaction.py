@@ -259,7 +259,12 @@ class cInteraction:
         if self.focusedCell is None:
             return
         # -------- proximal and distal synapses -----------------------
-        self.base.ShowProximalSynapses(self.focusedPath[0],self.focusedPath[1],self.gui.columnID);
+        if self.gui.showProximalSynapses:
+            self.base.ShowProximalSynapses(self.focusedPath[0],self.focusedPath[1],self.gui.columnID)
+
+        if self.gui.showDistalSynapses:
+            self.base.ShowDistalSynapses(self.focusedPath[0], self.focusedPath[1], self.gui.columnID, self.gui.cellID)
+
         # if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
         #     self.client.reqProximalData()
         # else:

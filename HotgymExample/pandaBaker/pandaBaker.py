@@ -6,6 +6,9 @@ from htm.algorithms.anomaly import Anomaly
 import numpy as np
 import os
 import time
+import sqlite3
+
+import multiprocessing as mp
 
 class PandaBaker(object):
     def __init__(self, databaseFilePath):
@@ -64,7 +67,7 @@ class PandaBaker(object):
             self.db.CreateTable('layer_winnerCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data SDR")
-            self.db.CreateTable('layer_distalSynapses_' + ly, "iteration INTEGER, column INTEGER, cell INTEGER, data SDR")
+            self.db.CreateTable('layer_distalSynapses_' + ly, "iteration INTEGER, column INTEGER, cell INTEGER, segment INTEGER, data SDR")
             self.db.CreateTable('layer_rawAnomaly_' + ly,
                                 "iteration INTEGER, value REAL")
 
@@ -113,19 +116,53 @@ class PandaBaker(object):
                     Log("This layer doesn't have TM, can't get distal synapses.. skipping")
                     continue
                 cellCnt = 0
-                for col in range(layer.params['sp_columnCount']):
-                    for cell in range(layer.params['tm_cellsPerColumn']):
-                        reqCellID = col * layer.params['tm_cellsPerColumn'] + cell
 
-                        # bake distal synapses only for active or predictive cells, about others we don't care, it would take too much time
-                        if reqCellID in self.layers[ly].activeCells or reqCellID in self.layers[ly].predictiveCells:
-                            presynCells = getPresynapticCellsForCell(tm, reqCellID)
+                #run in threads, this is CPU consuming ------------
+                # Define an output queue
+                output = mp.Queue()
 
-                            self.db.InsertDataArray3('layer_distalSynapses_' + ly,
-                                                 iteration, col, cell, presynCells)
-                            cellCnt = cellCnt + 1
+                CPU_CORES = 4
+                columnCount = layer.params['sp_columnCount']
+                oneBatchSize = int(columnCount/CPU_CORES)
+                split_startColIdx = [x*oneBatchSize for x in range(CPU_CORES)]
 
-                Log("Baked distal data for "+str(cellCnt)+" cells in layer "+str(ly))
+                # the division can be with remainder so add to the last thread the rest
+                if split_startColIdx[CPU_CORES-1]+oneBatchSize<columnCount-1:
+                    remainderCols = columnCount-1 - split_startColIdx[CPU_CORES-1]+oneBatchSize
+
+                self.db.Close()
+                # Setup a list of processes that we want to run
+                processes = [mp.Process(target=self.CalcPresynCells, args=(
+                    'layer_distalSynapses_' + ly,iteration, ly,
+                    split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0) , output)) for x in range(CPU_CORES)]
+
+                # Run processes
+                for p in processes:
+                    p.start()
+
+                # Wait for completion
+                for p in processes:
+                    p.join()
+
+                # Get process results from the output queue
+                results = [output.get() for p in processes]
+
+                cellCnt = 0
+                segmentsCnt = 0
+                for result in results:
+                    if result is None:
+                         continue
+                    cellCnt = cellCnt + result[0]
+                    segmentsCnt = segmentsCnt + result[1]
+
+                self.db.Open()
+
+                Log("Baked distal data for " + str(cellCnt) + " cells in layer " + str(ly) + " ("+str(segmentsCnt)+" segments)")
+                    #self.db.InsertDataArray4('layer_distalSynapses_' + ly,
+                                             #iteration, result[0],result[1],result[2],result[3])
+
+
+
 
             # ---------------- RAW anomaly score -----------------------------------
 
@@ -141,6 +178,53 @@ class PandaBaker(object):
                 self.previousPredictiveCells[layer] = self.layers[ly].predictiveCells
 
 
+    def CalcPresynCells(self, tableName, iteration, layerName, startCol, colCount, output):
+
+        layer = self.layers[layerName]
+        tm = layer.tm
+        #print("Process start for column range:"+str(startCol)+ " - "+str(startCol+colCount))
+        # need to create own connections to the DB to be thread-safe
+        threadDB = Database(self.db.filePath)
+        cellCnt = 0
+        segmentCnt = 0
+        for col in range(startCol, startCol+colCount ):
+            for cell in range(layer.params['tm_cellsPerColumn']):
+                reqCellID = col * layer.params['tm_cellsPerColumn'] + cell
+
+                # bake distal synapses only for active or predictive cells, about others we don't care, it would take too much time
+                if reqCellID in layer.activeCells or reqCellID in layer.predictiveCells:
+                    # presynCells = getPresynapticCellsForCell(tm, reqCellID)
+
+                    segments = tm.connections.segmentsForCell(reqCellID)
+
+                    segmentNo = 0
+                    for seg in segments:  # seg is ID of segments data
+                        synapsesForSegment = tm.connections.synapsesForSegment(seg)
+
+                        presynapticCells = []
+                        for syn in synapsesForSegment:
+                            presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+
+                        #print("putting")
+                        #output.put([col, cell, segmentNo, np.array(presynapticCells)])
+                        #print("done")
+                        done=False
+                        while(not done):
+                            try:
+                                threadDB.InsertDataArray4(tableName,
+                                                     iteration, col, cell, segmentNo, np.array(presynapticCells))
+                                done = True
+                            except sqlite3.OperationalError:
+                                continue
+                        #hasSomeOutput = True
+                        segmentNo = segmentNo + 1
+
+                    segmentCnt = segmentCnt + segmentNo
+                    cellCnt = cellCnt + 1
+        #if not hasSomeOutput:
+        output.put([cellCnt,segmentCnt]) # need to put something, otherwise output.get() hangs forever
+
+        threadDB.Close()
 
 def getPresynapticCellsForCell(tm, cellID):
     start_time = time.time()
@@ -167,12 +251,12 @@ def getPresynapticCellsForCell(tm, cellID):
             #time2 = time.time()
             presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
             #Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
-
-        res += [presynapticCells]
+            print(type(presynapticCells))
+        res += [seg, np.array(presynapticCells)]
 
     #if len(segments) > 0:
         #Log("getPresynapticCellsForCell() took %s ms " % ((time.time() - start_time)*1000))
-    return np.array(res) # TODO figure out if using directly numpy is faster
+    return res
 
 def Log(s):
     print(str(s))
