@@ -2,6 +2,7 @@
 
 from pandaBaker.bakerDatabase import Database
 from pandaBaker.dataStructs import cLayer,cInput
+from htm.algorithms.anomaly import Anomaly
 import numpy as np
 import os
 import time
@@ -16,7 +17,11 @@ class PandaBaker(object):
 
         #flags what to bake
         self.bakeProximalSynapses = True
-        self.bakeDistalSynapses = False
+        self.bakeDistalSynapses = True
+        self.bakeRawAnomalyScore = False
+
+        # for raw anomaly calculation
+        self.previousPredictiveCells = {} # dict storing predictive cells for previous timestamp for each layer
 
 
     def PrepareDatabase(self):
@@ -59,6 +64,9 @@ class PandaBaker(object):
             self.db.CreateTable('layer_winnerCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data SDR")
+            self.db.CreateTable('layer_distalSynapses_' + ly, "iteration INTEGER, column INTEGER, cell INTEGER, data SDR")
+            self.db.CreateTable('layer_rawAnomaly_' + ly,
+                                "iteration INTEGER, value REAL")
 
         self.db.conn.commit()
 
@@ -81,17 +89,12 @@ class PandaBaker(object):
                                 iteration, self.layers[ly].activeCells)
 
             layer = self.layers[ly]
+            # ---------------- PROXIMAL SYNAPSES ----------------------------------
             sp = layer.sp
             if sp is not None and self.bakeProximalSynapses:
 
-                if layer.params['sp_columnDimensions_y']==0:
-                    columnCount = layer.params['sp_columnDimensions_x']
-                else:
-                    #two dimensional SP
-                    columnCount = layer.params['sp_columnDimensions_x']*layer.params['sp_columnDimensions_y']
-
                 layer.proximalSynapses = [] # erase
-                for col in range(columnCount):
+                for col in range(layer.params['sp_columnCount']):
                     #proximal synapses
                     synapses = np.zeros(
                         sp.getNumInputs(), dtype=np.float32
@@ -103,51 +106,73 @@ class PandaBaker(object):
                     self.db.InsertDataArray2('layer_proximalSynapses_' + ly,
                                             iteration, col, synapses)
 
+            # ---------------- DISTAL SYNAPSES ----------------------------------
             tm = layer.tm
-            #if tm is not None and self.bakeDistalSynapses:
+            if self.bakeDistalSynapses:
+                if tm is None:
+                    Log("This layer doesn't have TM, can't get distal synapses.. skipping")
+                    continue
+                cellCnt = 0
+                for col in range(layer.params['sp_columnCount']):
+                    for cell in range(layer.params['tm_cellsPerColumn']):
+                        reqCellID = col * layer.params['tm_cellsPerColumn'] + cell
 
-                # cellsPerColumn = self.serverData.HTMObjects[HTMObjectName].layers[layerName].cellsPerColumn
-                # reqCellID = requestedColumn * cellsPerColumn + requestedCell
-                #
-                # printLog("Requested cell ID:" + str(reqCellID), verbosityMedium)
-                #
-                # if not layerName in self.temporalMemories[HTMObjectName]:
-                #     printLog("This layer doesn't have TM, can't request distal connections.. skipping")
-                #     continue
-                # tm = self.temporalMemories[HTMObjectName][layerName]
-                #
-                # presynCells = getPresynapticCellsForCell(tm, reqCellID)
-                #
-                # # printLog("PRESYN CELLS:"+str(presynCells))
-                # # winners = tm.getWinnerCells()
-                #
-                # # print(winners)
-                #
-                # self.ClearNonStaticData()  # clear previous data (e.g. for other layers)
-                #
-                # self.serverData.HTMObjects[HTMObjectName].layers[
-                #     layerName
-                # ].distalSynapses = [
-                #     [requestedColumn, requestedCell, presynCells]]  # sending just one pack for one cell
+                        # bake distal synapses only for active or predictive cells, about others we don't care, it would take too much time
+                        if reqCellID in self.layers[ly].activeCells or reqCellID in self.layers[ly].predictiveCells:
+                            presynCells = getPresynapticCellsForCell(tm, reqCellID)
+
+                            self.db.InsertDataArray3('layer_distalSynapses_' + ly,
+                                                 iteration, col, cell, presynCells)
+                            cellCnt = cellCnt + 1
+
+                Log("Baked distal data for "+str(cellCnt)+" cells in layer "+str(ly))
+
+            # ---------------- RAW anomaly score -----------------------------------
+
+            if self.bakeRawAnomalyScore:
+                if layer in self.previousPredictiveCells:
+                    rawAnomaly = Anomaly.calculateRawAnomaly(self.layers[ly].activeColumns,
+                                        tm.cellsToColumns(self.previousPredictiveCells[layer]))
+                else:
+                    rawAnomaly = 1.0 # first timestamp
+
+                self.db.InsertDataArray("layer_rawAnomaly_"+str(ly), iteration, rawAnomaly)
+
+                self.previousPredictiveCells[layer] = self.layers[ly].predictiveCells
+
+
 
 def getPresynapticCellsForCell(tm, cellID):
     start_time = time.time()
     segments = tm.connections.segmentsForCell(cellID)
 
-    synapses = []
+    #synapses = []
     res = []
+
+    #if len(segments) > 0:
+        #Log("segments len:"+str(len(segments)))
     for seg in segments:
-        for syn in tm.connections.synapsesForSegment(seg):
-            synapses += [syn]
+        time1 = time.time()
+        synapsesForSegment = tm.connections.synapsesForSegment(seg)
+        #Log("synapsesForSegment() took %s ms " % ((time.time() - time1)*1000))
+        #Log("synapses for segment len:" + str(len(segments)))
+        #Log("datatype:" + str(type(synapsesForSegment)))
+        #Log("synapsesForSegment len:" + str(len(synapsesForSegment)))
+
+        #for syn in synapsesForSegment:
+            #synapses += [syn]
 
         presynapticCells = []
-        for syn in synapses:
+        for syn in synapsesForSegment:
+            #time2 = time.time()
             presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+            #Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
 
         res += [presynapticCells]
 
-    Log("getPresynapticCellsForCell() took %s seconds " % (time.time() - start_time), verbosityHigh)
-    return res
+    #if len(segments) > 0:
+        #Log("getPresynapticCellsForCell() took %s ms " % ((time.time() - start_time)*1000))
+    return np.array(res) # TODO figure out if using directly numpy is faster
 
 def Log(s):
     print(str(s))

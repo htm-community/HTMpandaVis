@@ -68,8 +68,11 @@ class Database(object):
 
     # insert into three column table
     def InsertDataArray2(self, tableName, a, b, c):
-
         self.curs.execute("INSERT INTO " + tableName + " VALUES (?,?,?);", (a, b, c,))
+
+    # insert into four column table
+    def InsertDataArray3(self, tableName, a, b, c, d):
+        self.curs.execute("INSERT INTO " + tableName + " VALUES (?,?,?,?);", (a, b, c, d,))
 
 
 

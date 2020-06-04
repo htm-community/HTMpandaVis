@@ -26,6 +26,7 @@ class cGUI:
         self.focusedCell = None
         self.focusedPath = None
         self.columnID = 0
+        self.cellID = 0
 
         self.visApp = visApp
         self.loader = loader

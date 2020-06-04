@@ -111,7 +111,7 @@ class cApp(ShowBase):
                 printLog("Creating layer: " + str(lay), verbosityHigh)
                 newObj.CreateLayer(
                     name=lay,
-                    nOfColumnsPerLayer=int(self.bakeReader.layers[lay].params['sp_columnDimensions_x']),
+                    nOfColumnsPerLayer=int(self.bakeReader.layers[lay].params['sp_columnCount']),
                     nOfCellsPerColumn=int(self.bakeReader.layers[lay].params['tm_cellsPerColumn']),
                 )
 
@@ -132,7 +132,10 @@ class cApp(ShowBase):
                 self.bakeReader.LoadWinnerCells(ly, iteration)
                 self.bakeReader.LoadPredictiveCells(ly, iteration)
                 self.bakeReader.LoadActiveCells(ly, iteration)
-                self.bakeReader.LoadProximalSynapses(ly,[0,1], iteration)
+
+                self.bakeReader.LoadProximalSynapses(ly,[self.gui.columnID,], iteration)
+                #cell = self.gui.columnID * self.HTMObjects[obj].layers[ly].nOfCellsPerColumn + self.gui.cellID
+                # for distal
 
         self.iterationDataUpdate = True
 
