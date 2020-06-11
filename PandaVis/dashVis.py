@@ -33,57 +33,69 @@ class DashVis(object):
         with open('dashPlots.cfg') as f:
             cfgLayout = json.load(f)
 
-        dimensions = cfgLayout['subplotDimensions']
-        print("Creating subplot rows:"+str(dimensions[0])+" cols:"+str(dimensions[1]))
-
-        # Initialize figure with subplots
-        fig = make_subplots(
-            rows=dimensions[0], cols=dimensions[1])
+        plotsPerRow = cfgLayout['plotsPerRow']
 
 
+        figures = []
         for stream in cfgLayout['streams']:
             data = self.bakeReader.dataStreams[stream['name']].allData
 
             if stream['type'] == 'line':
-                fig.add_trace(go.Scatter(x=data[0,:], y=data[1,:]),row=stream['pos'][0], col=stream['pos'][1])
-                fig['layout']['']
-        # Set theme, margin, and annotation in layout
-        fig.update_layout(
-            template="plotly_dark",
-            margin=dict(r=10, t=25, b=40, l=60),
-            annotations=[
-                dict(
-                    text="abc Source: NOAA",
-                    showarrow=False,
-                    xref="paper",
-                    yref="paper",
-                    x=0,
-                    y=0)
-            ]
-        )
+                fig = go.Figure(data=go.Scatter(x=data[0, :], y=data[1, :]))
+                figures.append([stream['name'],fig])
 
+                # Set theme, margin, and annotation in layout
+                fig.update_layout(
+                    title=stream['name'],
+                    template="plotly_dark",
+                    margin=dict(r=10, t=25, b=40, l=60),
+                    # annotations=[
+                    #     dict(
+                    #         text="abc Source: NOAA",
+                    #         showarrow=False,
+                    #         xref="paper",
+                    #         yref="paper",
+                    #         x=0,
+                    #         y=0)
+                    # ]
+                )
 
-        self.app.layout = html.Div(style={'backgroundColor': self.colors['background']}, children=[
+        columnClassName = "twelve columns"
+        if plotsPerRow == 3:
+             columnClassName = "four columns"
+        elif plotsPerRow == 2:
+            columnClassName = "six columns"
+
+        graphs =  [html.Div(
+            ([html.Div([dcc.Graph(
+                        id='plot_'+x[0],
+                        figure=x[1]
+                    )], className=columnClassName) for x in figures]
+            ),className="row")
+                   ]
+
+        childs = [
             html.H4(
                 children='Dash vis',
                 style={
                     'textAlign': 'center',
                     'color': self.colors['text']
                 }
-            ),
+            ),]
 
-            dcc.Graph(
-                id='example-graph',
-                figure=fig
-            ),
+        childs += graphs
+
+        childs+=[
             html.Label('Slider'),
             dcc.Slider(
                 min=0,
                 max=1000,
                 marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(1,1000, 100)},
                 value=5,
-            ),
-        ])
+            ),]
+
+        self.app.layout = html.Div(style={'backgroundColor': self.colors['background']}, children=childs)
+
 
 if __name__ == '__main__':
     dash = DashVis()

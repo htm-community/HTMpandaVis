@@ -209,6 +209,8 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaBaker.layers["SensoryLayer"].activeCells = tm.getActiveCells().sparse
 
         pandaBaker.dataStreams["rawAnomaly"].value = rawAnomaly
+        pandaBaker.dataStreams["powerConsumption"].value = consumption
+        pandaBaker.dataStreams["numberOfWinnerCells"].value = len(tm.getWinnerCells().sparse)
 
         pandaBaker.StoreIteration(iterationNo)
 
@@ -221,7 +223,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         iterationNo = iterationNo + 1
 
         #pandaBaker.CommitBatch()
-        if iterationNo == 1000:
+        if iterationNo == 200:
             break
 
     pandaBaker.CommitBatch()
@@ -303,6 +305,8 @@ def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
 
     #data for dash plots
     pandaBaker.dataStreams["rawAnomaly"] = cDataStream()
+    pandaBaker.dataStreams["powerConsumption"] = cDataStream()
+    pandaBaker.dataStreams["numberOfWinnerCells"] = cDataStream()
 
     pandaBaker.PrepareDatabase()
 
