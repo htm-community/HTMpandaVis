@@ -11,6 +11,8 @@ import multiprocessing as mp
 from multiprocessing import Pool
 from multiprocessing import get_context
 
+CPU_CORES = 4
+
 class PandaBaker(object):
     def __init__(self, databaseFilePath):
         self.databaseFilePath = databaseFilePath
@@ -116,54 +118,24 @@ class PandaBaker(object):
                 if tm is None:
                     Log("This layer doesn't have TM, can't get distal synapses.. skipping")
                     continue
-                cellCnt = 0
 
-                #run in threads, this is CPU consuming ------------
-                # Define an output queue
-                #output = mp.Queue()
-
-                CPU_CORES = 4
                 columnCount = layer.params['sp_columnCount']
                 oneBatchSize = int(columnCount/CPU_CORES)
                 split_startColIdx = [x*oneBatchSize for x in range(CPU_CORES)]
 
-                print(split_startColIdx)
                 # the division can be with remainder so add to the last thread the rest
                 if split_startColIdx[CPU_CORES-1]+oneBatchSize<columnCount-1:
                     remainderCols = columnCount-1 - split_startColIdx[CPU_CORES-1]+oneBatchSize
 
-                # Setup a list of processes that we want to run
-                # processes = [mp.Process(target=self.CalcPresynCells, args=(
-                #     ly, split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0) , output)) for x in range(CPU_CORES)]
-
-                with get_context("spawn").Pool() as pool:
-                    pool = mp.Pool(processes=1)
-                    #results = pool.map(CalcPresynCells, [[layer, split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0)] for x in range(CPU_CORES)])
+                # Setup a pool of worker threads equal to CPU_CORES
+                with get_context("spawn").Pool(processes=CPU_CORES) as pool:
                     results = [pool.apply_async(CalcPresynCells, args=(layer, split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0))) for x in range(CPU_CORES)]
 
-                #print(results)
-
-                # Run processes
-                # for p in processes:
-                #     p.start()
-
-                # Wait for completion
-                # print(processes)
-                # print("beforejoin")
-                # for p in processes:
-                #     p.join()
-                #     print("oneJoinOK"+str(p))
-                # print("afterjoin")
-                # # Get process results from the output queue
-                # results = [output.get() for p in processes]
-                # print("afterGet")
-                for result in results:
-                    data = result.get()
-                    #print("wtf:"+str(data))
-                    for row in data:
-                         #print("uuuu:"+str(row))
-                         self.db.InsertDataArray4('layer_distalSynapses_' + ly,
-                          iteration, row[0],row[1],row[2],row[3])
+                    for result in results:
+                        data = result.get()
+                        for row in data:
+                            self.db.InsertDataArray4('layer_distalSynapses_' + ly,
+                                                     iteration, row[0], row[1], row[2], row[3])
 
             # ---------------- RAW anomaly score -----------------------------------
 
@@ -179,11 +151,12 @@ class PandaBaker(object):
                 self.previousPredictiveCells[layer] = self.layers[ly].predictiveCells
 
 
+
 def CalcPresynCells(layer, startCol, colCount):
+    print('process id:', os.getpid())
 
     tm = layer.tm
     print("Process start for column range:"+str(startCol)+ " - "+str(startCol+colCount))
-    hasSomeOutput = False
     output = []
     #cellCnt = 0
     #segmentCnt = 0
@@ -204,9 +177,7 @@ def CalcPresynCells(layer, startCol, colCount):
                     presynapticCells = []
                     for syn in synapsesForSegment:
                         presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
-                    #print("FFF"+str([col, cell, segmentNo]))
                     output += [[col, cell, segmentNo, np.array(presynapticCells)]]
-                    hasSomeOutput = True
                     segmentNo = segmentNo + 1
 
                 #segmentCnt = segmentCnt + segmentNo
@@ -242,7 +213,6 @@ def getPresynapticCellsForCell(tm, cellID):
             #time2 = time.time()
             presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
             #Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
-            print(type(presynapticCells))
         res += [seg, np.array(presynapticCells)]
 
     #if len(segments) > 0:
