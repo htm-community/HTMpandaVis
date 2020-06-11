@@ -173,9 +173,7 @@ class cMinicolumn:
 
     def CreateProximalSynapses(self, inputNames, inputObj, permanences, thresholdConnected):
 
-        for child in self.__cellsNodePath.getChildren():
-            if child.getName() == "ProximalSynapseLine":
-                child.removeNode()
+        self.DestroyProximalSynapses()
 
         printLog("Creating proximal permanences", verbosityMedium)
         printLog("To inputObj called:" + str(inputNames), verbosityMedium)

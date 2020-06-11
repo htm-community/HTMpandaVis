@@ -137,79 +137,91 @@ class cApp(ShowBase):
                 #cell = self.gui.columnID * self.HTMObjects[obj].layers[ly].nOfCellsPerColumn + self.gui.cellID
                 # for distal
 
-        self.iterationDataUpdate = True
+        self.updateHTMstate() # update state of the HTM objects and connections
+
 
     def updateHTMstate(self):
+        printLog("Data change! Updating HTM state", verbosityMedium)
 
-        if self.allHTMobjectsCreated and not self.initIterationLoaded: # wait till the objects are created, then load iteration 0
-            self.LoadIteration(0)
-            self.initIterationLoaded = True
+        self.gui.setIteration(self.iteration)
+        obj = "HTM1"
+        # go through all incoming inputs
+        for i in self.bakeReader.inputs:  # dict
+            printLog("Updating state of input: " + str(i), verbosityHigh)
+            # find matching input in local structure
 
-        if self.gui.gotoReq>=0:
-            self.LoadIteration(self.gui.gotoReq)
-            self.gui.gotoReq = -1
+            self.HTMObjects[obj].inputs[i].UpdateState(
+                self.bakeReader.inputs[i].bits,
+                self.bakeReader.inputs[i].stringValue,
+            )
 
-        cellDataWasUpdated = False
-
-        if self.iterationDataUpdate:
-            self.iterationDataUpdate = False
-
-            printLog("Data change! Updating HTM state", verbosityMedium)
-
-            self.gui.setIteration(self.iteration)
-            obj = "HTM1"
-            # go through all incoming inputs
-            for i in self.bakeReader.inputs:  # dict
-                printLog("Updating state of input: " + str(i), verbosityHigh)
-                # find matching input in local structure
-
-                self.HTMObjects[obj].inputs[i].UpdateState(
-                    self.bakeReader.inputs[i].bits,
-                    self.bakeReader.inputs[i].stringValue,
+        # go through all incoming layers
+        for l in self.bakeReader.layers:  # dict
+            if self.HTMObjects[obj].layers[l].gfxCreationFinished:
+                printLog("Updating state of layer: " + str(l), verbosityHigh)
+                # find matching layer in local structure
+                self.HTMObjects[obj].layers[l].UpdateState(
+                    self.bakeReader.layers[l].activeColumns,
+                    self.bakeReader.layers[l].activeCells,
+                    self.bakeReader.layers[l].winnerCells,
+                    self.bakeReader.layers[l].predictiveCells,
+                    newStep = True,
+                    showPredictionCorrectness=self.gui.showPredictionCorrectness,
+                    showBursting = self.gui.showBursting
                 )
 
-            # go through all incoming layers
-            for l in self.bakeReader.layers:  # dict
-                if self.HTMObjects[obj].layers[l].gfxCreationFinished:
-                    printLog("Updating state of layer: " + str(l), verbosityHigh)
-                    # find matching layer in local structure
-                    self.HTMObjects[obj].layers[l].UpdateState(
-                        self.bakeReader.layers[l].activeColumns,
-                        self.bakeReader.layers[l].activeCells,
-                        self.bakeReader.layers[l].winnerCells,
-                        self.bakeReader.layers[l].predictiveCells,
-                        newStep = True,
-                        showPredictionCorrectness=self.gui.showPredictionCorrectness,
-                        showBursting = self.gui.showBursting
-                    )
+        self.oneOfObjectsCreationFinished = False
 
-            self.oneOfObjectsCreationFinished = False
+        self.UpdateProximalAndDistalData()
+        self.gui.UpdateCellDescription()
 
-            self.interaction.UpdateProximalAndDistalData()
-            self.gui.UpdateCellDescription()
+    def UpdateProximalAndDistalData(self):
+        if self.gui.focusedCell is None:
+            return
+        # -------- proximal and distal synapses -----------------------
+        if self.gui.showProximalSynapses:
+            self.ShowProximalSynapses(self.gui.focusedPath[0],self.gui.focusedPath[1],self.gui.columnID)
+
+        if self.gui.showDistalSynapses:
+            self.ShowDistalSynapses(self.gui.focusedPath[0], self.gui.focusedPath[1], self.gui.columnID, self.gui.cellID)
+
+        # if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
+        #     self.client.reqProximalData()
+        # else:
+        #     for obj in self.base.HTMObjects.values():
+        #         obj.DestroyProximalSynapses()
+        #
+        # #do not request distal data if we don't want to show them or if this layer doesn't have TM
+        # if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
+        #     self.client.reqDistalData()
+        # else:
+        #     for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
+        #         obj.DestroyDistalSynapses()
+        # -----------------------------------------------------------
 
     def ShowProximalSynapses(self, obj, layerName, column):# reads the synapses from the database and show them
 
-            layer = self.bakeReader.layers[layerName]
+        layer = self.bakeReader.layers[layerName]
+        self.bakeReader.LoadProximalSynapses(layerName, [column], self.iteration) # load it
 
-            self.bakeReader.LoadProximalSynapses(layerName, [column], self.iteration) # load it
-
-            if column not in layer.proximalSynapses:
-                printLog("Don't have proximal data for requested column:"+str(column) + " of layer:"+str(layerName))
-                return
-            self.HTMObjects[obj].layers[layerName].ShowProximalSynapses(column, layer.proximalSynapses[column],
+        if column not in layer.proximalSynapses:
+            printLog("Don't have proximal data for requested column:"+str(column) + " of layer:"+str(layerName))
+            self.HTMObjects[obj].layers[layerName].DestroyProximalSynapses()
+            return
+        self.HTMObjects[obj].layers[layerName].ShowProximalSynapses(column, layer.proximalSynapses[column],
                                                                        layer.proximalInputs,#names of inputs
                                                                         self.HTMObjects[obj].inputs,
                                                                         layer.params['sp_synPermConnected'])
     def ShowDistalSynapses(self, obj, layerName, column, cell):
 
         layer = self.bakeReader.layers[layerName]
-
-
         gotSomeData = self.bakeReader.LoadDistalSynapses(layerName, column, cell, self.iteration)  # load it
 
         if not gotSomeData:
             printLog("Don't have any distal synapses to show for this cell.")
+            self.HTMObjects[obj].layers[layerName].minicolumns[
+                column
+            ].cells[cell].DestroyDistalSynapses()
             return
 
         self.HTMObjects[obj].layers[layerName].minicolumns[
@@ -222,13 +234,19 @@ class cApp(ShowBase):
         )
 
 
-
-
     def update(self, task):
 
         self.gui.update()
         self.interaction.Update()
-        self.updateHTMstate()
+
+        if self.allHTMobjectsCreated and not self.initIterationLoaded:  # wait till the objects are created, then load iteration 0
+            self.LoadIteration(0)
+            self.initIterationLoaded = True
+
+        if self.gui.gotoReq >= 0:
+            self.LoadIteration(self.gui.gotoReq)
+            self.gui.gotoReq = -1
+
 
         return task.cont
 

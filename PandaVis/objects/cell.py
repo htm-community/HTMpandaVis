@@ -139,9 +139,7 @@ class cCell:
     
     def CreateDistalSynapses(self, HTMObject, layer, data, inputObjects):
 
-        for child in self.__node.getChildren():
-            if child.getName() == "DistalSynapseLine":
-                child.removeNode()
+        self.DestroyDistalSynapses()
 
         printLog("Creating distal synapses", verbosityMedium)
 
