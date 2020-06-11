@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from bakeReader.bakeReaderDatabase import Database
-from bakeReader.dataStructs import cLayer,cInput
+from bakeReader.dataStructs import cLayer,cInput, cDataStream
 import numpy as np
 import os
 
@@ -12,6 +12,7 @@ class BakeReader(object):
 
         self.layers = {}  # can contain cLayer instances
         self.inputs = {}  # can contain cInput instances
+        self.dataStreams = {}  # can contain cDataStream instances
 
         self._gui =None
         self._reqProximalData = False
@@ -58,6 +59,26 @@ class BakeReader(object):
                 self.layers[con["layer"]].distalInputs.append(con["input"])
                 Log("Loaded distal input for layer: " + str(con["layer"]))
 
+    def LoadDataStreams(self):
+        # DATA STREAMS - loaded all at once
+        tableNames = self.db.getTableNames()
+        parStreamTables = [q for q in tableNames if q.startswith("dataStream_")]
+        for streamTable in parStreamTables:
+            streamName = streamTable.split('_')[1]
+            self.dataStreams[streamName] = cDataStream()
+            Log("Loaded stream: " + streamName)
+
+            data = self.db.SelectAll(streamTable)
+
+            arr = np.empty(shape=(2,len(data)))
+            i=0
+            for d in data:#convert to numpy two dim array
+                arr[0,i] = d['iteration']
+                arr[1,i] = d['value']
+                i=i+1
+
+
+            self.dataStreams[streamName].allData = arr
 
     def LoadInput(self, inp, iteration):
         tableName = "inputs_"+inp

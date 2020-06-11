@@ -64,11 +64,7 @@ class cLayer(object):
         self.proximalSynapses = {}
 
         # synapses - contains values of permanences
-        # dict of segments
-        # each segments is dict of cell-permanence pairs,
-        # e.g. distalSynapses[0] is dict for cell 0
-        # e.g. distalSynapses[0][0] is numpy array of permanences for segment 0
-        # note: cells indexes are sparse
+        # dict of numpy arrays, e.g. distalSynapses[0] is numpy array for cell ID 0
         self.distalSynapses = {}
 
 
@@ -80,5 +76,11 @@ class cInput(object):
         #dynamic vars ----------
         self.bits = np.empty(0)  # input SDRs (just indicies of active bits)
         self.stringValue = ""  # ordinary expressed value that is represented by input SDRs
+
+
+class cDataStream(object):
+    def __init__(self, dataType="REAL"):
+        self.dataType = dataType
+        self.value = None
 
 

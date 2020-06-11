@@ -9,7 +9,7 @@ import math
 #from PandaVis.pandaComm.server import PandaServer
 #from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
 from pandaBaker.pandaBaker import PandaBaker
-from pandaBaker.pandaBaker import cLayer, cInput
+from pandaBaker.pandaBaker import cLayer, cInput, cDataStream
 
 
 from htm.bindings.sdr import SDR, Metrics
@@ -173,6 +173,26 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
 
+        tm.activateCells(activeColumns, True)
+
+        tm_info.addData(tm.getActiveCells().flatten())
+
+        # Predict what will happen, and then train the predictor based on what just happened.
+        pdf = predictor.infer(tm.getActiveCells())
+        for n in (1, 5):
+            if pdf[n]:
+                predictions[n].append(np.argmax(pdf[n]) * predictor_resolution)
+            else:
+                predictions[n].append(float('nan'))
+
+        rawAnomaly = Anomaly.calculateRawAnomaly(activeColumns,
+                                                 tm.cellsToColumns(predictiveCellsSDR))
+
+        anomalyLikelihood = anomaly_history.anomalyProbability(consumption, rawAnomaly) # need to use different calculation as we are not calling sp.compute(..)
+        anomaly.append(rawAnomaly)
+        anomalyProb.append(anomalyLikelihood)
+
+        predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
 
         # ------------------HTMpandaVis----------------------
         # fill up values
@@ -188,40 +208,20 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaBaker.layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
         pandaBaker.layers["SensoryLayer"].activeCells = tm.getActiveCells().sparse
 
+        pandaBaker.dataStreams["rawAnomaly"].value = rawAnomaly
+
         pandaBaker.StoreIteration(iterationNo)
 
-        print(iterationNo)
+        print("ITERATION: "+str(iterationNo))
 
         # ------------------HTMpandaVis----------------------
 
-        tm.activateCells(activeColumns, True)
 
-        tm_info.addData(tm.getActiveCells().flatten())
-
-        activeCells = tm.getActiveCells()
-        print("ACTIVE" + str(len(activeCells.sparse)))
-
-        # Predict what will happen, and then train the predictor based on what just happened.
-        pdf = predictor.infer(tm.getActiveCells())
-        for n in (1, 5):
-            if pdf[n]:
-                predictions[n].append(np.argmax(pdf[n]) * predictor_resolution)
-            else:
-                predictions[n].append(float('nan'))
-
-        rawAnomaly = Anomaly.calculateRawAnomaly(activeColumns,
-                                                 tm.cellsToColumns(predictiveCellsSDR))
-        print("rawAnomaly:" + str(rawAnomaly))
-        anomalyLikelihood = anomaly_history.anomalyProbability(consumption, rawAnomaly) # need to use different calculation as we are not calling sp.compute(..)
-        anomaly.append(rawAnomaly)
-        anomalyProb.append(anomalyLikelihood)
-
-        predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
 
         iterationNo = iterationNo + 1
 
         #pandaBaker.CommitBatch()
-        if iterationNo == 40:
+        if iterationNo == 1000:
             break
 
     pandaBaker.CommitBatch()
@@ -300,6 +300,9 @@ def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
         "SL_Consumption",
         "SL_TimeOfDay",
     ]
+
+    #data for dash plots
+    pandaBaker.dataStreams["rawAnomaly"] = cDataStream()
 
     pandaBaker.PrepareDatabase()
 

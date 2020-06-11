@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from pandaBaker.bakerDatabase import Database
-from pandaBaker.dataStructs import cLayer,cInput
-from htm.algorithms.anomaly import Anomaly
+from pandaBaker.dataStructs import cLayer,cInput,cDataStream
+
 import numpy as np
 import os
 import time
@@ -20,11 +20,11 @@ class PandaBaker(object):
 
         self.layers = {}  # can contain cLayer instances
         self.inputs = {}  # can contain cInput instances
+        self.dataStreams = {}  # can contain cDataStream instances
 
         #flags what to bake
         self.bakeProximalSynapses = True
-        self.bakeDistalSynapses = True
-        self.bakeRawAnomalyScore = False
+        self.bakeDistalSynapses = False
 
         # for raw anomaly calculation
         self.previousPredictiveCells = {} # dict storing predictive cells for previous timestamp for each layer
@@ -64,6 +64,7 @@ class PandaBaker(object):
 
         for inp in self.inputs:
             self.db.CreateTable('inputs_'+inp, "iteration INTEGER, value TEXT, data SDR")
+
         for ly in self.layers:
             self.db.CreateTable('layer_activeColumns_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_predictiveCells_'+ly, "iteration INTEGER, data SDR")
@@ -71,8 +72,11 @@ class PandaBaker(object):
             self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data SDR")
             self.db.CreateTable('layer_distalSynapses_' + ly, "iteration INTEGER, column INTEGER, cell INTEGER, segment INTEGER, data SDR")
-            self.db.CreateTable('layer_rawAnomaly_' + ly,
-                                "iteration INTEGER, value REAL")
+
+        # data streams ----------------
+        for pl in self.dataStreams:
+            tableName = 'dataStream_' + pl
+            self.db.CreateTable(tableName, "iteration INTEGER, value " + self.dataStreams[pl].dataType)
 
         self.db.conn.commit()
 
@@ -137,18 +141,11 @@ class PandaBaker(object):
                             self.db.InsertDataArray4('layer_distalSynapses_' + ly,
                                                      iteration, row[0], row[1], row[2], row[3])
 
-            # ---------------- RAW anomaly score -----------------------------------
+            # ---------------- DATA STREAMS -----------------------------------
 
-            if self.bakeRawAnomalyScore:
-                if layer in self.previousPredictiveCells:
-                    rawAnomaly = Anomaly.calculateRawAnomaly(self.layers[ly].activeColumns,
-                                        tm.cellsToColumns(self.previousPredictiveCells[layer]))
-                else:
-                    rawAnomaly = 1.0 # first timestamp
-
-                self.db.InsertDataArray("layer_rawAnomaly_"+str(ly), iteration, rawAnomaly)
-
-                self.previousPredictiveCells[layer] = self.layers[ly].predictiveCells
+            for pl in self.dataStreams:
+                tableName = 'dataStream_' + pl
+                self.db.InsertDataArray(tableName, iteration, self.dataStreams[pl].value)
 
 
 
