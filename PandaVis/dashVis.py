@@ -9,13 +9,14 @@ import pandas as pd
 
 from bakeReader.bakeReader import BakeReader
 import json
+import math
 
 
 class DashVis(object):
     def __init__(self):
         self.bakeReader = None
 
-        external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+        external_stylesheets = ['https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css']
         self.app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
         self.colors = {
@@ -25,7 +26,7 @@ class DashVis(object):
 
     def run(self):
 
-        self.bakeReader = BakeReader('/media/D/hotgym.db')
+        self.bakeReader = BakeReader("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
         self.bakeReader.OpenDatabase()
         self.bakeReader.LoadDataStreams()
 
@@ -48,7 +49,7 @@ class DashVis(object):
                 fig.update_layout(
                     title=stream['name'],
                     template="plotly_dark",
-                    margin=dict(r=10, t=25, b=40, l=60),
+                    #margin=dict(r=10, t=25, b=40, l=60),
                     # annotations=[
                     #     dict(
                     #         text="abc Source: NOAA",
@@ -60,12 +61,16 @@ class DashVis(object):
                     # ]
                 )
 
+        
+        
         columnClassName = "twelve columns"
         if plotsPerRow == 3:
              columnClassName = "four columns"
         elif plotsPerRow == 2:
             columnClassName = "six columns"
 
+        columnClassName = "col-sm-4"
+       
         graphs =  [html.Div(
             ([html.Div([dcc.Graph(
                         id='plot_'+x[0],
@@ -74,6 +79,7 @@ class DashVis(object):
             ),className="row")
                    ]
 
+        print(graphs)
         childs = [
             html.H4(
                 children='Dash vis',

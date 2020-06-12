@@ -64,7 +64,7 @@ class BakeReader(object):
         tableNames = self.db.getTableNames()
         parStreamTables = [q for q in tableNames if q.startswith("dataStream_")]
         for streamTable in parStreamTables:
-            streamName = streamTable.split('_')[1]
+            streamName = streamTable.replace("dataStream_","")
             self.dataStreams[streamName] = cDataStream()
             Log("Loaded stream: " + streamName)
 

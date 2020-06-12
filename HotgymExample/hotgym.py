@@ -144,6 +144,10 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     anomalyProb = []
     predictions = {1: [], 5: []}
     iterationNo = 0
+
+    dateBits_last = None
+    consBits_last = None
+    
     for count, record in enumerate(records):
 
         # Convert date string into Python date object.
@@ -208,10 +212,25 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaBaker.layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
         pandaBaker.layers["SensoryLayer"].activeCells = tm.getActiveCells().sparse
 
+        # customizable datastreams to be show on the DASH PLOTS
         pandaBaker.dataStreams["rawAnomaly"].value = rawAnomaly
         pandaBaker.dataStreams["powerConsumption"].value = consumption
         pandaBaker.dataStreams["numberOfWinnerCells"].value = len(tm.getWinnerCells().sparse)
+        pandaBaker.dataStreams["consumptionInput_sparsity"].value = consumptionBits.getSparsity()
+        pandaBaker.dataStreams["dateInput_sparsity"].value = dateBits.getSparsity()
+        pandaBaker.dataStreams["consumptionInput_overlap_with_prev_step"].value = 0 if consBits_last is None else consumptionBits.getOverlap(consBits_last)
+        consBits_last = consumptionBits
+        pandaBaker.dataStreams["dateInput_overlap_with_prev_step"].value = 0 if dateBits_last is None else dateBits.getOverlap(dateBits_last)
+        dateBits_last = dateBits
 
+        pandaBaker.dataStreams["SensoryLayer_SP_overlap_metric"].value = sp_info.overlap.overlap
+        pandaBaker.dataStreams["SensoryLayer_TM_overlap_metric"].value = sp_info.overlap.overlap
+        pandaBaker.dataStreams["SensoryLayer_SP_activation_frequency"].value = sp_info.activationFrequency.mean()
+        pandaBaker.dataStreams["SensoryLayer_TM_activation_frequency"].value = tm_info.activationFrequency.mean()
+        pandaBaker.dataStreams["SensoryLayer_SP_entropy"].value = sp_info.activationFrequency.mean()
+        pandaBaker.dataStreams["SensoryLayer_TM_entropy"].value = tm_info.activationFrequency.mean()
+
+        
         pandaBaker.StoreIteration(iterationNo)
 
         print("ITERATION: "+str(iterationNo))
@@ -304,9 +323,15 @@ def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
     ]
 
     #data for dash plots
-    pandaBaker.dataStreams["rawAnomaly"] = cDataStream()
-    pandaBaker.dataStreams["powerConsumption"] = cDataStream()
-    pandaBaker.dataStreams["numberOfWinnerCells"] = cDataStream()
+    streams = ["rawAnomaly","powerConsumption","numberOfWinnerCells",
+               "consumptionInput_sparsity","dateInput_sparsity","consumptionInput_overlap_with_prev_step",
+               "dateInput_overlap_with_prev_step","SensoryLayer_SP_overlap_metric","SensoryLayer_TM_overlap_metric",
+               "SensoryLayer_SP_activation_frequency","SensoryLayer_TM_activation_frequency","SensoryLayer_SP_entropy",
+               "SensoryLayer_TM_entropy"
+               ]
+
+    pandaBaker.dataStreams = dict((name,cDataStream()) for name in streams)# create dicts for more comfortable code
+    #normally would be like: pandaBaker.dataStreams["myStreamName"] = cDataStream()
 
     pandaBaker.PrepareDatabase()
 

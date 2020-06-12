@@ -75,6 +75,9 @@ class PandaBaker(object):
 
         # data streams ----------------
         for pl in self.dataStreams:
+            if(pl.find(' ')!=-1):
+                raise RuntimeError("Name of datastream can't contain whitespaces. Name:"+str(pl))
+        
             tableName = 'dataStream_' + pl
             self.db.CreateTable(tableName, "iteration INTEGER, value " + self.dataStreams[pl].dataType)
 
@@ -145,6 +148,9 @@ class PandaBaker(object):
 
             for pl in self.dataStreams:
                 tableName = 'dataStream_' + pl
+                
+                if(type(self.dataStreams[pl].value)not in [float, int]):
+                    raise RuntimeError("Datatype:"+str(type(self.dataStreams[pl].value))+" is not supported!")
                 self.db.InsertDataArray(tableName, iteration, self.dataStreams[pl].value)
 
 
