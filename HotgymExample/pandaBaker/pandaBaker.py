@@ -70,7 +70,7 @@ class PandaBaker(object):
             self.db.CreateTable('layer_predictiveCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_winnerCells_'+ly, "iteration INTEGER, data SDR")
             self.db.CreateTable('layer_activeCells_'+ly, "iteration INTEGER, data SDR")
-            self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data SDR")
+            self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data array")#using float numpy array, not sparse SDR
             self.db.CreateTable('layer_distalSynapses_' + ly, "iteration INTEGER, column INTEGER, cell INTEGER, segment INTEGER, data SDR")
 
         # data streams ----------------

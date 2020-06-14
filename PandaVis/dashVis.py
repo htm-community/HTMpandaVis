@@ -10,7 +10,7 @@ import pandas as pd
 from bakeReader.bakeReader import BakeReader
 import json
 import math
-
+import random
 
 class DashVis(object):
     def __init__(self):
@@ -24,9 +24,16 @@ class DashVis(object):
             'text': '#7FDBFF'
         }
 
+        number_of_colors = 30
+        random.seed(1)
+        print(random.randint(1,50))
+        self.randomColors = ["#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                 for i in range(number_of_colors)]
+
+
     def run(self):
 
-        self.bakeReader = BakeReader("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
+        self.bakeReader = BakeReader("/media/D/hotgym.db")
         self.bakeReader.OpenDatabase()
         self.bakeReader.LoadDataStreams()
 
@@ -38,16 +45,19 @@ class DashVis(object):
 
 
         figures = []
+        cnt = 0
         for stream in cfgLayout['streams']:
             data = self.bakeReader.dataStreams[stream['name']].allData
 
             if stream['type'] == 'line':
-                fig = go.Figure(data=go.Scatter(x=data[0, :], y=data[1, :]))
+                fig = go.Figure(data=go.Scatter(x=data[0, :], y=data[1, :],line=dict(color=self.randomColors[cnt])))
                 figures.append([stream['name'],fig])
 
                 # Set theme, margin, and annotation in layout
                 fig.update_layout(
                     title=stream['name'],
+                    xaxis_title="iteration",
+                    yaxis_title=stream['yaxis'],
                     template="plotly_dark",
                     #margin=dict(r=10, t=25, b=40, l=60),
                     # annotations=[
@@ -60,16 +70,17 @@ class DashVis(object):
                     #         y=0)
                     # ]
                 )
+                cnt+=1
+                if cnt>=len(self.randomColors):
+                    cnt=0
 
         
         
-        columnClassName = "twelve columns"
+        columnClassName = "col-sm-12"
         if plotsPerRow == 3:
-             columnClassName = "four columns"
+             columnClassName = "col-sm-4"
         elif plotsPerRow == 2:
-            columnClassName = "six columns"
-
-        columnClassName = "col-sm-4"
+            columnClassName = "col-sm-6"
        
         graphs =  [html.Div(
             ([html.Div([dcc.Graph(
