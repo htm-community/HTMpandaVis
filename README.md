@@ -1,10 +1,11 @@
+![HTMpandaVis](images/HTMpandaVis.png)
 # HTMpandaVis
 **See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
 
 Screenshots for visualization of the [2D recognition project](https://discourse.numenta.org/t/2d-object-recognition-project/5465/92)
-![img1](img1.png)
-![img2](img2.png)
-![img2](img3.png)
+![img1](images/img1.png)
+![img2](images/img2.png)
+![img2](images/img3.png)
 
 This project aspires to create tool that helps **visualize HTM systems in 3D** by using opensource framework for 3D rendering https://www.panda3d.org/
 
@@ -24,7 +25,7 @@ Currently the "computation script" is hotgym example using [htm.core](https://gi
 small amout of code to communicate with visualization.
 That is also main idea, anybody can take his own current computation script, slightly modify it and use this vis tool.
 
-![Diagram](readmeDiagram.png)
+![Diagram](images/readmeDiagram.png)
 
 
 # How to install on Linux
