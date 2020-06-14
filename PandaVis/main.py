@@ -130,7 +130,7 @@ class cApp(ShowBase):
             for ly in self.HTMObjects[obj].layers:
                 self.bakeReader.LoadActiveColumns(ly, iteration)
                 self.bakeReader.LoadWinnerCells(ly, iteration)
-                self.bakeReader.LoadPredictiveCells(ly, iteration)
+                self.bakeReader.LoadPredictiveCells(ly, iteration+1)#take predictions for the t+1
                 self.bakeReader.LoadActiveCells(ly, iteration)
 
                 self.bakeReader.LoadProximalSynapses(ly,[self.gui.columnID,], iteration)

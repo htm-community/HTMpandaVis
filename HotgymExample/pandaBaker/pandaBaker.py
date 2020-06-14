@@ -24,7 +24,7 @@ class PandaBaker(object):
 
         #flags what to bake
         self.bakeProximalSynapses = True
-        self.bakeDistalSynapses = False
+        self.bakeDistalSynapses = True
 
         # for raw anomaly calculation
         self.previousPredictiveCells = {} # dict storing predictive cells for previous timestamp for each layer
