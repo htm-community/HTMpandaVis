@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
+
+import json
+import math
+import random
+import pandas as pd
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import pandas as pd
 
 from bakeReader.bakeReader import BakeReader
-import json
-import math
-import random
+
 
 class DashVis(object):
     def __init__(self):
         self.bakeReader = None
 
-        external_stylesheets = ['https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css']
-        self.app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+        #external_stylesheets = ['https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css']
+        self.app = dash.Dash(__name__,) #external_stylesheets=external_stylesheets)
 
         self.colors = {
             'background': '#111111',
@@ -33,7 +36,7 @@ class DashVis(object):
 
     def run(self):
 
-        self.bakeReader = BakeReader("/media/D/hotgym.db")
+        self.bakeReader = BakeReader("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
         self.bakeReader.OpenDatabase()
         self.bakeReader.LoadDataStreams()
 
@@ -90,7 +93,6 @@ class DashVis(object):
             ),className="row")
                    ]
 
-        print(graphs)
         childs = [
             html.H4(
                 children='Dash vis',
@@ -102,15 +104,7 @@ class DashVis(object):
 
         childs += graphs
 
-        childs+=[
-            html.Label('Slider'),
-            dcc.Slider(
-                min=0,
-                max=1000,
-                marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(1,1000, 100)},
-                value=5,
-            ),]
-
+        
         self.app.layout = html.Div(style={'backgroundColor': self.colors['background']}, children=childs)
 
 
