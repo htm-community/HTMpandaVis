@@ -4,14 +4,15 @@ from direct.showbase.ShowBase import ShowBase
 
 from bakeReader.bakeReader import BakeReader
 import math
-
+import os
 import time
+
 from objects.htmObject import cHTM
 from gui import cGUI # Graphical user interface
 from environment import cEnvironment # handles everything about the environment
 from interaction import cInteraction # handles keys, user interaction etc..
 from direct.stdpy import threading
-from panda3d.core import loadPrcFileData
+from panda3d.core import loadPrcFileData, GraphicsWindow
 
 loadPrcFileData('', 'win-size 1600 900')
 
@@ -87,6 +88,8 @@ class cApp(ShowBase):
 
         self.iteration = 0
         self.initIterationLoaded = False
+
+        self.autoRunIteration = 0
 
     def BuildStructure(self):
 
@@ -221,7 +224,7 @@ class cApp(ShowBase):
 
         layer = self.bakeReader.layers[layerName]
 
-        gotSomeData = self.bakeReader.LoadDistalSynapses2(layerName, column, cell, self.iteration)  # load it
+        gotSomeData = self.bakeReader.LoadDistalSynapses(layerName, column, cell, self.iteration)  # load it
 
         if not gotSomeData:
             printLog("Don't have any distal synapses to show for this cell.")
@@ -252,6 +255,15 @@ class cApp(ShowBase):
         if self.gui.gotoReq >= 0:
             self.LoadIteration(self.gui.gotoReq)
             self.gui.gotoReq = -1
+
+
+        if self.gui.capture:
+            self.LoadIteration(self.autoRunIteration)
+            self.autoRunIteration += 1
+            if self.autoRunIteration > 997:
+                self.gui.capture =False
+                os.system("ffmpeg -y -framerate 10 -i screenshots/%01d.jpg -codec copy screenshots/recording.mkv")
+            self.win.saveScreenshot('screenshots/'+str(self.autoRunIteration)+'.jpg')
 
 
         return task.cont

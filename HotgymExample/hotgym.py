@@ -60,7 +60,7 @@ default_parameters = {
     }
 }
 
-pandaBaker = PandaBaker("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
+pandaBaker = PandaBaker("/media/D/Data/HTM/hotgym.db")
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:

@@ -68,6 +68,8 @@ class cGUI:
         self.showLegend = self.getDefault("legend")
         self.showDescription = self.getDefault("desc")
 
+        self.capture = False
+
         self.iteration = 0
         self.cntIterations = 0
 
@@ -92,7 +94,8 @@ class cGUI:
                   sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
                             default_value=100, enable_events=True)],
                   [sg.Slider(key='LODSlider2', range=(1, 10000), orientation='h', size=(20, 10),
-                            default_value=100, enable_events=True)]])]
+                            default_value=100, enable_events=True)]])],
+                  [sg.Button('capture')],
                   ]
 
         self.window = sg.Window('Main panel', keep_on_top=True, location=self.getDefault("mainWinPos")).Layout(layout)
@@ -217,6 +220,8 @@ class cGUI:
                 else:
                     self.description.window.close()
                     self.description = None
+            elif event == 'capture':
+                self.capture = True
 
 
             self.wireframe = values["wireFrame"]
