@@ -61,7 +61,7 @@ class cMinicolumn:
 
         # self.__node.setTag('clickable',str(idx))#to be able to click on it
 
-        self.__columnBox = loader.loadModel("models/cube")
+        self.__columnBox = loader.loadModel("PandaVis/models/cube")
         self.__columnBox.setPos(
             0, 0, -0.5 + (0 if len(self.cells) == 0 else len(self.cells)*(1+CELL_OFFSET) / 2)
         )

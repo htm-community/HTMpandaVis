@@ -15,8 +15,9 @@ from panda3d.core import loadPrcFileData
 
 loadPrcFileData('', 'win-size 1600 900')
 
-import faulthandler; faulthandler.enable()
-
+#import faulthandler; faulthandler.enable()
+import os
+print(os.getcwd())
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -33,7 +34,7 @@ def printLog(txt, verbosity=verbosityLow):
 
 class cApp(ShowBase):
         
-    def __init__(self):
+    def __init__(self, databaseFilePath):
         ShowBase.__init__(self)
         self.speed = 40
 
@@ -59,7 +60,9 @@ class cApp(ShowBase):
             visApp = self
         )
 
-        self.bakeReader = BakeReader('/media/D/hotgym.db')
+        self.databaseFilePath = databaseFilePath
+
+        self.bakeReader = BakeReader(self.databaseFilePath)
         self.bakeReader.setGui(self.gui)
         
         self.interaction = cInteraction(self)
@@ -273,6 +276,3 @@ class cApp(ShowBase):
                 break
         printLog("GFX worker: quit")
 
-if __name__ == "__main__":
-    app = cApp()
-    app.run()

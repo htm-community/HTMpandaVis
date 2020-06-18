@@ -80,7 +80,7 @@ class cEnvironment:
     ):  # it will create basement object, just for case that nothing is drawn to be not lost
     
         # Load the environment model.
-        self.cube = self.base.loader.loadModel("models/cube")  # /media/Data/Data/Panda3d/
+        self.cube = self.base.loader.loadModel("PandaVis/models/cube")  # /media/Data/Data/Panda3d/
     
         # Reparent the model to render.
         self.cube.reparentTo(self.render)

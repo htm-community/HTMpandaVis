@@ -91,7 +91,14 @@ class Database(object):
         data = self.curs.fetchall()
 
         return data
+    
+    def SelectMaxIteration(self, tableName):
+        self.curs.execute("SELECT MAX(iteration) FROM " + tableName + ";")
+        self.conn.commit()
+        data = self.curs.fetchone() # returns single row
 
+        return data[0]
+        
     # used on tables where iteration is unique value
     def SelectByIteration(self, tableName, iteration):
 

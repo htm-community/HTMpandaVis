@@ -60,7 +60,7 @@ default_parameters = {
     }
 }
 
-pandaBaker = PandaBaker('/media/D/hotgym.db')
+pandaBaker = PandaBaker("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
@@ -201,16 +201,16 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         # ------------------HTMpandaVis----------------------
         # fill up values
 
-        pandaBaker.inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
-        pandaBaker.inputs["SL_Consumption"].bits = consumptionBits.sparse
+        pandaBaker.inputs["Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+        pandaBaker.inputs["Consumption"].bits = consumptionBits.sparse
 
-        pandaBaker.inputs["SL_TimeOfDay"].stringValue = record[0]
-        pandaBaker.inputs["SL_TimeOfDay"].bits = dateBits.sparse
+        pandaBaker.inputs["TimeOfDay"].stringValue = record[0]
+        pandaBaker.inputs["TimeOfDay"].bits = dateBits.sparse
 
-        pandaBaker.layers["SensoryLayer"].activeColumns = activeColumns.sparse
-        pandaBaker.layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
-        pandaBaker.layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
-        pandaBaker.layers["SensoryLayer"].activeCells = tm.getActiveCells().sparse
+        pandaBaker.layers["Layer1"].activeColumns = activeColumns.sparse
+        pandaBaker.layers["Layer1"].winnerCells = tm.getWinnerCells().sparse
+        pandaBaker.layers["Layer1"].predictiveCells = predictiveCellsSDR.sparse
+        pandaBaker.layers["Layer1"].activeCells = tm.getActiveCells().sparse
 
         # customizable datastreams to be show on the DASH PLOTS
         pandaBaker.dataStreams["rawAnomaly"].value = rawAnomaly
@@ -223,12 +223,12 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaBaker.dataStreams["dateInput_overlap_with_prev_step"].value = 0 if dateBits_last is None else dateBits.getOverlap(dateBits_last)
         dateBits_last = dateBits
 
-        pandaBaker.dataStreams["SensoryLayer_SP_overlap_metric"].value = sp_info.overlap.overlap
-        pandaBaker.dataStreams["SensoryLayer_TM_overlap_metric"].value = sp_info.overlap.overlap
-        pandaBaker.dataStreams["SensoryLayer_SP_activation_frequency"].value = sp_info.activationFrequency.mean()
-        pandaBaker.dataStreams["SensoryLayer_TM_activation_frequency"].value = tm_info.activationFrequency.mean()
-        pandaBaker.dataStreams["SensoryLayer_SP_entropy"].value = sp_info.activationFrequency.mean()
-        pandaBaker.dataStreams["SensoryLayer_TM_entropy"].value = tm_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_SP_overlap_metric"].value = sp_info.overlap.overlap
+        pandaBaker.dataStreams["Layer1_TM_overlap_metric"].value = sp_info.overlap.overlap
+        pandaBaker.dataStreams["Layer1_SP_activation_frequency"].value = sp_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_TM_activation_frequency"].value = tm_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_SP_entropy"].value = sp_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_TM_entropy"].value = tm_info.activationFrequency.mean()
 
         
         pandaBaker.StoreIteration(iterationNo)
@@ -242,7 +242,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         iterationNo = iterationNo + 1
 
         #pandaBaker.CommitBatch()
-        if iterationNo == 200:
+        if iterationNo == 10:
             break
 
     pandaBaker.CommitBatch()
@@ -311,27 +311,29 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     return -accuracy[5]
 
 
+#with this method, the structure for visualisation is defined
 def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
 
-    pandaBaker.inputs["SL_Consumption"] = cInput(consumptionBits_size)
-    pandaBaker.inputs["SL_TimeOfDay"] = cInput(dateBits_size)
+    #we have two inputs connected to proximal synapses of Layer1
+    pandaBaker.inputs["Consumption"] = cInput(consumptionBits_size)
+    pandaBaker.inputs["TimeOfDay"] = cInput(dateBits_size)
 
-    pandaBaker.layers["SensoryLayer"] = cLayer(sp,tm)
-    pandaBaker.layers["SensoryLayer"].proximalInputs = [
-        "SL_Consumption",
-        "SL_TimeOfDay",
+    pandaBaker.layers["Layer1"] = cLayer(sp,tm) # Layer1 has Spatial Pooler & Temporal Memory
+    pandaBaker.layers["Layer1"].proximalInputs = [
+        "Consumption",
+        "TimeOfDay",
     ]
 
     #data for dash plots
     streams = ["rawAnomaly","powerConsumption","numberOfWinnerCells",
                "consumptionInput_sparsity","dateInput_sparsity","consumptionInput_overlap_with_prev_step",
-               "dateInput_overlap_with_prev_step","SensoryLayer_SP_overlap_metric","SensoryLayer_TM_overlap_metric",
-               "SensoryLayer_SP_activation_frequency","SensoryLayer_TM_activation_frequency","SensoryLayer_SP_entropy",
-               "SensoryLayer_TM_entropy"
+               "dateInput_overlap_with_prev_step","Layer1_SP_overlap_metric","Layer1_TM_overlap_metric",
+               "Layer1_SP_activation_frequency","Layer1_TM_activation_frequency","Layer1_SP_entropy",
+               "Layer1_TM_entropy"
                ]
 
     pandaBaker.dataStreams = dict((name,cDataStream()) for name in streams)# create dicts for more comfortable code
-    #normally would be like: pandaBaker.dataStreams["myStreamName"] = cDataStream()
+    #could be also written like: pandaBaker.dataStreams["myStreamName"] = cDataStream()
 
     pandaBaker.PrepareDatabase()
 

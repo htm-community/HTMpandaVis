@@ -69,6 +69,7 @@ class cGUI:
         self.showDescription = self.getDefault("desc")
 
         self.iteration = 0
+        self.cntIterations = 0
 
 
 
@@ -171,8 +172,10 @@ class cGUI:
 
             if event == "STEP +1":
                 print("step +1")
-                self.gotoReq = self.iteration + 1
-                self.iteration= self.iteration + 1
+                if(self.iteration + 1 > self.cntIterations):
+                    self.gotoReq = self.iteration + 1
+                    self.iteration= self.iteration + 1
+                    MESSAGGEBOX
             if event == "STEP -1":
                 print("step -1")
                 if self.iteration > 0:

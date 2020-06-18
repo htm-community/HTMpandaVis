@@ -14,9 +14,10 @@ class BakeReader(object):
         self.inputs = {}  # can contain cInput instances
         self.dataStreams = {}  # can contain cDataStream instances
 
-        self._gui =None
         self._reqProximalData = False
         self._reqDistalData = False
+        
+        self.cntIterations = 0
 
     def OpenDatabase(self):
         self.db = Database(self.databaseFilePath)  # connect to the database
@@ -59,6 +60,10 @@ class BakeReader(object):
                 self.layers[con["layer"]].distalInputs.append(con["input"])
                 Log("Loaded distal input for layer: " + str(con["layer"]))
 
+        # figure out how many iterations there are
+        self.cntIterations = self.LoadMaxIteration("inputs_"+next(iter(self.inputs)))# get first input
+        Log("Database contains data for "+str(self.cntIterations)+" iterations.")
+
     def LoadDataStreams(self):
         # DATA STREAMS - loaded all at once
         tableNames = self.db.getTableNames()
@@ -80,6 +85,10 @@ class BakeReader(object):
 
             self.dataStreams[streamName].allData = arr
 
+    def LoadMaxIteration(self, tableName):
+        row = self.db.SelectMaxIteration(tableName)
+        return row
+        
     def LoadInput(self, inp, iteration):
         tableName = "inputs_"+inp
 
@@ -146,9 +155,6 @@ class BakeReader(object):
 
         return segNo>0 # true if we got something for this cell
 
-
-    def setGui(self, gui):
-        self._gui = gui
 
     def reqProximalData(self):
         self._reqProximalData = True

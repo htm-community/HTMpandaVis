@@ -23,7 +23,7 @@ class cInputBit:
 
     def CreateGfx(self, loader, idx):
 
-        self.__node = loader.loadModel("models/cube")
+        self.__node = loader.loadModel("PandaVis/models/cube")
         #self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)

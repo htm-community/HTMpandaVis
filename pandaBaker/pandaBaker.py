@@ -79,7 +79,7 @@ class PandaBaker(object):
                 raise RuntimeError("Name of datastream can't contain whitespaces. Name:"+str(pl))
         
             tableName = 'dataStream_' + pl
-            self.db.CreateTable(tableName, "iteration INTEGER, value " + self.dataStreams[pl].dataType)
+            self.db.CreateTable(tableName, "iteration INTEGER PRIMARY KEY, value " + self.dataStreams[pl].dataType)
 
         self.db.conn.commit()
 
@@ -90,6 +90,9 @@ class PandaBaker(object):
         # store input states
         for inp in self.inputs:
             self.db.InsertDataArray2('inputs_'+inp, iteration, self.inputs[inp].stringValue, self.inputs[inp].bits)
+            print("INPUT")
+            print(inp)
+            print(self.inputs[inp].stringValue)
         #layer states
         for ly in self.layers:
             self.db.InsertDataArray('layer_activeColumns_' + ly,
@@ -119,30 +122,36 @@ class PandaBaker(object):
                     self.db.InsertDataArray2('layer_proximalSynapses_' + ly,
                                             iteration, col, synapses)
 
+
+            layer.tm.saveToFile(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_"+str(iteration)+".dump"))
+
             # ---------------- DISTAL SYNAPSES ----------------------------------
-            tm = layer.tm
-            if self.bakeDistalSynapses:
-                if tm is None:
-                    Log("This layer doesn't have TM, can't get distal synapses.. skipping")
-                    continue
-
-                columnCount = layer.params['sp_columnCount']
-                oneBatchSize = int(columnCount/CPU_CORES)
-                split_startColIdx = [x*oneBatchSize for x in range(CPU_CORES)]
-
-                # the division can be with remainder so add to the last thread the rest
-                if split_startColIdx[CPU_CORES-1]+oneBatchSize<columnCount-1:
-                    remainderCols = columnCount-1 - split_startColIdx[CPU_CORES-1]+oneBatchSize
-
-                # Setup a pool of worker threads equal to CPU_CORES
-                with get_context("spawn").Pool(processes=CPU_CORES) as pool:
-                    results = [pool.apply_async(CalcPresynCells, args=(layer, split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0))) for x in range(CPU_CORES)]
-
-                    for result in results:
-                        data = result.get()
-                        for row in data:
-                            self.db.InsertDataArray4('layer_distalSynapses_' + ly,
-                                                     iteration, row[0], row[1], row[2], row[3])
+##            timeStartDistalSynapsesCalc = time.time()
+##            tm = layer.tm
+##            if self.bakeDistalSynapses:
+##                if tm is None:
+##                    Log("This layer doesn't have TM, can't get distal synapses.. skipping")
+##                    continue
+##
+##                columnCount = layer.params['sp_columnCount']
+##                oneBatchSize = int(columnCount/CPU_CORES)
+##                split_startColIdx = [x*oneBatchSize for x in range(CPU_CORES)]
+##
+##                # the division can be with remainder so add to the last thread the rest
+##                if split_startColIdx[CPU_CORES-1]+oneBatchSize<columnCount-1:
+##                    remainderCols = columnCount-1 - split_startColIdx[CPU_CORES-1]+oneBatchSize
+##
+##                # Setup a pool of worker threads equal to CPU_CORES
+##                with get_context("spawn").Pool(processes=CPU_CORES) as pool:
+##                    results = [pool.apply_async(CalcPresynCells, args=(layer, split_startColIdx[x],oneBatchSize+(remainderCols if x==CPU_CORES-1 else 0))) for x in range(CPU_CORES)]
+##
+##                    for result in results:
+##                        data = result.get()
+##                        for row in data:
+##                            self.db.InsertDataArray4('layer_distalSynapses_' + ly,
+##                                                     iteration, row[0], row[1], row[2], row[3])
+##
+##                Log("Gathering of distal synapses took took {:.3f} s ".format((time.time() - timeStartDistalSynapsesCalc)))
 
             # ---------------- DATA STREAMS -----------------------------------
 
@@ -190,37 +199,6 @@ def CalcPresynCells(layer, startCol, colCount):
         #output.put(None) # need to put something, otherwise output.get() hangs forever
     print("Finished")
     return output
-
-def getPresynapticCellsForCell(tm, cellID):
-    start_time = time.time()
-    segments = tm.connections.segmentsForCell(cellID)
-
-    #synapses = []
-    res = []
-
-    #if len(segments) > 0:
-        #Log("segments len:"+str(len(segments)))
-    for seg in segments:
-        time1 = time.time()
-        synapsesForSegment = tm.connections.synapsesForSegment(seg)
-        #Log("synapsesForSegment() took %s ms " % ((time.time() - time1)*1000))
-        #Log("synapses for segment len:" + str(len(segments)))
-        #Log("datatype:" + str(type(synapsesForSegment)))
-        #Log("synapsesForSegment len:" + str(len(synapsesForSegment)))
-
-        #for syn in synapsesForSegment:
-            #synapses += [syn]
-
-        presynapticCells = []
-        for syn in synapsesForSegment:
-            #time2 = time.time()
-            presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
-            #Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
-        res += [seg, np.array(presynapticCells)]
-
-    #if len(segments) > 0:
-        #Log("getPresynapticCellsForCell() took %s ms " % ((time.time() - start_time)*1000))
-    return res
 
 def Log(s):
     print(str(s))

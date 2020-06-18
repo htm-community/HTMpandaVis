@@ -44,7 +44,7 @@ class cCell:
     ):  # idx is neccesary to be able to track it down for mouse picking
 
         self.idx = idx
-        self.__node = loader.loadModel("models/cube")
+        self.__node = loader.loadModel("PandaVis/models/cube")
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)
         self.__node.setTag("clickable", str(idx))  # to be able to click on it
