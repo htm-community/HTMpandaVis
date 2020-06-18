@@ -132,13 +132,16 @@ class cInteraction:
     def onEscape(self):
         """Event when escape button is pressed."""
 
+        if self.gui.focusedCell is None:
+            return
         # unfocus all
         for obj in self.base.HTMObjects.values():
             obj.DestroyProximalSynapses()
         for obj in self.base.HTMObjects.values():
             obj.DestroyDistalSynapses()
 
-        self.focusedCell.resetFocus()  # reset previous
+        self.gui.focusedCell.resetFocus()  # reset previous
+        self.gui.focusedCell = None
 
     def onMouseEvent(self, event, press):
         printLog("Mouse event:" + str(event), verbosityHigh)
@@ -228,13 +231,13 @@ class cInteraction:
             HTMObj = self.base.HTMObjects[focusedHTMObject]
             Layer = HTMObj.layers[focusedLayer]
             newCellFocus = Layer.minicolumns[parentId].cells[thisId]
-            self.focusedPath = [focusedHTMObject, focusedLayer]
+            focusedPath = [focusedHTMObject, focusedLayer]
 
 
-            if self.focusedCell is not None:
-                self.focusedCell.resetFocus()  # reset previous
-            self.focusedCell = newCellFocus
-            self.focusedCell.setFocus()
+            if self.gui.focusedCell is not None:
+                self.gui.focusedCell.resetFocus()  # reset previous
+            self.gui.focusedCell = newCellFocus
+            self.gui.focusedCell.setFocus()
 
             # unfocus all
             for obj in self.base.HTMObjects.values():
@@ -242,8 +245,8 @@ class cInteraction:
             for obj in self.base.HTMObjects.values():
                 obj.DestroyDistalSynapses()
 
-            self.gui.focusedCell = self.focusedCell
-            self.gui.focusedPath = self.focusedPath
+
+            self.gui.focusedPath = focusedPath
             
             self.gui.columnID = Layer.minicolumns.index(self.gui.focusedCell.column)
             self.gui.cellID = Layer.minicolumns[self.gui.columnID].cells.index(self.gui.focusedCell)

@@ -78,12 +78,6 @@ class cInput:
 
     def UpdateState(self, data, text):
 
-        #    if len(data)!=self.count:
-        #      print("Given data for input does not match number of bits in input!")
-        #      print("A:"+str(self.count)+" B:"+str(len(data)))
-        #      return
-        printLog("In UpdateState(): " + str(self.name), verbosityHigh)
-
         self.__textValNodePath.getNode(0).setText(text)
 
         for i in range(len(self.inputBits)):
@@ -99,8 +93,6 @@ class cInput:
 
         for i in range(len(self.inputBits)):  # update all states
             self.inputBits[i].UpdateState()
-
-        printLog("Leaving UpdateState()")
 
     def getNode(self):
         return self.__node

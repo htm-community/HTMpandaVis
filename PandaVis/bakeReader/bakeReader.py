@@ -4,6 +4,10 @@ from bakeReader.bakeReaderDatabase import Database
 from bakeReader.dataStructs import cLayer,cInput, cDataStream
 import numpy as np
 import os
+import time
+
+#needed to gather distal synapses from dump
+from htm.bindings.algorithms import TemporalMemory
 
 class BakeReader(object):
     def __init__(self, databaseFilePath):
@@ -133,28 +137,56 @@ class BakeReader(object):
             self.layers[layer].proximalSynapses[col] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
 
 
-    #cellsPerColumn = self.bakeReader.layers[layerName].params["tm_cellsPerColumn"]
-    #cellID = column*cellsPerColumn + cell
-
     def LoadDistalSynapses(self, layer, column, cell, iteration):
-        tableName = "layer_distalSynapses_"+layer
-        self.layers[layer].distalSynapses = {} # erase dict
+        timeStartDistalSynapsesCalc = time.time()
+        tm = TemporalMemory()
+        tm.loadFromFile(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
+                                         "" + str(layer) + "_" + str(iteration) + ".dump"))
 
-        rows = self.db.SelectDistalData(tableName, iteration, column, cell) # get segments for this cell in this iteration
+        reqCellID = int(column * self.layers[layer].params['tm_cellsPerColumn'] + cell)
+
+        print("requesting distals for cell:"+str(reqCellID))
+        segments = self.getPresynapticCellsForCell(tm, reqCellID)
 
         segNo = 0
-        for row in rows:# for each segment
-            #now check for sure if the data fits
-            if cell != row['cell'] or iteration != row['iteration']:
-                raise RuntimeError("Data are not valid!")
+        for seg in segments:  # for each segment
             if cell not in self.layers[layer].distalSynapses.keys():
                 self.layers[layer].distalSynapses[cell] = {}
-            self.layers[layer].distalSynapses[cell][segNo] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
+            self.layers[layer].distalSynapses[cell][segNo] = seg # add numpy array to the dict
+            segNo += 1
 
-            segNo = segNo + 1
+        return len(segments) > 0  # true if we got something for this cell
 
-        return segNo>0 # true if we got something for this cell
+    def getPresynapticCellsForCell(self, tm, cellID):
+        start_time = time.time()
+        segments = tm.connections.segmentsForCell(cellID)
 
+        # synapses = []
+        res = []
+
+        # if len(segments) > 0:
+        # Log("segments len:"+str(len(segments)))
+        for seg in segments:
+            time1 = time.time()
+            synapsesForSegment = tm.connections.synapsesForSegment(seg)
+            # Log("synapsesForSegment() took %s ms " % ((time.time() - time1)*1000))
+            # Log("synapses for segment len:" + str(len(segments)))
+            # Log("datatype:" + str(type(synapsesForSegment)))
+            # Log("synapsesForSegment len:" + str(len(synapsesForSegment)))
+
+            # for syn in synapsesForSegment:
+            # synapses += [syn]
+
+            presynapticCells = []
+            for syn in synapsesForSegment:
+                # time2 = time.time()
+                presynapticCells += [tm.connections.presynapticCellForSynapse(syn)]
+                # Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
+            res += [np.array(presynapticCells)]
+
+        # if len(segments) > 0:
+        # Log("getPresynapticCellsForCell() took %s ms " % ((time.time() - start_time)*1000))
+        return res
 
     def reqProximalData(self):
         self._reqProximalData = True

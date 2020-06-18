@@ -242,7 +242,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         iterationNo = iterationNo + 1
 
         #pandaBaker.CommitBatch()
-        if iterationNo == 10:
+        if iterationNo == 1000:
             break
 
     pandaBaker.CommitBatch()

@@ -144,9 +144,9 @@ class cCell:
 
         printLog("Creating distal synapses", verbosityMedium)
 
-        printLog("EXTERNAL DISTAL:"+str(inputObjects))
-        printLog("HTM inputs:"+str(HTMObject.inputs))
-        printLog("HTM layers:" + str(HTMObject.layers))
+        #printLog("EXTERNAL DISTAL:"+str(inputObjects))
+        #printLog("HTM inputs:"+str(HTMObject.inputs))
+        #printLog("HTM layers:" + str(HTMObject.layers))
 
         #input object could be either input or layer instance
         for inputObj in inputObjects:

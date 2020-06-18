@@ -191,7 +191,6 @@ class cGUI:
                     else:
                         self.gotoReq = int(values["iterationGoto"])
                         print("GOTO")
-                        print(values["iterationGoto"])
                 except:
                     print("It is not a number!")
             elif event == "transparencySlider":

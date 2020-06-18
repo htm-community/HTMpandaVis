@@ -138,8 +138,9 @@ class cApp(ShowBase):
                 self.bakeReader.LoadActiveCells(ly, iteration)
 
                 self.bakeReader.LoadProximalSynapses(ly,[self.gui.columnID,], iteration)
-                #cell = self.gui.columnID * self.HTMObjects[obj].layers[ly].nOfCellsPerColumn + self.gui.cellID
-                # for distal
+                #can't load distal synapses here, because they are a big size
+                # loading just for one cell per - user click
+
 
         self.updateHTMstate() # update state of the HTM objects and connections
 
@@ -219,7 +220,8 @@ class cApp(ShowBase):
     def ShowDistalSynapses(self, obj, layerName, column, cell):
 
         layer = self.bakeReader.layers[layerName]
-        gotSomeData = self.bakeReader.LoadDistalSynapses(layerName, column, cell, self.iteration)  # load it
+
+        gotSomeData = self.bakeReader.LoadDistalSynapses2(layerName, column, cell, self.iteration)  # load it
 
         if not gotSomeData:
             printLog("Don't have any distal synapses to show for this cell.")
