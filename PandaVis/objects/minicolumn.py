@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 from objects.cell import cCell
 from panda3d.core import NodePath, PandaNode, LODNode, LColor
 from panda3d.core import (
@@ -61,7 +62,7 @@ class cMinicolumn:
 
         # self.__node.setTag('clickable',str(idx))#to be able to click on it
 
-        self.__columnBox = loader.loadModel("PandaVis/models/cube")
+        self.__columnBox = loader.loadModel(os.path.join(os.getcwd(),"models/cube"))
         self.__columnBox.setPos(
             0, 0, -0.5 + (0 if len(self.cells) == 0 else len(self.cells)*(1+CELL_OFFSET) / 2)
         )

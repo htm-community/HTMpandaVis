@@ -274,8 +274,11 @@ def main(parameters=default_parameters, argv=None, verbose=True):
                 accuracy[n] += (inp - val) ** 2
                 accuracy_samples[n] += 1
     for n in sorted(predictions):
-        accuracy[n] = (accuracy[n] / accuracy_samples[n]) ** .5
-        print("Predictive Error (RMS)", n, "steps ahead:", accuracy[n])
+        if accuracy_samples[n]!=0:
+            accuracy[n] = (accuracy[n] / accuracy_samples[n]) ** .5
+            print("Predictive Error (RMS)", n, "steps ahead:", accuracy[n])
+        else:
+            print("Unable to calculate RMS error!")
 
     # Show info about the anomaly (mean & std)
     print("Anomaly Mean", np.mean(anomaly))

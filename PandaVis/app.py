@@ -16,8 +16,6 @@ from panda3d.core import loadPrcFileData
 loadPrcFileData('', 'win-size 1600 900')
 
 #import faulthandler; faulthandler.enable()
-import os
-print(os.getcwd())
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -63,7 +61,6 @@ class cApp(ShowBase):
         self.databaseFilePath = databaseFilePath
 
         self.bakeReader = BakeReader(self.databaseFilePath)
-        self.bakeReader.setGui(self.gui)
         
         self.interaction = cInteraction(self)
         
@@ -83,6 +80,10 @@ class cApp(ShowBase):
         self.iterationDataUpdate = False
 
         self.BuildStructure()
+
+        # hand over this value to the gui to be able to validate user inputs
+        # -1 because predictive cells are + 1
+        self.gui.cntIterations = self.bakeReader.cntIterations-1
 
         self.iteration = 0
         self.initIterationLoaded = False

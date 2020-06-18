@@ -5,6 +5,7 @@ Created on Wed Feb  6 05:46:38 2019
 
 @author: osboxes
 """
+import os
 from panda3d.core import LColor, CollisionBox, CollisionNode
 from panda3d.core import (
     GeomVertexFormat,
@@ -14,7 +15,7 @@ from panda3d.core import (
     GeomLines,
     GeomNode,
 )
-import random
+
 from Colors import *
 
 verbosityLow = 0
@@ -44,7 +45,7 @@ class cCell:
     ):  # idx is neccesary to be able to track it down for mouse picking
 
         self.idx = idx
-        self.__node = loader.loadModel("PandaVis/models/cube")
+        self.__node = loader.loadModel(os.path.join(os.getcwd(),"models/cube"))
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)
         self.__node.setTag("clickable", str(idx))  # to be able to click on it

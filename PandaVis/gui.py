@@ -172,10 +172,9 @@ class cGUI:
 
             if event == "STEP +1":
                 print("step +1")
-                if(self.iteration + 1 > self.cntIterations):
+                if(self.iteration + 1 <= self.cntIterations):
                     self.gotoReq = self.iteration + 1
                     self.iteration= self.iteration + 1
-                    MESSAGGEBOX
             if event == "STEP -1":
                 print("step -1")
                 if self.iteration > 0:
@@ -187,9 +186,12 @@ class cGUI:
                 self.cmdStop = True
             elif event == "GOTO step":
                 try:
-                    self.gotoReq = int(values["iterationGoto"])
-                    print("GOTO")
-                    print(values["iterationGoto"])
+                    if (int(values["iterationGoto"]) > self.cntIterations):
+                        print("Larger than allowed!")
+                    else:
+                        self.gotoReq = int(values["iterationGoto"])
+                        print("GOTO")
+                        print(values["iterationGoto"])
                 except:
                     print("It is not a number!")
             elif event == "transparencySlider":
