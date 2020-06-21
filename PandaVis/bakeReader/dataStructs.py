@@ -58,6 +58,7 @@ class cLayer(object):
         self.winnerCells = np.empty(0)
         self.activeCells = np.empty(0)
         self.predictiveCells = np.empty(0)
+        self.prev_predictiveCells = np.empty(0) # filled in only when we want to see prediction correctness
 
         # proximal synapses - contains values of permanences
         # dict of numpy arrays, e.g. proximalSynapses[0] is numpy array for column ID 0

@@ -111,10 +111,13 @@ class BakeReader(object):
         row = self.db.SelectByIteration(tableName,iteration)
         self.layers[layer].winnerCells = row['data'] if row['data'] is not None else np.empty(0)
 
-    def LoadPredictiveCells(self, layer, iteration):
+    def LoadPredictiveCells(self, layer, iteration, loadPrevious=False):
         tableName = "layer_predictiveCells_"+layer
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
+        if not loadPrevious:
+            self.layers[layer].predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
+        else:
+            self.layers[layer].prev_predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
 
     def LoadActiveCells(self, layer, iteration):
         tableName = "layer_activeCells_"+layer
@@ -201,6 +204,6 @@ def Log(s):
     print(str(s))
     from datetime import datetime
     dateStr=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    with open("logs/pandaBaker.log","a") as file:
+    with open(os.path.join(os.getcwd(),"logs","pandaBaker.log"),"a") as file:
         file.write(dateStr+" >> "+str(s)+"\n")
 

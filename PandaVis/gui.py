@@ -80,6 +80,7 @@ class cGUI:
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.InputText(self.getDefault("iterationGoto"), key="iterationGoto"), sg.Button('GOTO step')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show only active proximal synapes', key="onlyActiveProximalSynapses", enable_events=True)],
                   [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
                   [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Show prediction correctness', key="predictionCorrectness", enable_events=True)],
@@ -228,6 +229,7 @@ class cGUI:
             self.wireframeChanged = event == "wireFrame"
 
             self.showProximalSynapses = values["proximalSynapses"]
+            self.showOnlyActiveProximalSynapses = values["onlyActiveProximalSynapses"]
             self.showDistalSynapses = values["distalSynapses"]
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]

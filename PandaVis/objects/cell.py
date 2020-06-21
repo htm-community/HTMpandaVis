@@ -58,20 +58,23 @@ class cCell:
 
         self.UpdateState(False, False, False)
 
-    def UpdateState(self, active, predictive, winner, focused=False, presynapticFocus=False, newStep = False, showPredictionCorrectness = True):
+    def UpdateState(self, active, predictive, winner, focused=False, presynapticFocus=False, showPredictionCorrectness = False, prev_predictive = False):
 
         # determine if previous prediction was correct or not
-        if newStep:
-            if self.predictive and showPredictionCorrectness:#was predicted last step
-                if active:#now active
-                    self.correctlyPredicted = True
-                    self.falselyPredicted = False
-                else:
-                    self.correctlyPredicted = False
-                    self.falselyPredicted = True
-            else: # wasn't predictive previous step, so can't be correct or false
+
+        if showPredictionCorrectness:#was predicted last step
+            if prev_predictive and active:#was predictive and now is active
+                self.correctlyPredicted = True
+                self.falselyPredicted = False
+            elif prev_predictive and not active:
+                self.correctlyPredicted = False
+                self.falselyPredicted = True
+            else:#wasn't predictive previous step, so can't be correct or false
                 self.correctlyPredicted = False
                 self.falselyPredicted = False
+        else: # we don't want to see correctness
+            self.correctlyPredicted = False
+            self.falselyPredicted = False
 
         self.active = active
         self.predictive = predictive

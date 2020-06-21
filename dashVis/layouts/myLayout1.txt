@@ -9,38 +9,39 @@
 			 "type" : "line",
 			 "yaxis": "cells"},
 			 
-			 
+		   {"name" : "numberOfPredictiveCells",
+			 "type" : "line",
+			 "yaxis": "cells"}, 
 		   {"name" : "consumptionInput_sparsity",
 			 "type" : "line",
 			 "yaxis": "%"},
 		   {"name" : "dateInput_sparsity",
 			 "type" : "line",
 			 "yaxis": "%"},
+			 
 		   {"name" : "consumptionInput_overlap_with_prev_step",
 			 "type" : "line",
 			 "yaxis": "cells"},
-			 
 		   {"name" : "dateInput_overlap_with_prev_step",
 			 "type" : "line",
 			 "yaxis": "cells"},
 		   {"name" : "Layer1_SP_overlap_metric",
 			 "type" : "line",
 			 "yaxis": "avg cells"},
+			 
 		   {"name" : "Layer1_TM_overlap_metric",
 			 "type" : "line",
-			 "yaxis": "avg cells"},
-			 
-			 
+			 "yaxis": "avg cells"},			 
 		   {"name" : "Layer1_SP_activation_frequency",
 			 "type" : "line",
 			 "yaxis": "Hz"},
 		   {"name" : "Layer1_TM_activation_frequency",
 			 "type" : "line",
 			 "yaxis": "Hz"},
+			 
 		   {"name" : "Layer1_SP_entropy",
 			 "type" : "line",
 			 "yaxis": "entropy"},
-			 
 		   {"name" : "Layer1_TM_entropy",
 			 "type" : "line",
 			 "yaxis": "entropy"}

@@ -42,7 +42,7 @@ class cDashVis(object):
         self.bakeReader.LoadDataStreams()
 
 
-        with open(os.path.join(os.getcwd(),'dashVis','layouts',layout+'.txt')) as f:
+        with open(os.path.join(os.getcwd(),'..','dashVis','layouts',layout+'.txt')) as f:
             cfgLayout = json.load(f)
 
         plotsPerRow = cfgLayout['plotsPerRow']

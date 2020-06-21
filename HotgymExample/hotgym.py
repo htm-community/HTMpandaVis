@@ -60,7 +60,7 @@ default_parameters = {
     }
 }
 
-pandaBaker = PandaBaker("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
+pandaBaker = PandaBaker("/media/D/Data/HTM/hotgym.db")
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
@@ -216,6 +216,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         pandaBaker.dataStreams["rawAnomaly"].value = rawAnomaly
         pandaBaker.dataStreams["powerConsumption"].value = consumption
         pandaBaker.dataStreams["numberOfWinnerCells"].value = len(tm.getWinnerCells().sparse)
+        pandaBaker.dataStreams["numberOfPredictiveCells"].value = len(predictiveCellsSDR.sparse)
         pandaBaker.dataStreams["consumptionInput_sparsity"].value = consumptionBits.getSparsity()
         pandaBaker.dataStreams["dateInput_sparsity"].value = dateBits.getSparsity()
         pandaBaker.dataStreams["consumptionInput_overlap_with_prev_step"].value = 0 if consBits_last is None else consumptionBits.getOverlap(consBits_last)
@@ -242,7 +243,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         iterationNo = iterationNo + 1
 
         #pandaBaker.CommitBatch()
-        if iterationNo == 100:
+        if iterationNo == 1000:
             break
 
     pandaBaker.CommitBatch()
@@ -328,7 +329,7 @@ def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
     ]
 
     #data for dash plots
-    streams = ["rawAnomaly","powerConsumption","numberOfWinnerCells",
+    streams = ["rawAnomaly","powerConsumption","numberOfWinnerCells","numberOfPredictiveCells",
                "consumptionInput_sparsity","dateInput_sparsity","consumptionInput_overlap_with_prev_step",
                "dateInput_overlap_with_prev_step","Layer1_SP_overlap_metric","Layer1_TM_overlap_metric",
                "Layer1_SP_activation_frequency","Layer1_TM_activation_frequency","Layer1_SP_entropy",

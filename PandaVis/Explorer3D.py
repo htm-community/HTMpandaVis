@@ -31,7 +31,7 @@ def printLog(txt, verbosity=verbosityLow):
         print(txt)
 
 
-class cApp(ShowBase):
+class cExplorer3D(ShowBase):
         
     def __init__(self, databaseFilePath):
         ShowBase.__init__(self)
@@ -107,7 +107,7 @@ class cApp(ShowBase):
             # create inputs
             for inp in self.bakeReader.inputs:
                 printLog("Creating input: " + str(inp), verbosityHigh)
-                print(self.bakeReader.inputs[inp])
+
                 newObj.CreateInput(
                     name=inp,
                     count=self.bakeReader.inputs[inp].size,
@@ -137,7 +137,9 @@ class cApp(ShowBase):
             for ly in self.HTMObjects[obj].layers:
                 self.bakeReader.LoadActiveColumns(ly, iteration)
                 self.bakeReader.LoadWinnerCells(ly, iteration)
-                self.bakeReader.LoadPredictiveCells(ly, iteration+1)#take predictions for the t+1
+                self.bakeReader.LoadPredictiveCells(ly, iteration+1)#take predictions for t+1
+                if self.gui.showPredictionCorrectness:
+                    self.bakeReader.LoadPredictiveCells(ly, iteration, loadPrevious=True)#take also predictions for t to be able to calculate correctness
                 self.bakeReader.LoadActiveCells(ly, iteration)
 
                 self.bakeReader.LoadProximalSynapses(ly,[self.gui.columnID,], iteration)
@@ -173,7 +175,7 @@ class cApp(ShowBase):
                     self.bakeReader.layers[l].activeCells,
                     self.bakeReader.layers[l].winnerCells,
                     self.bakeReader.layers[l].predictiveCells,
-                    newStep = True,
+                    self.bakeReader.layers[l].prev_predictiveCells,
                     showPredictionCorrectness=self.gui.showPredictionCorrectness,
                     showBursting = self.gui.showBursting
                 )
@@ -188,7 +190,7 @@ class cApp(ShowBase):
             return
         # -------- proximal and distal synapses -----------------------
         if self.gui.showProximalSynapses:
-            self.ShowProximalSynapses(self.gui.focusedPath[0],self.gui.focusedPath[1],self.gui.columnID)
+            self.ShowProximalSynapses(self.gui.focusedPath[0],self.gui.focusedPath[1],self.gui.columnID, self.gui.showOnlyActiveProximalSynapses)
 
         if self.gui.showDistalSynapses:
             self.ShowDistalSynapses(self.gui.focusedPath[0], self.gui.focusedPath[1], self.gui.columnID, self.gui.cellID)
@@ -207,7 +209,7 @@ class cApp(ShowBase):
         #         obj.DestroyDistalSynapses()
         # -----------------------------------------------------------
 
-    def ShowProximalSynapses(self, obj, layerName, column):# reads the synapses from the database and show them
+    def ShowProximalSynapses(self, obj, layerName, column, showOnlyActive):# reads the synapses from the database and show them
 
         layer = self.bakeReader.layers[layerName]
         self.bakeReader.LoadProximalSynapses(layerName, [column], self.iteration) # load it
@@ -219,7 +221,8 @@ class cApp(ShowBase):
         self.HTMObjects[obj].layers[layerName].ShowProximalSynapses(column, layer.proximalSynapses[column],
                                                                        layer.proximalInputs,#names of inputs
                                                                         self.HTMObjects[obj].inputs,
-                                                                        layer.params['sp_synPermConnected'])
+                                                                        layer.params['sp_synPermConnected'],
+                                                                        showOnlyActive)
     def ShowDistalSynapses(self, obj, layerName, column, cell):
 
         layer = self.bakeReader.layers[layerName]

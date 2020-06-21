@@ -10,9 +10,9 @@ os.chdir(workDir)
 sys.path.append(os.getcwd())
 
 from entryWindow import cEntryWindow
-from app import cApp
+from Explorer3D import cExplorer3D
 from dashVis.dashVis import cDashVis
-
+import threading
 
 if __name__ == "__main__":
     entryWin = cEntryWindow()
@@ -20,15 +20,24 @@ if __name__ == "__main__":
 
     if entryWin.command == 'terminate':
         print("App terminated")
-    elif entryWin.command == '-run3Dexplorer-':
-        print("RUN 3D explorer")
-        app = cApp(entryWin.databaseFilePath)
-        app.run()
-        
-    elif entryWin.command == '-runDash-':
+
+    if entryWin.command == '-runBoth-':
+        print("RUN DASH in thread")
+        dashVis = cDashVis()
+        dashThread = threading.Thread(target=dashVis.run,args=(entryWin.databaseFilePath, entryWin.dashLayout))
+        dashThread.start()
+
+    if entryWin.command == '-runDash-':
         print("RUN DASH")
         dashVis = cDashVis()
         dashVis.run(entryWin.databaseFilePath, entryWin.dashLayout)
+
+    if entryWin.command == '-run3Dexplorer-' or entryWin.command == '-runBoth-':
+        print("RUN 3D explorer")
+        app = cExplorer3D(entryWin.databaseFilePath)
+        app.run()
+        
+
         
         
     

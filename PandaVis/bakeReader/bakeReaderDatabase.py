@@ -2,7 +2,7 @@
 
 import sqlite3
 import numpy as np
-
+import os
 # defining new SQLITE datatype to be able to store numpy array types
 #--------------------------------------------------------------------FLOAT ARRAY
 def adapt_array(arr):
@@ -136,5 +136,5 @@ def Log(s):
     print(str(s))
     from datetime import datetime
     dateStr=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    with open("logs/database.log","a") as file:
+    with open(os.path.join(os.getcwd(), "logs", "bakerDatabase.log"), "a") as file:
         file.write(dateStr+" >> "+str(s)+"\n")

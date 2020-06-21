@@ -23,7 +23,7 @@ class cEntryWindow:
 
         # find all txt files in layouts folder
         dashLayouts = () # tuple
-        for file in os.listdir(os.path.join(os.getcwd(),"dashVis","layouts")):
+        for file in os.listdir(os.path.join(os.getcwd(),"..","dashVis","layouts")):
             if file.endswith(".txt"):
                 dashLayouts += (file.replace('.txt',''),)
 
@@ -32,8 +32,9 @@ class cEntryWindow:
         layout = [[sg.Column(imageColumn, justification='center')],
                   [sg.Text('Database file location:'), sg.Text(size=(15,1))],
                   [sg.In(default_text=self.databaseFilePath,key='-databaseFilePath-') ,sg.FileBrowse(file_types=(("SQLite3 database", "*.db"),))],
-                  [sg.Button('Run pandaVis 3D explorer',size=(25,5),key='-run3Dexplorer-')],
-                  [sg.Button('Run dash visualisation in web browser',size=(25,5),key='-runDash-'), sg.InputCombo(dashLayouts, default_value=defaultDashLayout, size=(20, 1),key='-dashLayout-')],
+                  [sg.Button('Run pandaVis 3D explorer',size=(30,5),key='-run3Dexplorer-')],
+                  [sg.Button('Run dash visualisation in web browser',size=(30,5),key='-runDash-'), sg.InputCombo(dashLayouts, default_value=defaultDashLayout, size=(20, 1),key='-dashLayout-')],
+                  [sg.Button('Run both', size=(30, 5), key='-runBoth-')],
                   [sg.Button('Exit')]
                   ]
 

@@ -172,7 +172,7 @@ class cMinicolumn:
     # permanences - list of the second points of synapses (first point is this minicolumn)
     # NOTE: synapses are now DENSE
 
-    def CreateProximalSynapses(self, inputNames, inputObj, permanences, thresholdConnected):
+    def CreateProximalSynapses(self, inputNames, inputObj, permanences, thresholdConnected, createOnlyActive=False):
 
         self.DestroyProximalSynapses()
 
@@ -201,6 +201,9 @@ class cMinicolumn:
                 len(synapsesDiv[i])
             ):  # go through every synapse and check if its connected (we are comparing permanences)
                 if synapsesDiv[i][y] >= thresholdConnected:
+
+                    if createOnlyActive and not inputObj[inputNames[i]].inputBits[y].active:# we want to show only active synapses
+                        continue
 
                     form = GeomVertexFormat.getV3()
                     vdata = GeomVertexData("ProximalSynapseLine", form, Geom.UHStatic)
