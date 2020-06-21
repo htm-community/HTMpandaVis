@@ -2,12 +2,9 @@ import csv
 import datetime
 import os
 import numpy as np
-import random
 import math
 
 # Panda vis
-#from PandaVis.pandaComm.server import PandaServer
-#from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
 from pandaBaker.pandaBaker import PandaBaker
 from pandaBaker.pandaBaker import cLayer, cInput, cDataStream
 

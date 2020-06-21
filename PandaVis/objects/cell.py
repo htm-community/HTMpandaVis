@@ -39,6 +39,7 @@ class cCell:
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
         self.idx = -1
+        self.showPredictionCorrectness = False
 
     def CreateGfx(
         self, loader, idx
@@ -75,6 +76,7 @@ class cCell:
         else: # we don't want to see correctness
             self.correctlyPredicted = False
             self.falselyPredicted = False
+            self.showPredictionCorrectness = showPredictionCorrectness # store it for purposes of description
 
         self.active = active
         self.predictive = predictive
@@ -229,8 +231,8 @@ class cCell:
         txt += "Active:" + str(self.active)+"\n"
         txt += "Winner:" + str(self.winner) + "\n"
         txt += "Predictive:" + str(self.predictive)+"\n"
-        txt += "Correctly predicted:" + str(self.correctlyPredicted)+"\n"
-        txt += "Falsely predicted:" + str(self.falselyPredicted)+"\n"
+        txt += "Correctly predicted:" + 'N/A' if not self.showPredictionCorrectness else str(self.correctlyPredicted)+"\n"
+        txt += "Falsely predicted:" + 'N/A' if not self.showPredictionCorrectness else str(self.falselyPredicted)+"\n"
 
         return txt
 

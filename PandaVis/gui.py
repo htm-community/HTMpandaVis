@@ -47,6 +47,7 @@ class cGUI:
 
 
         self.showProximalSynapses = self.getDefault("proximalSynapses")
+        self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyProximalSynapses")
         self.showDistalSynapses = self.getDefault("distalSynapses")
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
         self.showPredictionCorrectness = self.getDefault("predictionCorrectness")
