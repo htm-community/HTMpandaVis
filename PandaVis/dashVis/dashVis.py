@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import json
 import math
 import random
@@ -15,7 +16,7 @@ import plotly.graph_objects as go
 from bakeReader.bakeReader import BakeReader
 
 
-class DashVis(object):
+class cDashVis(object):
     def __init__(self):
         self.bakeReader = None
 
@@ -34,14 +35,14 @@ class DashVis(object):
                  for i in range(number_of_colors)]
 
 
-    def run(self):
+    def run(self, databaseFilePath, layout):
 
-        self.bakeReader = BakeReader("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
+        self.bakeReader = BakeReader(databaseFilePath)
         self.bakeReader.OpenDatabase()
         self.bakeReader.LoadDataStreams()
 
 
-        with open('dashPlots.cfg') as f:
+        with open(os.path.join(os.getcwd(),'dashVis','layouts',layout+'.txt')) as f:
             cfgLayout = json.load(f)
 
         plotsPerRow = cfgLayout['plotsPerRow']
@@ -50,7 +51,11 @@ class DashVis(object):
         figures = []
         cnt = 0
         for stream in cfgLayout['streams']:
-            data = self.bakeReader.dataStreams[stream['name']].allData
+            try:
+                data = self.bakeReader.dataStreams[stream['name']].allData
+            except KeyError:
+                print('Requested data stream "'+str(stream['name'])+'" was not found in the database!')
+                return
 
             if stream['type'] == 'line':
                 fig = go.Figure(data=go.Scatter(x=data[0, :], y=data[1, :],line=dict(color=self.randomColors[cnt])))
@@ -107,8 +112,9 @@ class DashVis(object):
         
         self.app.layout = html.Div(style={'backgroundColor': self.colors['background']}, children=childs)
 
+        self.app.run_server(debug=True, use_reloader=False)
 
 if __name__ == '__main__':
-    dash = DashVis()
+    dash = cDashVis()
     dash.run()
-    dash.app.run_server(debug=True)
+

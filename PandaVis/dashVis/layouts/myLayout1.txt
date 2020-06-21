@@ -23,25 +23,25 @@
 		   {"name" : "dateInput_overlap_with_prev_step",
 			 "type" : "line",
 			 "yaxis": "cells"},
-		   {"name" : "SensoryLayer_SP_overlap_metric",
+		   {"name" : "Layer1_SP_overlap_metric",
 			 "type" : "line",
 			 "yaxis": "avg cells"},
-		   {"name" : "SensoryLayer_TM_overlap_metric",
+		   {"name" : "Layer1_TM_overlap_metric",
 			 "type" : "line",
 			 "yaxis": "avg cells"},
 			 
 			 
-		   {"name" : "SensoryLayer_SP_activation_frequency",
+		   {"name" : "Layer1_SP_activation_frequency",
 			 "type" : "line",
 			 "yaxis": "Hz"},
-		   {"name" : "SensoryLayer_TM_activation_frequency",
+		   {"name" : "Layer1_TM_activation_frequency",
 			 "type" : "line",
 			 "yaxis": "Hz"},
-		   {"name" : "SensoryLayer_SP_entropy",
+		   {"name" : "Layer1_SP_entropy",
 			 "type" : "line",
 			 "yaxis": "entropy"},
 			 
-		   {"name" : "SensoryLayer_TM_entropy",
+		   {"name" : "Layer1_TM_entropy",
 			 "type" : "line",
 			 "yaxis": "entropy"}
 		   ]

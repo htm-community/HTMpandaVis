@@ -20,16 +20,26 @@ class cEntryWindow:
         logoPath = os.path.join('..','images','HTMpandaVis.png')
         
         imageColumn = [[sg.Image(filename=logoPath)]]
+
+        # find all txt files in layouts folder
+        dashLayouts = () # tuple
+        for file in os.listdir(os.path.join(os.getcwd(),"dashVis","layouts")):
+            if file.endswith(".txt"):
+                dashLayouts += (file.replace('.txt',''),)
+
+        defaultDashLayout = self.getDefault("defaultDashLayout")
          
         layout = [[sg.Column(imageColumn, justification='center')],
                   [sg.Text('Database file location:'), sg.Text(size=(15,1))],
                   [sg.In(default_text=self.databaseFilePath,key='-databaseFilePath-') ,sg.FileBrowse(file_types=(("SQLite3 database", "*.db"),))],
-                  [sg.Button('Run pandaVis 3D explorer',size=(25,5),key='-run3Dexplorer-'),sg.Button('Run dash visualisation in web browser',size=(25,5),key='-runDash-')],
+                  [sg.Button('Run pandaVis 3D explorer',size=(25,5),key='-run3Dexplorer-')],
+                  [sg.Button('Run dash visualisation in web browser',size=(25,5),key='-runDash-'), sg.InputCombo(dashLayouts, default_value=defaultDashLayout, size=(20, 1),key='-dashLayout-')],
                   [sg.Button('Exit')]
                   ]
 
         self.window = sg.Window('HTMpandaVis', keep_on_top=True).Layout(layout)
 
+        self.dashLayout = None
 
 
     def Show(self):
@@ -40,7 +50,8 @@ class cEntryWindow:
                 self.command = "terminate"
             else:
                 self.databaseFilePath = values['-databaseFilePath-']
-
+                self.defaults["defaultDashLayout"] = values['-dashLayout-']
+                self.dashLayout = values['-dashLayout-']
                 self.command = event
 
             break
@@ -55,17 +66,19 @@ class cEntryWindow:
             return False
 
     def Close(self):
-        #retrieve defaults
+
+        # retrieve defaults
         self.defaults["databaseFileLocation"] = self.databaseFilePath
-        
+        self.SaveDefaults()
+
+        self.window.close()
+
+    def SaveDefaults(self):
+
         try:
             with open('guiValues.ini', 'w') as file:
                 file.write(json.dumps(self.defaults))
         except:
             self.defaults = {}
             print("Wasn't able to save defaults into file guiValues.ini !!")
-
-        self.window.close()
-
-
 

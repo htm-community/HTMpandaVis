@@ -60,7 +60,7 @@ default_parameters = {
     }
 }
 
-pandaBaker = PandaBaker("/media/D/Data/HTM/hotgym.db")
+pandaBaker = PandaBaker("C:\\Users\\43010600\\Data\\Personal\\hotgym.db")
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
@@ -242,7 +242,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         iterationNo = iterationNo + 1
 
         #pandaBaker.CommitBatch()
-        if iterationNo == 1000:
+        if iterationNo == 100:
             break
 
     pandaBaker.CommitBatch()

@@ -11,6 +11,7 @@ sys.path.append(os.getcwd())
 
 from entryWindow import cEntryWindow
 from app import cApp
+from dashVis.dashVis import cDashVis
 
 
 if __name__ == "__main__":
@@ -20,11 +21,14 @@ if __name__ == "__main__":
     if entryWin.command == 'terminate':
         print("App terminated")
     elif entryWin.command == '-run3Dexplorer-':
+        print("RUN 3D explorer")
         app = cApp(entryWin.databaseFilePath)
         app.run()
         
     elif entryWin.command == '-runDash-':
         print("RUN DASH")
+        dashVis = cDashVis()
+        dashVis.run(entryWin.databaseFilePath, entryWin.dashLayout)
         
         
     
