@@ -27,7 +27,7 @@ class cInteraction:
         self.speedBoost = False
         
         self.gui = base.gui
-        self.client = base.client
+        self.bakeReader = base.bakeReader
         
     """Updates the camera based on the keyboard input. Once this is
       done, then the CellManager's update function is called."""
@@ -132,13 +132,16 @@ class cInteraction:
     def onEscape(self):
         """Event when escape button is pressed."""
 
+        if self.gui.focusedCell is None:
+            return
         # unfocus all
         for obj in self.base.HTMObjects.values():
             obj.DestroyProximalSynapses()
         for obj in self.base.HTMObjects.values():
             obj.DestroyDistalSynapses()
 
-        self.focusedCell.resetFocus()  # reset previous
+        self.gui.focusedCell.resetFocus()  # reset previous
+        self.gui.focusedCell = None
 
     def onMouseEvent(self, event, press):
         printLog("Mouse event:" + str(event), verbosityHigh)
@@ -199,7 +202,7 @@ class cInteraction:
     def CloseApp(self):
 
         printLog("CLOSE app event")
-        self.client.terminateClientThread = True
+        self.bakeReader.Close()
         self.base.gui.Terminate() # terminate GUI windows
 
         __import__("sys").exit(0)
@@ -228,13 +231,13 @@ class cInteraction:
             HTMObj = self.base.HTMObjects[focusedHTMObject]
             Layer = HTMObj.layers[focusedLayer]
             newCellFocus = Layer.minicolumns[parentId].cells[thisId]
-            self.focusedPath = [focusedHTMObject, focusedLayer]
+            focusedPath = [focusedHTMObject, focusedLayer]
 
 
-            if self.focusedCell is not None:
-                self.focusedCell.resetFocus()  # reset previous
-            self.focusedCell = newCellFocus
-            self.focusedCell.setFocus()
+            if self.gui.focusedCell is not None:
+                self.gui.focusedCell.resetFocus()  # reset previous
+            self.gui.focusedCell = newCellFocus
+            self.gui.focusedCell.setFocus()
 
             # unfocus all
             for obj in self.base.HTMObjects.values():
@@ -242,34 +245,19 @@ class cInteraction:
             for obj in self.base.HTMObjects.values():
                 obj.DestroyDistalSynapses()
 
-            self.gui.focusedCell = self.focusedCell
-            self.gui.focusedPath = self.focusedPath
+
+            self.gui.focusedPath = focusedPath
             
             self.gui.columnID = Layer.minicolumns.index(self.gui.focusedCell.column)
             self.gui.cellID = Layer.minicolumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
-            self.UpdateProximalAndDistalData()
+            self.base.UpdateProximalAndDistalData()
 
             self.gui.UpdateCellDescription()
             
         elif obj.getName() == "basement":
             self.testRoutine()
 
-    def UpdateProximalAndDistalData(self):
-        # -------- proximal and distal synapses -----------------------
-        if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
-            self.client.reqProximalData()
-        else:
-            for obj in self.base.HTMObjects.values():
-                obj.DestroyProximalSynapses()
-
-        #do not request distal data if we don't want to show them or if this layer doesn't have TM
-        if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
-            self.client.reqDistalData()
-        else:
-            for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
-                obj.DestroyDistalSynapses()
-        # -----------------------------------------------------------
 
     def Update(self):
         

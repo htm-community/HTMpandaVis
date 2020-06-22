@@ -5,7 +5,7 @@ Created on Sat Feb 23 11:37:36 2019
 
 @author: zz
 """
-
+import os
 from panda3d.core import LColor, CollisionNode, CollisionBox
 from Colors import *
 # import random
@@ -23,7 +23,7 @@ class cInputBit:
 
     def CreateGfx(self, loader, idx):
 
-        self.__node = loader.loadModel("models/cube")
+        self.__node = loader.loadModel(os.path.join(os.getcwd(),"models/cube"))
         #self.__node.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)

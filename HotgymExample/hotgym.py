@@ -2,12 +2,12 @@ import csv
 import datetime
 import os
 import numpy as np
-import random
 import math
 
 # Panda vis
-from PandaVis.pandaComm.server import PandaServer
-from PandaVis.pandaComm.dataExchange import ServerData, dataHTMObject, dataLayer, dataInput
+from pandaBaker.pandaBaker import PandaBaker
+from pandaBaker.pandaBaker import cLayer, cInput, cDataStream
+
 
 from htm.bindings.sdr import SDR, Metrics
 from htm.encoders.rdse import RDSE, RDSE_Parameters
@@ -22,6 +22,8 @@ from htm.algorithms.anomaly import Anomaly
 
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
+
+BAKE_DATABASE_FILE_PATH = os.path.join(os.getcwd(),'bakedDatabase','hotgym.db')
 
 default_parameters = {
     # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
@@ -57,7 +59,7 @@ default_parameters = {
     }
 }
 
-pandaServer = PandaServer()
+pandaBaker = PandaBaker(BAKE_DATABASE_FILE_PATH)
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
@@ -133,12 +135,18 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     predictor = Predictor(steps=[1, 5], alpha=parameters["predictor"]['sdrc_alpha'])
     predictor_resolution = 1
 
+    BuildPandaSystem(sp,tm, parameters["enc"]["value"]["size"],dateEncoder.size)
+
     # Iterate through every datum in the dataset, record the inputs & outputs.
     inputs = []
     anomaly = []
     anomalyProb = []
     predictions = {1: [], 5: []}
     iterationNo = 0
+
+    dateBits_last = None
+    consBits_last = None
+    
     for count, record in enumerate(records):
 
         # Convert date string into Python date object.
@@ -168,44 +176,9 @@ def main(parameters=default_parameters, argv=None, verbose=True):
         tm.activateDendrites(True)
         predictiveCellsSDR = tm.getPredictiveCells()
 
-        pandaServer.currentIteration = iterationNo  # update server's iteration number
-        # do not update if we are running GOTO iteration command
-        if (not pandaServer.cmdGotoIteration or (
-                pandaServer.cmdGotoIteration and pandaServer.gotoIteration == pandaServer.currentIteration)):
-            # ------------------HTMpandaVis----------------------
-            # fill up values
-            serverData.iterationNo = pandaServer.currentIteration
-
-            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
-            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].bits = consumptionBits.sparse
-            serverData.HTMObjects["HTM1"].inputs["SL_Consumption"].count = consumptionBits.size
-
-            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].stringValue = record[0]
-            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].bits = dateBits.sparse
-            serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"].count = dateBits.size
-
-            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].activeColumns = activeColumns.sparse
-            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].winnerCells = tm.getWinnerCells().sparse
-            serverData.HTMObjects["HTM1"].layers["SensoryLayer"].predictiveCells = predictiveCellsSDR.sparse
-
-            pandaServer.serverData = serverData
-
-            pandaServer.spatialPoolers["HTM1"] = sp
-            pandaServer.temporalMemories["HTM1"] = tm
-            pandaServer.NewStateDataReady()
-
-        print("One step finished")
-        pandaServer.BlockExecution()
-        print("Proceeding one step...")
-
-        # ------------------HTMpandaVis----------------------
-
         tm.activateCells(activeColumns, True)
 
         tm_info.addData(tm.getActiveCells().flatten())
-
-        activeCells = tm.getActiveCells()
-        print("ACTIVE" + str(len(activeCells.sparse)))
 
         # Predict what will happen, and then train the predictor based on what just happened.
         pdf = predictor.infer(tm.getActiveCells())
@@ -217,14 +190,62 @@ def main(parameters=default_parameters, argv=None, verbose=True):
 
         rawAnomaly = Anomaly.calculateRawAnomaly(activeColumns,
                                                  tm.cellsToColumns(predictiveCellsSDR))
-        print("rawAnomaly:" + str(rawAnomaly))
+
         anomalyLikelihood = anomaly_history.anomalyProbability(consumption, rawAnomaly) # need to use different calculation as we are not calling sp.compute(..)
         anomaly.append(rawAnomaly)
         anomalyProb.append(anomalyLikelihood)
 
         predictor.learn(count, tm.getActiveCells(), int(consumption / predictor_resolution))
 
+        # ------------------HTMpandaVis----------------------
+        # fill up values
+
+        pandaBaker.inputs["Consumption"].stringValue = "consumption: {:.2f}".format(consumption)
+        pandaBaker.inputs["Consumption"].bits = consumptionBits.sparse
+
+        pandaBaker.inputs["TimeOfDay"].stringValue = record[0]
+        pandaBaker.inputs["TimeOfDay"].bits = dateBits.sparse
+
+        pandaBaker.layers["Layer1"].activeColumns = activeColumns.sparse
+        pandaBaker.layers["Layer1"].winnerCells = tm.getWinnerCells().sparse
+        pandaBaker.layers["Layer1"].predictiveCells = predictiveCellsSDR.sparse
+        pandaBaker.layers["Layer1"].activeCells = tm.getActiveCells().sparse
+
+        # customizable datastreams to be show on the DASH PLOTS
+        pandaBaker.dataStreams["rawAnomaly"].value = rawAnomaly
+        pandaBaker.dataStreams["powerConsumption"].value = consumption
+        pandaBaker.dataStreams["numberOfWinnerCells"].value = len(tm.getWinnerCells().sparse)
+        pandaBaker.dataStreams["numberOfPredictiveCells"].value = len(predictiveCellsSDR.sparse)
+        pandaBaker.dataStreams["consumptionInput_sparsity"].value = consumptionBits.getSparsity()
+        pandaBaker.dataStreams["dateInput_sparsity"].value = dateBits.getSparsity()
+        pandaBaker.dataStreams["consumptionInput_overlap_with_prev_step"].value = 0 if consBits_last is None else consumptionBits.getOverlap(consBits_last)
+        consBits_last = consumptionBits
+        pandaBaker.dataStreams["dateInput_overlap_with_prev_step"].value = 0 if dateBits_last is None else dateBits.getOverlap(dateBits_last)
+        dateBits_last = dateBits
+
+        pandaBaker.dataStreams["Layer1_SP_overlap_metric"].value = sp_info.overlap.overlap
+        pandaBaker.dataStreams["Layer1_TM_overlap_metric"].value = sp_info.overlap.overlap
+        pandaBaker.dataStreams["Layer1_SP_activation_frequency"].value = sp_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_TM_activation_frequency"].value = tm_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_SP_entropy"].value = sp_info.activationFrequency.mean()
+        pandaBaker.dataStreams["Layer1_TM_entropy"].value = tm_info.activationFrequency.mean()
+
+        
+        pandaBaker.StoreIteration(iterationNo)
+
+        print("ITERATION: "+str(iterationNo))
+
+        # ------------------HTMpandaVis----------------------
+
+
+
         iterationNo = iterationNo + 1
+
+        #pandaBaker.CommitBatch()
+        if iterationNo == 1000:
+            break
+
+    pandaBaker.CommitBatch()
 
     # Print information & statistics about the state of the HTM.
     print("Encoded Input", enc_info)
@@ -253,8 +274,11 @@ def main(parameters=default_parameters, argv=None, verbose=True):
                 accuracy[n] += (inp - val) ** 2
                 accuracy_samples[n] += 1
     for n in sorted(predictions):
-        accuracy[n] = (accuracy[n] / accuracy_samples[n]) ** .5
-        print("Predictive Error (RMS)", n, "steps ahead:", accuracy[n])
+        if accuracy_samples[n]!=0:
+            accuracy[n] = (accuracy[n] / accuracy_samples[n]) ** .5
+            print("Predictive Error (RMS)", n, "steps ahead:", accuracy[n])
+        else:
+            print("Unable to calculate RMS error!")
 
     # Show info about the anomaly (mean & std)
     print("Anomaly Mean", np.mean(anomaly))
@@ -290,32 +314,37 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     return -accuracy[5]
 
 
-def BuildPandaSystem():
-    global serverData
-    serverData = ServerData()
-    serverData.HTMObjects["HTM1"] = dataHTMObject()
-    serverData.HTMObjects["HTM1"].inputs["SL_Consumption"] = dataInput()
-    serverData.HTMObjects["HTM1"].inputs["SL_TimeOfDay"] = dataInput()
+#with this method, the structure for visualisation is defined
+def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
 
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"] = dataLayer(
-        default_parameters["sp"]["columnCount"],
-        default_parameters["tm"]["cellsPerColumn"],
-    )
-    serverData.HTMObjects["HTM1"].layers["SensoryLayer"].proximalInputs = [
-        "SL_Consumption",
-        "SL_TimeOfDay",
+    #we have two inputs connected to proximal synapses of Layer1
+    pandaBaker.inputs["Consumption"] = cInput(consumptionBits_size)
+    pandaBaker.inputs["TimeOfDay"] = cInput(dateBits_size)
+
+    pandaBaker.layers["Layer1"] = cLayer(sp,tm) # Layer1 has Spatial Pooler & Temporal Memory
+    pandaBaker.layers["Layer1"].proximalInputs = [
+        "Consumption",
+        "TimeOfDay",
     ]
 
+    #data for dash plots
+    streams = ["rawAnomaly","powerConsumption","numberOfWinnerCells","numberOfPredictiveCells",
+               "consumptionInput_sparsity","dateInput_sparsity","consumptionInput_overlap_with_prev_step",
+               "dateInput_overlap_with_prev_step","Layer1_SP_overlap_metric","Layer1_TM_overlap_metric",
+               "Layer1_SP_activation_frequency","Layer1_TM_activation_frequency","Layer1_SP_entropy",
+               "Layer1_TM_entropy"
+               ]
+
+    pandaBaker.dataStreams = dict((name,cDataStream()) for name in streams)# create dicts for more comfortable code
+    #could be also written like: pandaBaker.dataStreams["myStreamName"] = cDataStream()
+
+    pandaBaker.PrepareDatabase()
 
 if __name__ == "__main__":
     try:
-        pandaServer.Start()
-        BuildPandaSystem()
-
         #while True:  # run infinitely
         main()
 
     except KeyboardInterrupt:
         print("Keyboard interrupt")
-        pandaServer.MainThreadQuitted()
     print("Script finished")

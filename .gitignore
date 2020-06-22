@@ -4,3 +4,7 @@ PandaVis/guiValues.ini
 build/*
 dist/*
 *.egg-info/*
+*.log
+PandaVis/screenshots/*
+HotgymExample/bakedDatabase/*/*.dump
+HotgymExample/bakedDatabase/*.db

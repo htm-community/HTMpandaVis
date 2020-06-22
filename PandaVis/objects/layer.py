@@ -78,7 +78,7 @@ class cLayer:
         else:
             self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.minicolumns)))+" %)")
 
-    def UpdateState(self, activeColumns, activeCells, winnerCells, predictiveCells, newStep = False, showPredictionCorrectness = False, showBursting = False):
+    def UpdateState(self, activeColumns, activeCells, winnerCells, predictiveCells, prevPredictiveCells, showPredictionCorrectness = False, showBursting = False):
 
         # print("COLUMNS SIZE:"+str(len(self.minicolumns)))
         #print("winners:"+str(winnerCells))
@@ -94,6 +94,10 @@ class cLayer:
                 isActive = cellID+(colID*self.nOfCellsPerColumn) in activeCells
                 isWinner = cellID + (colID * self.nOfCellsPerColumn) in winnerCells
                 isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
+                if showPredictionCorrectness:
+                    wasPredictive = cellID+(colID*self.nOfCellsPerColumn) in prevPredictiveCells
+                else:
+                    wasPredictive = False
 
                 if isPredictive:
                     oneOfCellPredictive=True
@@ -102,7 +106,7 @@ class cLayer:
                     nOfActiveCells = nOfActiveCells + 1
 
 
-                self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive,winner = isWinner, newStep=newStep, showPredictionCorrectness = showPredictionCorrectness)
+                self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive,winner = isWinner, showPredictionCorrectness = showPredictionCorrectness, prev_predictive = wasPredictive)
 
                 if showPredictionCorrectness:
                     #get correct/false prediction info
@@ -135,6 +139,18 @@ class cLayer:
             
     def getNode(self):
         return self.__node
+
+    def ShowProximalSynapses(self, column, permanences, inputNames, inputObj, thresholdConnected, showOnlyActive):
+        # update columns with proximal Synapses
+        self.minicolumns[
+            column
+        ].CreateProximalSynapses(
+            inputNames,
+            inputObj,
+            permanences,
+            thresholdConnected,
+            createOnlyActive=showOnlyActive
+        )
 
     def DestroyProximalSynapses(self):
         for col in self.minicolumns:

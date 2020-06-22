@@ -26,6 +26,7 @@ class cGUI:
         self.focusedCell = None
         self.focusedPath = None
         self.columnID = 0
+        self.cellID = 0
 
         self.visApp = visApp
         self.loader = loader
@@ -46,6 +47,7 @@ class cGUI:
 
 
         self.showProximalSynapses = self.getDefault("proximalSynapses")
+        self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyProximalSynapses")
         self.showDistalSynapses = self.getDefault("distalSynapses")
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
         self.showPredictionCorrectness = self.getDefault("predictionCorrectness")
@@ -67,13 +69,19 @@ class cGUI:
         self.showLegend = self.getDefault("legend")
         self.showDescription = self.getDefault("desc")
 
+        self.capture = False
+
+        self.iteration = 0
+        self.cntIterations = 0
+
 
 
         layout = [[sg.Text('Iteration no. 0     ', key = 'iteration')],
-                  [sg.Button('ONE STEP')],
+                  [sg.Button('STEP -1'), sg.Button('STEP +1')],
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.InputText(self.getDefault("iterationGoto"), key="iterationGoto"), sg.Button('GOTO step')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show only active proximal synapes', key="onlyActiveProximalSynapses", enable_events=True)],
                   [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
                   [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Show prediction correctness', key="predictionCorrectness", enable_events=True)],
@@ -88,13 +96,16 @@ class cGUI:
                   sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
                             default_value=100, enable_events=True)],
                   [sg.Slider(key='LODSlider2', range=(1, 10000), orientation='h', size=(20, 10),
-                            default_value=100, enable_events=True)]])]
+                            default_value=100, enable_events=True)]])],
+                  [sg.Button('capture')],
                   ]
 
         self.window = sg.Window('Main panel', keep_on_top=True, location=self.getDefault("mainWinPos")).Layout(layout)
 
     def setIteration(self, iterationNo):
+        self.iteration = iterationNo
         self.window["iteration"].update("Iteration no.:"+str(iterationNo))
+
     def getDefault(self, key):
         try:
             return self.defaults[key]
@@ -164,18 +175,27 @@ class cGUI:
 
         if event != '__TIMEOUT__':
 
-            if event == "ONE STEP":
-                self.cmdStepForward = True
-                print("one step")
+            if event == "STEP +1":
+                print("step +1")
+                if(self.iteration + 1 <= self.cntIterations):
+                    self.gotoReq = self.iteration + 1
+                    self.iteration= self.iteration + 1
+            if event == "STEP -1":
+                print("step -1")
+                if self.iteration > 0:
+                    self.gotoReq = self.iteration - 1
+                    self.iteration= self.iteration - 1
             elif event == "RUN":
                 self.cmdRun = True
             elif event == "STOP":
                 self.cmdStop = True
             elif event == "GOTO step":
                 try:
-                    self.gotoReq = int(values["iterationGoto"])
-                    print("GOTO")
-                    print(values["iterationGoto"])
+                    if (int(values["iterationGoto"]) > self.cntIterations):
+                        print("Larger than allowed!")
+                    else:
+                        self.gotoReq = int(values["iterationGoto"])
+                        print("GOTO")
                 except:
                     print("It is not a number!")
             elif event == "transparencySlider":
@@ -202,12 +222,15 @@ class cGUI:
                 else:
                     self.description.window.close()
                     self.description = None
+            elif event == 'capture':
+                self.capture = True
 
 
             self.wireframe = values["wireFrame"]
             self.wireframeChanged = event == "wireFrame"
 
             self.showProximalSynapses = values["proximalSynapses"]
+            self.showOnlyActiveProximalSynapses = values["onlyActiveProximalSynapses"]
             self.showDistalSynapses = values["distalSynapses"]
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]
@@ -222,6 +245,7 @@ class cGUI:
     def UpdateDescription(self, txt):
         if self.description is not None:
             self.description.updateText(txt)
+
     def UpdateCellDescription(self):
 
         if self.focusedCell is None:

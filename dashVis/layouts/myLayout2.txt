@@ -1,0 +1,13 @@
+{"plotsPerRow" : 3,
+"streams": [{"name" : "rawAnomaly",
+			 "type" : "line",
+			 "yaxis": "anomaly"},
+		   {"name" : "powerConsumption",
+			 "type" : "line",
+			 "yaxis": "kWh"},
+		   {"name" : "numberOfWinnerCells",
+			 "type" : "line",
+			 "yaxis": "cells"}
+			]
+			 
+}

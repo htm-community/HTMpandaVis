@@ -5,6 +5,7 @@ Created on Wed Feb  6 05:46:38 2019
 
 @author: osboxes
 """
+import os
 from panda3d.core import LColor, CollisionBox, CollisionNode
 from panda3d.core import (
     GeomVertexFormat,
@@ -14,7 +15,7 @@ from panda3d.core import (
     GeomLines,
     GeomNode,
 )
-import random
+
 from Colors import *
 
 verbosityLow = 0
@@ -38,13 +39,14 @@ class cCell:
         self.transparency = 1.0
         self.column = column  # to be able to track column that this cell belongs to
         self.idx = -1
+        self.showPredictionCorrectness = False
 
     def CreateGfx(
         self, loader, idx
     ):  # idx is neccesary to be able to track it down for mouse picking
 
         self.idx = idx
-        self.__node = loader.loadModel("models/cube")
+        self.__node = loader.loadModel(os.path.join(os.getcwd(),"models/cube"))
         self.__node.setPos(0, 0, 0)
         self.__node.setScale(0.5, 0.5, 0.5)
         self.__node.setTag("clickable", str(idx))  # to be able to click on it
@@ -57,20 +59,24 @@ class cCell:
 
         self.UpdateState(False, False, False)
 
-    def UpdateState(self, active, predictive, winner, focused=False, presynapticFocus=False, newStep = False, showPredictionCorrectness = True):
+    def UpdateState(self, active, predictive, winner, focused=False, presynapticFocus=False, showPredictionCorrectness = False, prev_predictive = False):
 
         # determine if previous prediction was correct or not
-        if newStep:
-            if self.predictive and showPredictionCorrectness:#was predicted last step
-                if active:#now active
-                    self.correctlyPredicted = True
-                    self.falselyPredicted = False
-                else:
-                    self.correctlyPredicted = False
-                    self.falselyPredicted = True
-            else: # wasn't predictive previous step, so can't be correct or false
+
+        if showPredictionCorrectness:#was predicted last step
+            if prev_predictive and active:#was predictive and now is active
+                self.correctlyPredicted = True
+                self.falselyPredicted = False
+            elif prev_predictive and not active:
+                self.correctlyPredicted = False
+                self.falselyPredicted = True
+            else:#wasn't predictive previous step, so can't be correct or false
                 self.correctlyPredicted = False
                 self.falselyPredicted = False
+        else: # we don't want to see correctness
+            self.correctlyPredicted = False
+            self.falselyPredicted = False
+            self.showPredictionCorrectness = showPredictionCorrectness # store it for purposes of description
 
         self.active = active
         self.predictive = predictive
@@ -139,15 +145,13 @@ class cCell:
     
     def CreateDistalSynapses(self, HTMObject, layer, data, inputObjects):
 
-        for child in self.__node.getChildren():
-            if child.getName() == "DistalSynapseLine":
-                child.removeNode()
+        self.DestroyDistalSynapses()
 
         printLog("Creating distal synapses", verbosityMedium)
 
-        printLog("EXTERNAL DISTAL:"+str(inputObjects))
-        printLog("HTM inputs:"+str(HTMObject.inputs))
-        printLog("HTM layers:" + str(HTMObject.layers))
+        #printLog("EXTERNAL DISTAL:"+str(inputObjects))
+        #printLog("HTM inputs:"+str(HTMObject.inputs))
+        #printLog("HTM layers:" + str(HTMObject.layers))
 
         #input object could be either input or layer instance
         for inputObj in inputObjects:
@@ -160,7 +164,7 @@ class cCell:
 
         for segment in data:
 
-            for presynCellID in segment:
+            for presynCellID in data[segment]:
                 
                 cellID = presynCellID % layer.nOfCellsPerColumn
                 colID = (int)(presynCellID / layer.nOfCellsPerColumn)
@@ -227,8 +231,8 @@ class cCell:
         txt += "Active:" + str(self.active)+"\n"
         txt += "Winner:" + str(self.winner) + "\n"
         txt += "Predictive:" + str(self.predictive)+"\n"
-        txt += "Correctly predicted:" + str(self.correctlyPredicted)+"\n"
-        txt += "Falsely predicted:" + str(self.falselyPredicted)+"\n"
+        txt += "Correctly predicted:" + 'N/A' if not self.showPredictionCorrectness else str(self.correctlyPredicted)+"\n"
+        txt += "Falsely predicted:" + 'N/A' if not self.showPredictionCorrectness else str(self.falselyPredicted)+"\n"
 
         return txt
 
