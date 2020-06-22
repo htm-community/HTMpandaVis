@@ -23,6 +23,8 @@ from htm.algorithms.anomaly import Anomaly
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INPUT_FILE_PATH = os.path.join(_EXAMPLE_DIR, "gymdata.csv")
 
+BAKE_DATABASE_FILE_PATH = os.path.join(os.getcwd(),'bakedDatabase','hotgym.db')
+
 default_parameters = {
     # there are 2 (3) encoders: "value" (RDSE) & "time" (DateTime weekend, timeOfDay)
     'enc': {
@@ -57,7 +59,7 @@ default_parameters = {
     }
 }
 
-pandaBaker = PandaBaker("/media/D/Data/HTM/hotgym.db")
+pandaBaker = PandaBaker(BAKE_DATABASE_FILE_PATH)
 
 def main(parameters=default_parameters, argv=None, verbose=True):
     if verbose:
