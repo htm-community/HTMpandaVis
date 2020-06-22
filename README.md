@@ -1,4 +1,7 @@
-![HTMpandaVis](images/HTMpandaVis.png)
+<p align="center">
+  <img src="images/HTMpandaVis.png">
+</p>
+
 # HTMpandaVis
 **See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
 
