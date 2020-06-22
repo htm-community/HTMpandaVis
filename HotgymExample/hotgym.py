@@ -314,7 +314,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
     return -accuracy[5]
 
 
-#with this method, the structure for visualisation is defined
+#with this method, the structure for visualization is defined
 def BuildPandaSystem(sp,tm,consumptionBits_size,dateBits_size):
 
     #we have two inputs connected to proximal synapses of Layer1

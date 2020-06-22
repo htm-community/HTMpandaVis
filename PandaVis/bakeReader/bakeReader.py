@@ -66,6 +66,8 @@ class BakeReader(object):
 
         # figure out how many iterations there are
         self.cntIterations = self.LoadMaxIteration("inputs_"+next(iter(self.inputs)))# get first input
+        if self.cntIterations is None:
+            raise RuntimeError("Database contains no data!")
         Log("Database contains data for "+str(self.cntIterations)+" iterations.")
 
     def LoadDataStreams(self):

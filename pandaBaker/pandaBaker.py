@@ -14,7 +14,7 @@ from multiprocessing import get_context
 CPU_CORES = 4
 
 class PandaBaker(object):
-    def __init__(self, databaseFilePath):
+    def __init__(self, databaseFilePath, bakeProximalSynapses = True, bakeDistalSynapses = True):
         self.databaseFilePath = databaseFilePath
         self.db = None
 
@@ -23,8 +23,8 @@ class PandaBaker(object):
         self.dataStreams = {}  # can contain cDataStream instances
 
         #flags what to bake
-        self.bakeProximalSynapses = True
-        self.bakeDistalSynapses = True
+        self.bakeProximalSynapses = bakeProximalSynapses
+        self.bakeDistalSynapses = bakeDistalSynapses
 
         # for raw anomaly calculation
         self.previousPredictiveCells = {} # dict storing predictive cells for previous timestamp for each layer
@@ -136,6 +136,6 @@ def Log(s):
     print(str(s))
     from datetime import datetime
     dateStr=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    with open("logs/pandaBaker.log","a") as file:
+    with open(os.path.join(os.getcwd(), "logs","pandaBaker.log"),"a") as file:
         file.write(dateStr+" >> "+str(s)+"\n")
 
