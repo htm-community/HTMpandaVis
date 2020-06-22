@@ -3,6 +3,8 @@
 </p>
 
 # HTMpandaVis
+**UPDATE 6/2020 - major change - SQLITE3 instead of TCP sockets + Dash plots visualization in web browser !**
+
 **See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
 
 Screenshots for visualization of the [2D recognition project](https://discourse.numenta.org/t/2d-object-recognition-project/5465/92)
