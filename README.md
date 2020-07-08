@@ -44,6 +44,9 @@ HTMpandaVis can be used also to record custom dataStreams with pandaBaker and th
 For creating layout arrangement, axis and plot labels, there are JSON layout configuration files. They are located in HTMpandaVis\dashVis\layouts. 
 See hotgym example for more informations.
 
+### Usage with databaseRegion from htm.core networkAPI
+Within htm.core, there is databaseRegion in networkAPI that allows to output scalar values into sqliteDatabase. Data can be then plot in the same way as above. See htm.core examples/napi_hello_database.
+
 # How to install on Linux
 
 Python >3.6 is recommended.
