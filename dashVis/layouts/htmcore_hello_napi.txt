@@ -1,0 +1,9 @@
+{"plotsPerRow" : 1,
+"streams": [		{"name" : "dataIn0",
+			 "type" : "line",
+			 "yaxis": "anomaly"},
+			{"name" : "dataIn1",
+			 "type" : "line",
+			 "yaxis": "encoder bucket"}
+		   ]
+}
