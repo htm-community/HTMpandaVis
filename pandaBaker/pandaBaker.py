@@ -119,8 +119,26 @@ class PandaBaker(object):
                     self.db.InsertDataArray2('layer_proximalSynapses_' + ly,
                                             iteration, col, synapses)
 
+            dumpFilePath = os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_"+str(iteration)+".dump")
+            
+            classicalTM = False
+            if classicalTM:
+                layer.tm.saveToFile(dumpFilePath)
 
-            layer.tm.saveToFile(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_"+str(iteration)+".dump"))
+                f = open(os.path.join(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_version.txt"), 'wt')
+                f.write("1")
+                f.close()
+            else:
+                #if apicalTM from advanced code
+                byteStream = layer.tm.connections.save()
+                f = open(os.path.join(dumpFilePath, 'wb')
+                f.write(byteStream)
+                f.close();
+
+                f = open(os.path.join(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
+                                                   "" + str(ly) + "_version.txt"), 'wt')
+                f.write("2")
+                f.close()
 
             # ---------------- DATA STREAMS -----------------------------------
 
