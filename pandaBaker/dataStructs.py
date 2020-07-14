@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from htm.bindings.algorithms import TemporalMemory
+from htm.advanced.algorithms.apical_tiebreak_temporal_memory import ApicalTiebreakPairMemory
 
 def Params(sp, tm):
 
@@ -24,17 +26,27 @@ def Params(sp, tm):
                 'sp_wrapAround': sp.getWrapAround()}
 
     if tm is not None:
-
-        tmPars = {'tm_activationThreshold': tm.getActivationThreshold(),
-                    'tm_cellsPerColumn': tm.getCellsPerColumn(),
-                    'tm_initialPerm': tm.getInitialPermanence(),
-                    'tm_maxSegmentsPerCell': tm.getMaxSegmentsPerCell(),
-                    'tm_maxSynapsesPerSegment': tm.getMaxSynapsesPerSegment(),
-                    'tm_minThreshold': tm.getMinThreshold(),
-                    'tm_newSynapseCount': tm.getMaxNewSynapseCount(),
-                    'tm_permanenceDec': tm.getPermanenceDecrement(),
-                    'tm_permanenceInc': tm.getPermanenceIncrement()
-                }
+        if isinstance(tm, TemporalMemory):
+          tmPars = {'tm_activationThreshold': tm.getActivationThreshold(),
+                      'tm_cellsPerColumn': tm.getCellsPerColumn(),
+                      'tm_initialPerm': tm.getInitialPermanence(),
+                      'tm_maxSegmentsPerCell': tm.getMaxSegmentsPerCell(),
+                      'tm_maxSynapsesPerSegment': tm.getMaxSynapsesPerSegment(),
+                      'tm_minThreshold': tm.getMinThreshold(),
+                      'tm_newSynapseCount': tm.getMaxNewSynapseCount(),
+                      'tm_permanenceDec': tm.getPermanenceDecrement(),
+                      'tm_permanenceInc': tm.getPermanenceIncrement()
+                  }
+        elif isinstance(tm, ApicalTiebreakPairMemory):
+          tmPars = {'tm_activationThreshold': tm.getActivationThreshold(),
+                      'tm_cellsPerColumn': tm.getCellsPerColumn(),
+                      'tm_initialPerm': tm.getInitialPermanence(),
+                      'tm_minThreshold': tm.getMinThreshold(),
+                      'tm_permanenceDec': tm.getPermanenceDecrement(),
+                      'tm_permanenceInc': tm.getPermanenceIncrement()
+                  }
+        else:
+          AssertionError(str(type(tm))+" is not known instance of TemporalMemory!")
 
     return {**spPars, **tmPars}
 

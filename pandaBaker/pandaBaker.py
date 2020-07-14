@@ -120,23 +120,22 @@ class PandaBaker(object):
                                             iteration, col, synapses)
 
             dumpFilePath = os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_"+str(iteration)+".dump")
-            
-            classicalTM = False
-            if classicalTM:
+
+            if isinstance(layer.tm, TemporalMemory):
                 layer.tm.saveToFile(dumpFilePath)
 
-                f = open(os.path.join(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_version.txt"), 'wt')
+                f = open(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump", str(ly)+"_version.txt"), 'wt')
                 f.write("1")
                 f.close()
             else:
                 #if apicalTM from advanced code
-                byteStream = layer.tm.connections.save()
-                f = open(os.path.join(dumpFilePath, 'wb')
+                byteStream = layer.tm.basalConnections.save()
+                f = open(dumpFilePath, 'wb')
                 f.write(byteStream)
-                f.close();
+                f.close()
 
-                f = open(os.path.join(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
-                                                   "" + str(ly) + "_version.txt"), 'wt')
+                f = open(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
+                                                   str(ly) + "_version.txt"), 'wt')
                 f.write("2")
                 f.close()
 
