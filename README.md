@@ -36,7 +36,7 @@ You can also browse SQLite3 dabase file (.db) directly with ordinary browser suc
 ## Baking
 
 To bake your simulation, you must use [htm.core](https://github.com/htm-community/htm.core) and extend your script with small amount of code to do the baking.
-
+See [baking readme](pandaBaker/README.md).
 ## Dash plots visualization
 
 HTMpandaVis can be used also to record custom dataStreams with pandaBaker and then visualize it in web browser.
