@@ -2,53 +2,8 @@
 import numpy as np
 from htm.bindings.algorithms import TemporalMemory
 from htm.advanced.algorithms.apical_tiebreak_temporal_memory import ApicalTiebreakPairMemory
+import warnings
 
-def Params(sp, tm):
-
-    spPars={}
-    tmPars={}
-    if sp is not None:
-
-        sp_inputDims_x = sp.getInputDimensions()[0]
-        sp_inputDims_y = sp.getInputDimensions()[1] if len(sp.getInputDimensions()) > 1 else 1
-        sp_columnDimensions_x = sp.getColumnDimensions()[0]
-        sp_columnDimensions_y = sp.getColumnDimensions()[1] if len(sp.getColumnDimensions()) > 1 else 1
-
-        sp_columnCount = sp_columnDimensions_x * sp_columnDimensions_y;
-
-        spPars = {'sp_inputDimensions_x': sp_inputDims_x,'sp_inputDimensions_y': sp_inputDims_y,
-                  'sp_columnCount' : sp_columnCount,
-                'sp_columnDimensions_x': sp_columnDimensions_x, 'sp_columnDimensions_y': sp_columnDimensions_y,
-                'sp_potentialPct': sp.getPotentialPct(), 'sp_potentialRadius': sp.getPotentialRadius(),
-                'sp_globalInhibition': sp.getGlobalInhibition(), 'sp_localAreaDensity': sp.getLocalAreaDensity(),
-                'sp_synPermInactiveDec': sp.getSynPermInactiveDec(), 'sp_synPermActiveInc': sp.getSynPermActiveInc(),
-                'sp_synPermConnected': sp.getSynPermConnected(), 'sp_boostStrength': sp.getBoostStrength(),
-                'sp_wrapAround': sp.getWrapAround()}
-
-    if tm is not None:
-        if isinstance(tm, TemporalMemory):
-          tmPars = {'tm_activationThreshold': tm.getActivationThreshold(),
-                      'tm_cellsPerColumn': tm.getCellsPerColumn(),
-                      'tm_initialPerm': tm.getInitialPermanence(),
-                      'tm_maxSegmentsPerCell': tm.getMaxSegmentsPerCell(),
-                      'tm_maxSynapsesPerSegment': tm.getMaxSynapsesPerSegment(),
-                      'tm_minThreshold': tm.getMinThreshold(),
-                      'tm_newSynapseCount': tm.getMaxNewSynapseCount(),
-                      'tm_permanenceDec': tm.getPermanenceDecrement(),
-                      'tm_permanenceInc': tm.getPermanenceIncrement()
-                  }
-        elif isinstance(tm, ApicalTiebreakPairMemory):
-          tmPars = {'tm_activationThreshold': tm.getActivationThreshold(),
-                      'tm_cellsPerColumn': tm.getCellsPerColumn(),
-                      'tm_initialPerm': tm.getInitialPermanence(),
-                      'tm_minThreshold': tm.getMinThreshold(),
-                      'tm_permanenceDec': tm.getPermanenceDecrement(),
-                      'tm_permanenceInc': tm.getPermanenceIncrement()
-                  }
-        else:
-          AssertionError(str(type(tm))+" is not known instance of TemporalMemory!")
-
-    return {**spPars, **tmPars}
 
 class cLayer(object):
     def __init__(self, sp=None, tm=None):
@@ -56,7 +11,7 @@ class cLayer(object):
         self.sp = sp
         self.tm = tm
 
-        self.params = Params(self.sp, self.tm)
+        self.params =0#= Params(self.sp, self.tm)
 
         # to what inputs are the synapses connected
         self.proximalInputs = []  # [inputName1,inputName2,...]

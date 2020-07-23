@@ -1,7 +1,7 @@
 import os
 from htm.bindings.engine_internal import Network as BaseNetwork
-from pandaBaker.pandaBaker import PandaBaker
-from pandaBaker.pandaBaker import cLayer, cInput, cDataStream
+from pandaBaker import PandaBaker
+import pandaBaker
 
 BAKE_DATABASE_FILE_PATH = os.path.join(os.getcwd(), 'bakedDatabase', 'pandaVis.db')
 
@@ -9,6 +9,7 @@ class Network(BaseNetwork):
     def __init__(self):
         self.firstRun = True
         self.pandaBaker = PandaBaker(BAKE_DATABASE_FILE_PATH)
+        self.iteration = 0
         super().__init__()
 
     def run(self, n):
@@ -17,7 +18,9 @@ class Network(BaseNetwork):
             super().run(1)
             if self.firstRun:
                 self.FirstRun()
-            self.BakeIteration()
+            self.pandaBaker.StoreIteration(self, self.iteration)
+            self.iteration += 1
+        self.pandaBaker.CommitBatch() # called too often? performance issue?
 
     def FirstRun(self):
         print("first run")
@@ -40,9 +43,6 @@ class Network(BaseNetwork):
             i = i+1
 
         self.pandaBaker.PrepareDatabase(structure)
-
-    def BakeIteration(self):
-        a=1
 
 
 

@@ -26,6 +26,22 @@ class BakeReader(object):
     def OpenDatabase(self):
         self.db = Database(self.databaseFilePath)  # connect to the database
 
+    def LoadStructure(self):
+        regions = self.db.SelectAll('region_parameters')
+
+        resultRegions = {}
+        for region in regions:
+            resultRegions[region['region']] = region['regionType']
+
+        links = self.db.SelectAll('links')
+
+        resultLinks = {}
+        for link in links:
+            resultLinks[link['id']] = [link['sourceRegion'], link['sourceOutput'], link['destinationRegion'], link['destinationInput']]
+
+        return resultRegions, resultLinks
+
+
     def BuildStructure(self):
         tableNames = self.db.getTableNames()
 
