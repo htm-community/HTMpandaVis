@@ -18,8 +18,8 @@ class PandaBaker(object):
         self.databaseFilePath = databaseFilePath
         self.db = None
 
-        self.layers = {}  # can contain cLayer instances
-        self.inputs = {}  # can contain cInput instances
+        self.regions = {}
+        self.links = {}
         self.dataStreams = {}  # can contain cDataStream instances
 
         #flags what to bake
@@ -30,7 +30,8 @@ class PandaBaker(object):
         self.previousPredictiveCells = {} # dict storing predictive cells for previous timestamp for each layer
 
 
-    def PrepareDatabase(self):
+    # creates database tables according to given dict
+    def PrepareDatabase(self, structure):
         #create database file, delete if exists
         if os.path.exists(self.databaseFilePath):
             Log("database file "+self.databaseFilePath+" exists, deleting...")
@@ -42,23 +43,17 @@ class PandaBaker(object):
 
 
         # STATIC tables creation -----------------------------------------------------------------------------
-        self.db.CreateTable('connections', "input TEXT, layer TEXT, type TEXT")
 
+        tableName = 'region_parameters'
+        self.db.CreateTable(tableName, "region TEXT, parameters TEXT")
 
-        self.db.CreateTable('par_inputs','name TEXT, size INTEGER')
-        for inp in self.inputs:
-            self.db.Insert('par_inputs', [inp, str(self.inputs[inp].size)])
+        for reg in structure["regions"]:
+            self.db.Insert(tableName, reg[0], reg[1])
 
-
-        for ly in self.layers:
-            tableName = 'par_layers_'+ly
-            self.db.CreateTable(tableName, "name TEXT, value REAL")
-            self.db.InsertParameters(tableName, self.layers[ly].params)
-            #create table for defining to what inputs these layers are connected
-            for pi in self.layers[ly].proximalInputs:
-                self.db.Insert("connections", [pi, ly, 'proximal'])
-            for pi in self.layers[ly].distalInputs:
-                self.db.Insert("connections", [pi, ly, 'distal'])
+        self.db.CreateTable('links',
+                            "sourceRegion TEXT, sourceOutput TEXT, destinationRegion TEXT, destinationInput TEXT")
+        for l in self.links:
+            self.db.Insert("links", [pi, ly, 'proximal'])
 
         # DYNAMIC tables creation -----------------------------------------------------------------------------
 

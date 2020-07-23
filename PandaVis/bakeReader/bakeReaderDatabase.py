@@ -45,20 +45,17 @@ class Database(object):
         return s
 
     # inserts array of values into table
-    def Insert(self,tableName, values):
+    def Insert(self, tableName, *values):
         values = [Database.AddParanthesis(v) for v in values]
 
-        query = "INSERT INTO " + tableName + " VALUES (%s);"%(",".join(values))
+        query = "INSERT INTO " + tableName + " VALUES (%s);" % (",".join(values))
 
         self.curs.execute(query)
 
 
-    # inserts dictionary items into table with "name" and "value" column
-    def InsertParameters(self,tableName, _dict):
-
+    def InsertDictItems(self, tableName, _dict):
         for i in _dict:
             query = "INSERT INTO " + tableName + " (name,value) VALUES (%s,%s);"%(Database.AddParanthesis(i),_dict[i])
-
             self.curs.execute(query)
 
 
