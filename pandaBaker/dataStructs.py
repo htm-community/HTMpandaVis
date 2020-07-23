@@ -83,6 +83,8 @@ class cLayer(object):
 class cInput(object):
     def __init__(self, size):
         #static vars -----------
+        if type(size)!=int:
+            raise AttributeError("Input size must be integer!")
         self.size = size
 
         #dynamic vars ----------

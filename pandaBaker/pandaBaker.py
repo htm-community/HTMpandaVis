@@ -148,6 +148,11 @@ def Log(s):
     print(str(s))
     from datetime import datetime
     dateStr=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    with open(os.path.join(os.getcwd(), "logs","pandaBaker.log"),"a") as file:
+    #create directory if not exists
+    logPath = os.path.join(os.getcwd(), "logs")
+    if not os.path.exists(logPath):
+        os.makedirs(logPath)
+
+    with open(os.path.join(logPath,"pandaBaker.log"),"a") as file:
         file.write(dateStr+" >> "+str(s)+"\n")
 
