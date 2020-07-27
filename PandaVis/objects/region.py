@@ -3,19 +3,35 @@
 
 from objects.minicolumn import cMinicolumn
 from panda3d.core import NodePath, PandaNode, TextNode
+import warnings
 
-class cLayer:
+
+class cRegion:
     ONE_ROW_SIZE = 150
     MAX_CREATED_COL_PER_CYCLE = 50
 
-    def __init__(self, name, nOfColumns, nOfCellsPerColumn):
+    def __init__(self, name, cellData):
 
         self.name = name
-        self.nOfCellsPerColumn = nOfCellsPerColumn
+        self.type = cellData.type
+        self.parameters = cellData.parameters
+
+        # minicolumns only for some types of regions
+
         self.minicolumns = []
-        for i in range(nOfColumns):
-            c = cMinicolumn(name, nOfCellsPerColumn)
-            self.minicolumns.append(c)
+
+        # if self.type=='py.ColumnPoolerRegion':
+        #     print('NOT IMPLEMENTED!!')
+        # elif self.type == 'py.ApicalTMPairRegion':
+        #
+        #
+        #
+        # if 'cellsPerColumn' in self.parameters:
+        #     for i in range(self.parameters['columnCount']):
+        #         c = cMinicolumn(name, self.parameters['cellsPerColumn'])
+        #         self.minicolumns.append(c)
+        # else:
+
 
         # for creation of GFX
         self.offset_y = 0
@@ -46,6 +62,9 @@ class cLayer:
         self.offset_idx = 0
         self.offset_row = 0
 
+
+    def getVerticalCellCount(self):
+        return 10
 
     def CreateGfxProgressively(self):
         createdCols = 0

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from bakeReader.bakeReaderDatabase import Database
-from bakeReader.dataStructs import cLayer,cInput, cDataStream
+from bakeReader.dataStructs import cLinkData, cRegionData
+
 import numpy as np
 import os
 import time
@@ -14,9 +15,11 @@ class BakeReader(object):
         self.databaseFilePath = databaseFilePath
         self.db = None
 
-        self.layers = {}  # can contain cLayer instances
-        self.inputs = {}  # can contain cInput instances
+        self.regions = {}  # can contain cRegion instances
+        self.links = {}  # can contain cLink instances
         self.dataStreams = {}  # can contain cDataStream instances
+
+        self.tableNames = []
 
         self._reqProximalData = False
         self._reqDistalData = False
@@ -26,62 +29,41 @@ class BakeReader(object):
     def OpenDatabase(self):
         self.db = Database(self.databaseFilePath)  # connect to the database
 
-    def LoadStructure(self):
+    def LoadParameters(self):
         regions = self.db.SelectAll('region_parameters')
 
         resultRegions = {}
         for region in regions:
-            resultRegions[region['region']] = region['regionType']
+            resultRegions[region['region']] = cRegionData(region['regionType'],region['parameters'])
 
         links = self.db.SelectAll('links')
 
         resultLinks = {}
         for link in links:
-            resultLinks[link['id']] = [link['sourceRegion'], link['sourceOutput'], link['destinationRegion'], link['destinationInput']]
+            resultLinks[link['id']] = cLinkData(link['sourceRegion'], link['sourceOutput'], link['destinationRegion'], link['destinationInput'])
+
+        # load all table names to be able then to check if table exists quickly
+        self.tableNames = self.db.getTableNames()
 
         return resultRegions, resultLinks
 
 
     def BuildStructure(self):
-        tableNames = self.db.getTableNames()
 
-        #build the structure, tables that start with par_
-        parTables = [q for q in tableNames if q.startswith("par_") and q!='par_inputs']
+        regions, links = self.LoadParameters()
+        print(regions)
+        #each region has own tables of active cols, predictive cols etc..
+        for regName, regData in regions.items():
+            self.regions[regName] = regData
 
-        #each layer has own par table
-        for t in parTables:
-            ly = t.split('_')[2]
-            self.layers[ly]=cLayer()
-            Log("Loaded layer: " + ly)
+            Log("Region parameters loaded:"+str(regName))
 
-            pars = self.db.SelectAll(t)
-            # create dict from rows
-            dictPars = {}
-            for p in pars:
-                dictPars[p['name']] = p['value']
 
-            self.layers[ly].params = dictPars   # assign parameter dict to the layer
-            Log("Layer parameters loaded:"+str(dictPars))
-
-        #fill all inputs 
-        rows = self.db.SelectAll('par_inputs')
-        for row in rows:
-            self.inputs[row['name']] = cInput(row['size'])
-            Log("Loaded input : " + row['name'])
-
-            # load connections
-            connections = self.db.SelectAll("connections")
-
-        for con in connections:
-            if con["type"] == "proximal":
-                self.layers[con["layer"]].proximalInputs.append(con["input"])
-                Log("Loaded proximal input for layer: " + str(con["layer"]))
-            elif con["type"] == "distal":
-                self.layers[con["layer"]].distalInputs.append(con["input"])
-                Log("Loaded distal input for layer: " + str(con["layer"]))
+        # load links
+        self.links = links
 
         # figure out how many iterations there are
-        self.cntIterations = self.LoadMaxIteration("inputs_"+next(iter(self.inputs)))# get first input
+        self.cntIterations = self.LoadMaxIteration("region__"+next(iter(self.regions))+"__activeCells")# get first region
         if self.cntIterations is None:
             raise RuntimeError("Database contains no data!")
         Log("Database contains data for "+str(self.cntIterations)+" iterations.")
@@ -111,72 +93,79 @@ class BakeReader(object):
         row = self.db.SelectMaxIteration(tableName)
         return row
         
-    def LoadInput(self, inp, iteration):
-        tableName = "inputs_"+inp
+
+    def LoadActiveColumns(self, region, iteration):
+        tableName = "region__"+region+"__activeColumns"
+
+        if tableName not in self.tableNames:
+            return  # table not exists
 
         row = self.db.SelectByIteration(tableName,iteration)
+        self.regions[region].activeColumns = row['data'] if row['data'] is not None else np.empty(0)
 
-        self.inputs[inp].bits = row['data']
-        self.inputs[inp].stringValue = row['value']
-
-    def LoadActiveColumns(self, layer, iteration):
-        tableName = "layer_activeColumns_"+layer
+    def LoadWinnerCells(self, region, iteration):
+        tableName = "region__"+region+"__winnerCells"
+        if tableName not in self.tableNames:
+            return  # table not exists
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].activeColumns = row['data'] if row['data'] is not None else np.empty(0)
+        self.regions[region].winnerCells = row['data'] if row['data'] is not None else np.empty(0)
 
-    def LoadWinnerCells(self, layer, iteration):
-        tableName = "layer_winnerCells_"+layer
-        row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].winnerCells = row['data'] if row['data'] is not None else np.empty(0)
+    def LoadPredictiveCells(self, region, iteration, loadPrevious=False):
+        tableName = "region__"+region+"__predictiveCells"
 
-    def LoadPredictiveCells(self, layer, iteration, loadPrevious=False):
-        tableName = "layer_predictiveCells_"+layer
+        if tableName not in self.tableNames:
+            return  # table not exists
+
         row = self.db.SelectByIteration(tableName,iteration)
         if not loadPrevious:
-            self.layers[layer].predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
+            self.regions[region].predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
         else:
-            self.layers[layer].prev_predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
+            self.regions[region].prev_predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
 
-    def LoadActiveCells(self, layer, iteration):
-        tableName = "layer_activeCells_"+layer
+    def LoadActiveCells(self, region, iteration):
+        tableName = "region__"+region+"__activeCells"
+
+        if tableName not in self.tableNames:
+            return  # table not exists
+
         row = self.db.SelectByIteration(tableName,iteration)
-        self.layers[layer].activeCells = row['data'] if row['data'] is not None else np.empty(0)
+        self.regions[region].activeCells = row['data'] if row['data'] is not None else np.empty(0)
 
-    def LoadProximalSynapses(self, layer, columns, iteration):
-        tableName = "layer_proximalSynapses_"+layer
-        columnCount = self.layers[layer].params["sp_columnCount"]
-        self.layers[layer].proximalSynapses = {} # erase dict
-
-        for col in columns: # what specific columns we want to get
-            # we need to select by rowid, because of speed
-            rowId = iteration * columnCount + col + 1
-            row = self.db.SelectByRowId(tableName, rowId)
-
-            #now check for sure if the data fits
-            if col != row['column'] or iteration != row['iteration']:
-                raise RuntimeError("Data are not valid! Not sorted!")
-            self.layers[layer].proximalSynapses[col] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
-
-
-    def LoadDistalSynapses(self, layer, column, cell, iteration):
-        timeStartDistalSynapsesCalc = time.time()
-        tm = TemporalMemory()
-        tm.loadFromFile(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
-                                         "" + str(layer) + "_" + str(iteration) + ".dump"))
-
-        reqCellID = int(column * self.layers[layer].params['tm_cellsPerColumn'] + cell)
-
-        print("requesting distals for cell:"+str(reqCellID))
-        segments = self.getPresynapticCellsForCell(tm, reqCellID)
-
-        segNo = 0
-        for seg in segments:  # for each segment
-            if cell not in self.layers[layer].distalSynapses.keys():
-                self.layers[layer].distalSynapses[cell] = {}
-            self.layers[layer].distalSynapses[cell][segNo] = seg # add numpy array to the dict
-            segNo += 1
-
-        return len(segments) > 0  # true if we got something for this cell
+    # def LoadProximalSynapses(self, layer, columns, iteration):
+    #     tableName = "layer_proximalSynapses_"+layer
+    #     columnCount = self.layers[layer].params["sp_columnCount"]
+    #     self.layers[layer].proximalSynapses = {} # erase dict
+    #
+    #     for col in columns: # what specific columns we want to get
+    #         # we need to select by rowid, because of speed
+    #         rowId = iteration * columnCount + col + 1
+    #         row = self.db.SelectByRowId(tableName, rowId)
+    #
+    #         #now check for sure if the data fits
+    #         if col != row['column'] or iteration != row['iteration']:
+    #             raise RuntimeError("Data are not valid! Not sorted!")
+    #         self.layers[layer].proximalSynapses[col] =  (row['data'] if row['data'] is not None else np.empty(0))# add to the dict
+    #
+    #
+    # def LoadDistalSynapses(self, layer, column, cell, iteration):
+    #     timeStartDistalSynapsesCalc = time.time()
+    #     tm = TemporalMemory()
+    #     tm.loadFromFile(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
+    #                                      "" + str(layer) + "_" + str(iteration) + ".dump"))
+    #
+    #     reqCellID = int(column * self.layers[layer].params['tm_cellsPerColumn'] + cell)
+    #
+    #     print("requesting distals for cell:"+str(reqCellID))
+    #     segments = self.getPresynapticCellsForCell(tm, reqCellID)
+    #
+    #     segNo = 0
+    #     for seg in segments:  # for each segment
+    #         if cell not in self.layers[layer].distalSynapses.keys():
+    #             self.layers[layer].distalSynapses[cell] = {}
+    #         self.layers[layer].distalSynapses[cell][segNo] = seg # add numpy array to the dict
+    #         segNo += 1
+    #
+    #     return len(segments) > 0  # true if we got something for this cell
 
     def getPresynapticCellsForCell(self, tm, cellID):
         start_time = time.time()

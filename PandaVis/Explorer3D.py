@@ -104,22 +104,12 @@ class cExplorer3D(ShowBase):
             newObj = cHTM(self, self.loader, obj)
             newObj.getNode().reparentTo(self.render)
 
-            # create inputs
-            for inp in self.bakeReader.inputs:
-                printLog("Creating input: " + str(inp), verbosityHigh)
-
-                newObj.CreateInput(
-                    name=inp,
-                    count=self.bakeReader.inputs[inp].size,
-                    rows=int(math.sqrt(self.bakeReader.inputs[inp].size)),
-                )
-            # create layers
-            for lay in self.bakeReader.layers:
-                printLog("Creating layer: " + str(lay), verbosityHigh)
-                newObj.CreateLayer(
-                    name=lay,
-                    nOfColumnsPerLayer=int(self.bakeReader.layers[lay].params['sp_columnCount']),
-                    nOfCellsPerColumn=int(self.bakeReader.layers[lay].params['tm_cellsPerColumn']),
+            # create regions
+            for reg in self.bakeReader.regions:
+                printLog("Creating region: " + str(reg), verbosityHigh)
+                newObj.CreateRegion(
+                    name=reg,
+                    regionData = self.bakeReader.regions[reg]
                 )
 
             self.HTMObjects[obj] = newObj
@@ -131,18 +121,16 @@ class cExplorer3D(ShowBase):
         self.iteration = iteration
 
         for obj in self.HTMObjects:
-            for inp in self.HTMObjects[obj].inputs:
-                self.bakeReader.LoadInput(inp, iteration)
 
-            for ly in self.HTMObjects[obj].layers:
-                self.bakeReader.LoadActiveColumns(ly, iteration)
-                self.bakeReader.LoadWinnerCells(ly, iteration)
-                self.bakeReader.LoadPredictiveCells(ly, iteration+1)#take predictions for t+1
+            for reg in self.HTMObjects[obj].regions:
+                self.bakeReader.LoadActiveColumns(reg, iteration)
+                self.bakeReader.LoadWinnerCells(reg, iteration)
+                self.bakeReader.LoadPredictiveCells(reg, iteration+1)#take predictions for t+1
                 if self.gui.showPredictionCorrectness:
-                    self.bakeReader.LoadPredictiveCells(ly, iteration, loadPrevious=True)#take also predictions for t to be able to calculate correctness
-                self.bakeReader.LoadActiveCells(ly, iteration)
+                    self.bakeReader.LoadPredictiveCells(reg, iteration, loadPrevious=True)#take also predictions for t to be able to calculate correctness
+                self.bakeReader.LoadActiveCells(reg, iteration)
 
-                self.bakeReader.LoadProximalSynapses(ly,[self.gui.columnID,], iteration)
+                #self.bakeReader.LoadProximalSynapses(reg,[self.gui.columnID,], iteration)
                 #can't load distal synapses here, because they are a big size
                 # loading just for one cell per - user click
 
@@ -155,27 +143,18 @@ class cExplorer3D(ShowBase):
 
         self.gui.setIteration(self.iteration)
         obj = "HTM1"
-        # go through all incoming inputs
-        for i in self.bakeReader.inputs:  # dict
-            printLog("Updating state of input: " + str(i), verbosityHigh)
-            # find matching input in local structure
 
-            self.HTMObjects[obj].inputs[i].UpdateState(
-                self.bakeReader.inputs[i].bits,
-                self.bakeReader.inputs[i].stringValue,
-            )
-
-        # go through all incoming layers
-        for l in self.bakeReader.layers:  # dict
-            if self.HTMObjects[obj].layers[l].gfxCreationFinished:
-                printLog("Updating state of layer: " + str(l), verbosityHigh)
+        # go through all regions
+        for reg in self.bakeReader.regions:  # dict
+            if self.HTMObjects[obj].regions[reg].gfxCreationFinished:
+                printLog("Updating state of region: " + str(reg), verbosityHigh)
                 # find matching layer in local structure
-                self.HTMObjects[obj].layers[l].UpdateState(
-                    self.bakeReader.layers[l].activeColumns,
-                    self.bakeReader.layers[l].activeCells,
-                    self.bakeReader.layers[l].winnerCells,
-                    self.bakeReader.layers[l].predictiveCells,
-                    self.bakeReader.layers[l].prev_predictiveCells,
+                self.HTMObjects[obj].regions[reg].UpdateState(
+                    self.bakeReader.regions[reg].activeColumns,
+                    self.bakeReader.regions[reg].activeCells,
+                    self.bakeReader.regions[reg].winnerCells,
+                    self.bakeReader.regions[reg].predictiveCells,
+                    self.bakeReader.regions[reg].prev_predictiveCells,
                     showPredictionCorrectness=self.gui.showPredictionCorrectness,
                     showBursting = self.gui.showBursting
                 )
@@ -209,40 +188,40 @@ class cExplorer3D(ShowBase):
         #         obj.DestroyDistalSynapses()
         # -----------------------------------------------------------
 
-    def ShowProximalSynapses(self, obj, layerName, column, showOnlyActive):# reads the synapses from the database and show them
+    def ShowProximalSynapses(self, obj, regionName, column, showOnlyActive):# reads the synapses from the database and show them
 
-        layer = self.bakeReader.layers[layerName]
-        self.bakeReader.LoadProximalSynapses(layerName, [column], self.iteration) # load it
+        region = self.bakeReader.regions[regionName]
+        self.bakeReader.LoadProximalSynapses(regionName, [column], self.iteration) # load it
 
-        if column not in layer.proximalSynapses:
-            printLog("Don't have proximal data for requested column:"+str(column) + " of layer:"+str(layerName))
-            self.HTMObjects[obj].layers[layerName].DestroyProximalSynapses()
+        if column not in region.proximalSynapses:
+            printLog("Don't have proximal data for requested column:"+str(column) + " of region:"+str(regionName))
+            self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
             return
-        self.HTMObjects[obj].layers[layerName].ShowProximalSynapses(column, layer.proximalSynapses[column],
-                                                                       layer.proximalInputs,#names of inputs
+        self.HTMObjects[obj].regions[regionName].ShowProximalSynapses(column, region.proximalSynapses[column],
+                                                                       region.proximalInputs,#names of inputs
                                                                         self.HTMObjects[obj].inputs,
-                                                                        layer.params['sp_synPermConnected'],
+                                                                        region.params['sp_synPermConnected'],
                                                                         showOnlyActive)
-    def ShowDistalSynapses(self, obj, layerName, column, cell):
+    def ShowDistalSynapses(self, obj, regionName, column, cell):
 
-        layer = self.bakeReader.layers[layerName]
+        region = self.bakeReader.regions[regionName]
 
-        gotSomeData = self.bakeReader.LoadDistalSynapses(layerName, column, cell, self.iteration)  # load it
+        gotSomeData = self.bakeReader.LoadDistalSynapses(regionName, column, cell, self.iteration)  # load it
 
         if not gotSomeData:
             printLog("Don't have any distal synapses to show for this cell.")
-            self.HTMObjects[obj].layers[layerName].minicolumns[
+            self.HTMObjects[obj].regions[regionName].minicolumns[
                 column
             ].cells[cell].DestroyDistalSynapses()
             return
 
-        self.HTMObjects[obj].layers[layerName].minicolumns[
+        self.HTMObjects[obj].regions[regionName].minicolumns[
             column
         ].cells[cell].CreateDistalSynapses(
             self.HTMObjects[obj],
-            self.HTMObjects[obj].layers[layerName],
-            layer.distalSynapses[cell],
-            layer.distalInputs
+            self.HTMObjects[obj].regions[regionName],
+            region.distalSynapses[cell],
+            region.distalInputs
         )
 
 

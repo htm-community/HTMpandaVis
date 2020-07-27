@@ -1,6 +1,28 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+
+# structs for easier manipulation with data from database
+class cLinkData:
+    def __init__(self, sourceRegion, sourceOutput, destinationRegion, destinationInput):
+        self.sourceRegion = sourceRegion
+        self.sourceOutput = sourceOutput
+        self.destinationRegion = destinationRegion
+        self.destinationInput = destinationInput
+
+class cRegionData:
+    def __init__(self, type, parameters):
+        self.type = type
+        self.parameters = parameters
+
+        # dynamic vars ----------------------------------------------------------------------
+        self.activeColumns = np.empty(0)  # currently active columns (sparse) in this layer
+        self.winnerCells = np.empty(0)
+        self.activeCells = np.empty(0)
+        self.predictiveCells = np.empty(0)
+        self.prev_predictiveCells = np.empty(0) # filled in only when we want to see prediction correctness
+
+
 def Params(sp, tm):
 
     spPars={}

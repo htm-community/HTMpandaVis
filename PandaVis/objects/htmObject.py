@@ -8,10 +8,10 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.realpath("__file__")))
 )  # adds parent directory to path
 
-from objects.layer import cLayer
-from objects.input import cInput
+from objects.region import cRegion
 from panda3d.core import NodePath, PandaNode
-
+from objects.ColumnPoolerRegion import cColumnPoolerRegion
+from objects.ApicalTMPairRegion import cApicalTMPairRegion
 
 class cHTM:
 
@@ -22,8 +22,7 @@ class cHTM:
 
         self.__base = baseApp
         self.__loader = loader
-        self.layers = {}
-        self.inputs = {}
+        self.regions = {}
 
         self.__gfx = None
         self.__node = None
@@ -31,59 +30,49 @@ class cHTM:
         self.gfxCreationFinished = False
         self.__node = NodePath(PandaNode(name))
 
-    def CreateLayer(self, name, nOfColumnsPerLayer, nOfCellsPerColumn):
+    @classmethod
+    def getClassByType(cls, type):
+        if type=='py.ColumnPoolerRegion':
+            return cColumnPoolerRegion
+        elif type == 'py.ApicalTMPairRegion':
+            return cApicalTMPairRegion
+        else:
+            warnings.warn( type + ' region is not implemented!', UserWarning())
 
-        l = cLayer(name, nOfColumnsPerLayer, nOfCellsPerColumn)
-        self.layers[name] = l
+    def CreateRegion(self, name, regionData):
 
-        l.CreateGfx(self.__loader)
-        l.getNode().setPos(0, 0 , cHTM.layerOffset)
+        self.regions[name] = cHTM.getClassByType(regionData.type)(name, regionData)
+        region = self.regions[name]
 
-        l.getNode().reparentTo(self.__node)
+        region.CreateGfx(self.__loader)
+        region.getNode().setPos(0, 0 , cHTM.layerOffset)
+
+        region.getNode().reparentTo(self.__node)
         # self.__node = NodePath()
 
-        cHTM.layerOffset += nOfCellsPerColumn + 40
+        cHTM.layerOffset += region.getVerticalCellCount() + 40
 
-    def CreateInput(self, name, count, rows):
-
-        i = cInput(self.__base, name, count, rows)
-        self.inputs[name] = i
-
-        i.CreateGfx(self.__loader)
-        i.getNode().setPos(-40, cHTM.inputOffset, 0)
-
-        i.getNode().reparentTo(self.__node)
-
-        cHTM.inputOffset += 5 + rows * 3
 
     def getNode(self):
         return self.__node
 
     def DestroyProximalSynapses(self):
-        for ly in self.layers.values():
+        for ly in self.regions.values():
             ly.DestroyProximalSynapses()
 
-        for inp in self.inputs.values():
-                inp.resetProximalFocus()
-            
     def DestroyDistalSynapses(self):
-        for ly in self.layers.values():
+        for ly in self.regions.values():
             ly.DestroyDistalSynapses()
 
-        for inp in self.inputs.values():
-            inp.resetPresynapticFocus()
-        
     def updateWireframe(self, value):
-        for ly in self.layers.values():
+        for ly in self.regions.values():
             ly.updateWireframe(value)
-        for i in self.inputs.values():
-            i.updateWireframe(value)
 
     def CreateGfxProgressively(self):
         allFinished = True
-        for ly in self.layers:
-            if not self.layers[ly].gfxCreationFinished:
-                self.layers[ly].CreateGfxProgressively()
+        for reg in self.regions:
+            if not self.regions[reg].gfxCreationFinished:
+                self.regions[reg].CreateGfxProgressively()
                 allFinished = False
 
         if allFinished:

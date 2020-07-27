@@ -65,7 +65,7 @@ class PandaBaker(object):
         self.db.CreateTable(tableName, "region TEXT, regionType TEXT, parameters TEXT")
 
         for regionName, regionInstance in structure["regions"].items():
-            self.db.Insert(tableName, regionName,regionInstance[0], json.dumps(getParametersOfRegion(regionInstance[0])))
+            self.db.Insert(tableName, regionName,regionInstance[0], json.dumps(getParametersOfRegion(regionInstance[0], regionInstance[1])))
 
         self.db.CreateTable('links',
                             "id INTEGER, sourceRegion TEXT, sourceOutput TEXT, destinationRegion TEXT, destinationInput TEXT")
@@ -140,10 +140,16 @@ def getOutputsOfRegion(regionType):
         # c++ region
         return list(eval(regionType).getSpec()['outputs'].keys())
 
-def getParametersOfRegion(regionType):
+def getParametersOfRegion(regionType, regionInstance):
     if 'py.' in regionType:
         # python region
-        return list(eval(regionType.split('.')[1]).getSpec()['parameters'].keys())
+        parList = list(eval(regionType.split('.')[1]).getSpec()['parameters'].keys())
+
+        resultDict = {}
+        for par in parList:
+            resultDict[par] = regionInstance.eval(par)# nevim jestli to jde castnout abych dostal parametry..
+
+        return resultDict
     else:
         # c++ region
         return list(eval(regionType).getSpec()['parameters'].keys())

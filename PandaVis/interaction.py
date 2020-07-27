@@ -285,8 +285,8 @@ class cInteraction:
             self.gui.transparencyChanged = False
 
             for obj in self.base.HTMObjects.values():
-                for ly in obj.layers.values():
-                    ly.setTransparency(self.gui.transparency/100.0)
+                for reg in obj.regions.values():
+                    reg.setTransparency(self.gui.transparency/100.0)
 
         if self.gui.LODChanged and len(self.base.HTMObjects) > 0:
             self.gui.LODChanged = False
@@ -295,5 +295,5 @@ class cInteraction:
             self.base.cam.node().getLens().setFar(self.gui.LODvalue2)
 
             for obj in self.base.HTMObjects.values():
-                for ly in obj.layers.values():
-                    ly.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)
+                for reg in obj.regions.values():
+                    reg.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)
