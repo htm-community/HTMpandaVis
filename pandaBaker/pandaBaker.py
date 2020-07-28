@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from bakerDatabase import Database
-import dataStructs as dataStructs
+from pandaBaker.bakerDatabase import Database
 
 import numpy as np
 import os
@@ -143,11 +142,18 @@ def getOutputsOfRegion(regionType):
 def getParametersOfRegion(regionType, regionInstance):
     if 'py.' in regionType:
         # python region
-        parList = list(eval(regionType.split('.')[1]).getSpec()['parameters'].keys())
+        regionTypeClass = eval(regionType.split('.')[1])# get rid of the py. in py.ColumnPoolerRegion for example
+        parList = list(regionTypeClass.getSpec()['parameters'].keys())
 
         resultDict = {}
         for par in parList:
-            resultDict[par] = regionInstance.eval(par)# nevim jestli to jde castnout abych dostal parametry..
+            regionInstance.__class__ = regionTypeClass
+            print(regionInstance)
+            print(par)
+            print(type(regionInstance))
+            import inspect
+            print(inspect.getmembers(ApicalTMPairRegion, predicate=inspect.ismethod))
+            resultDict[par] = eval("regionInstance."+par)
 
         return resultDict
     else:

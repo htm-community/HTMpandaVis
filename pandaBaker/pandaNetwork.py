@@ -1,7 +1,8 @@
 import os
 from htm.bindings.engine_internal import Network as BaseNetwork
-from pandaBaker import PandaBaker
-import pandaBaker
+
+from pandaBaker.pandaBaker import PandaBaker
+
 
 BAKE_DATABASE_FILE_PATH = os.path.join(os.getcwd(), 'bakedDatabase', 'pandaVis.db')
 
