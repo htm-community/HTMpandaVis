@@ -51,7 +51,7 @@ class BakeReader(object):
     def BuildStructure(self):
 
         regions, links = self.LoadParameters()
-        print(regions)
+
         #each region has own tables of active cols, predictive cols etc..
         for regName, regData in regions.items():
             self.regions[regName] = regData
@@ -70,8 +70,8 @@ class BakeReader(object):
 
     def LoadDataStreams(self):
         # DATA STREAMS - loaded all at once
-        tableNames = self.db.getTableNames()
-        parStreamTables = [q for q in tableNames if q.startswith("dataStream_")]
+
+        parStreamTables = [q for q in self.tableNames if q.startswith("dataStream_")]
         for streamTable in parStreamTables:
             streamName = streamTable.replace("dataStream_","")
             self.dataStreams[streamName] = cDataStream()
@@ -94,24 +94,25 @@ class BakeReader(object):
         return row
         
 
-    def LoadActiveColumns(self, region, iteration):
-        tableName = "region__"+region+"__activeColumns"
+    # loads all tables for specified region
+    # table name is like: "region__L2__activeCells"
+    def LoadAllRegionData(self, region, iteration):
+        regionTables = [i for i in self.tableNames if i.startswith("region__" + region)]
 
+        for table in regionTables:
+            row = self.db.SelectByIteration(table, iteration)
+            self.regions[region].data[table.split("__")[2]] = row['data'] if row['data'] is not None else np.empty(0)
+
+    # loads data from given region table to specified destDataName (to data dict)
+    def LoadRegionData(self, region, iteration, databaseData, destDataName):
+        tableName = "region__"+region+"__"+databaseData
         if tableName not in self.tableNames:
-            return  # table not exists
-
-        row = self.db.SelectByIteration(tableName,iteration)
-        self.regions[region].activeColumns = row['data'] if row['data'] is not None else np.empty(0)
-
-    def LoadWinnerCells(self, region, iteration):
-        tableName = "region__"+region+"__winnerCells"
-        if tableName not in self.tableNames:
-            return  # table not exists
-        row = self.db.SelectByIteration(tableName,iteration)
-        self.regions[region].winnerCells = row['data'] if row['data'] is not None else np.empty(0)
+            return # requested table does not exists
+        row = self.db.SelectByIteration(tableName, iteration)
+        self.regions[region].data[destDataName] = row['data'] if row['data'] is not None else np.empty(0)
 
     def LoadPredictiveCells(self, region, iteration, loadPrevious=False):
-        tableName = "region__"+region+"__predictiveCells"
+        tableName = "region__"+region+"__predictedCells"
 
         if tableName not in self.tableNames:
             return  # table not exists
@@ -122,14 +123,6 @@ class BakeReader(object):
         else:
             self.regions[region].prev_predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
 
-    def LoadActiveCells(self, region, iteration):
-        tableName = "region__"+region+"__activeCells"
-
-        if tableName not in self.tableNames:
-            return  # table not exists
-
-        row = self.db.SelectByIteration(tableName,iteration)
-        self.regions[region].activeCells = row['data'] if row['data'] is not None else np.empty(0)
 
     # def LoadProximalSynapses(self, layer, columns, iteration):
     #     tableName = "layer_proximalSynapses_"+layer

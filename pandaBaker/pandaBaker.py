@@ -11,6 +11,7 @@ import multiprocessing as mp
 from multiprocessing import Pool
 from multiprocessing import get_context
 
+from htm.bindings.sdr import SDR
 # import all python regions
 from htm.advanced.regions.ApicalTMPairRegion import ApicalTMPairRegion
 from htm.advanced.regions.ApicalTMSequenceRegion import ApicalTMSequenceRegion
@@ -75,7 +76,7 @@ class PandaBaker(object):
         for regName, regInstance in structure["regions"].items():
             outs = getOutputsOfRegion(regInstance[0])#get outputs from name
             for out in outs:
-                self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data SDR")
+                self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
             #self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data array")#using float numpy array, not sparse SDR
 
         # data streams ----------------
@@ -96,8 +97,12 @@ class PandaBaker(object):
         #region data
         for regName, regInstance in self.structure['regions'].items():
             for out in getOutputsOfRegion(regInstance[0]):
+                regionOutArr = np.array(network.getRegion(regName).getOutputArray(out), dtype=np.float32)
+                #regionOutSDR = SDR(regionOutArr.size)
+                #regionOutSDR.dense = regionOutArr
+
                 self.db.InsertDataArray('region__'+regName+'__'+out,
-                                iteration, network.getRegion(regName).getOutputArray(out))
+                                iteration, regionOutArr)
 
 
 
@@ -146,15 +151,15 @@ def getParametersOfRegion(regionType, regionInstance):
         parList = list(regionTypeClass.getSpec()['parameters'].keys())
 
         resultDict = {}
-        for par in parList:
-            regionInstance.__class__ = regionTypeClass
-            print(regionInstance)
-            print(par)
-            print(type(regionInstance))
-            import inspect
-            print(inspect.getmembers(ApicalTMPairRegion, predicate=inspect.ismethod))
-            resultDict[par] = eval("regionInstance."+par)
-
+        #for par in parList:
+            # regionInstance.__class__ = regionTypeClass
+            # print(regionInstance)
+            # print(par)
+            # print(type(regionInstance))
+            # import inspect
+            # print(inspect.getmembers(ApicalTMPairRegion, predicate=inspect.ismethod))
+            # resultDict[par] = eval("regionInstance."+par)
+        resultDict = parList
         return resultDict
     else:
         # c++ region

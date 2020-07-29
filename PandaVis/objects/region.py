@@ -1,36 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from abc import ABC, abstractmethod
 
 from objects.minicolumn import cMinicolumn
 from panda3d.core import NodePath, PandaNode, TextNode
 import warnings
 
 
-class cRegion:
+class cRegion(ABC):
     ONE_ROW_SIZE = 150
-    MAX_CREATED_COL_PER_CYCLE = 50
+    MAX_CREATED_OBJ_PER_CYCLE = 50
 
-    def __init__(self, name, cellData):
+    def __init__(self, name, cellData, gui):
 
         self.name = name
         self.type = cellData.type
         self.parameters = cellData.parameters
-
-        # minicolumns only for some types of regions
-
-        self.minicolumns = []
-
-        # if self.type=='py.ColumnPoolerRegion':
-        #     print('NOT IMPLEMENTED!!')
-        # elif self.type == 'py.ApicalTMPairRegion':
-        #
-        #
-        #
-        # if 'cellsPerColumn' in self.parameters:
-        #     for i in range(self.parameters['columnCount']):
-        #         c = cMinicolumn(name, self.parameters['cellsPerColumn'])
-        #         self.minicolumns.append(c)
-        # else:
+        self.gui = gui  # to be able for regions to determine what we want to visualize
 
 
         # for creation of GFX
@@ -39,125 +25,87 @@ class cRegion:
         self.offset_row = 0
         self.loader = None
         self.gfxCreationFinished = False
+        self._node = None
+        self.text = None
+
+        # can be overidden by derived classes
+        self.SUBOBJ_DISTANCE_X = 1.5
+        self.SUBOBJ_DISTANCE_Y = 1.5
+
+        self.subObjects = []  # subObjects can be now minicolumn or cells
 
     def CreateGfx(self, loader):
 
-        self.__node = NodePath(
+        self._node = NodePath(
             PandaNode(self.name)
         )  # TextNode('layerText')#loader.loadModel("models/teapot")
 
         self.text = TextNode("Layer text node")
         self.text.setText(self.name)
 
-        textNodePath = self.__node.attachNewNode(self.text)
+        textNodePath = self._node.attachNewNode(self.text)
         textNodePath.setScale(5)
 
         textNodePath.setPos(0, -5, 0)
 
-        self.__node.setPos(0, 0, 0)
-        self.__node.setScale(1, 1, 1)
+        self._node.setPos(0, 0, 0)
+        self._node.setScale(1, 1, 1)
 
         self.loader = loader
         self.offset_y = 0
         self.offset_idx = 0
         self.offset_row = 0
 
+        print("GFX created for "+self.name)
 
-    def getVerticalCellCount(self):
-        return 10
 
+    @abstractmethod
+    def getVerticalSize(self):
+        pass
+
+    # creating gfx per chunks, to avoid lagging
     def CreateGfxProgressively(self):
-        createdCols = 0
-        currentlyCreatedCols = 0
+        createdObjs = 0
+        currentlyCreatedObjs = 0
         allFinished = True
-        for c in self.minicolumns:
-            if not c.gfxCreated:
-                c.CreateGfx(self.loader, self.offset_idx)
-                self.offset_idx += 1
-                c.getNode().setPos(self.offset_row * 10, self.offset_y, 0)
-                self.offset_y += 3
 
-                if self.offset_y > cLayer.ONE_ROW_SIZE:
+        for o in self.subObjects:
+            if not o.gfxCreated:
+                o.CreateGfx(self.loader, self.offset_idx)
+                self.offset_idx += 1
+                o.getNode().setPos(self.offset_row * self.SUBOBJ_DISTANCE_X, self.offset_y, 0)
+                self.offset_y += self.SUBOBJ_DISTANCE_Y
+
+                if self.offset_y > cRegion.ONE_ROW_SIZE:
                     self.offset_y = 0
                     self.offset_row += 1
-                c.getNode().reparentTo(self.__node)
-                c.gfxCreated = True
-                currentlyCreatedCols += 1
+                o.getNode().reparentTo(self._node)
+                o.gfxCreated = True
+                currentlyCreatedObjs += 1
 
-                if currentlyCreatedCols >= cLayer.MAX_CREATED_COL_PER_CYCLE:
+                if currentlyCreatedObjs >= cRegion.MAX_CREATED_OBJ_PER_CYCLE:
                     allFinished = False
                     break
             else:
-                createdCols += 1
+                createdObjs += 1
 
         if allFinished:
             if not self.gfxCreationFinished:
                 self.gfxCreationFinished = True
                 self.text.setText(self.name)
         else:
-            self.text.setText(self.name+"(creating:"+str(int(100*createdCols/len(self.minicolumns)))+" %)")
+            self.text.setText(self.name + "(creating:" + str(int(100 * createdObjs / len(self.subObjects))) + " %)")
 
-    def UpdateState(self, activeColumns, activeCells, winnerCells, predictiveCells, prevPredictiveCells, showPredictionCorrectness = False, showBursting = False):
-
-        # print("COLUMNS SIZE:"+str(len(self.minicolumns)))
-        #print("winners:"+str(winnerCells))
-        #print("predictive:"+str(predictiveCells))
-        
-        for colID in range(len(self.minicolumns)):# go through all columns
-            oneOfCellPredictive=False
-            oneOfCellCorrectlyPredicted = False
-            oneOfCellFalselyPredicted = False
-            nOfActiveCells = 0
-
-            for cellID in range(len(self.minicolumns[colID].cells)): # for each cell in column
-                isActive = cellID+(colID*self.nOfCellsPerColumn) in activeCells
-                isWinner = cellID + (colID * self.nOfCellsPerColumn) in winnerCells
-                isPredictive = cellID+(colID*self.nOfCellsPerColumn) in predictiveCells
-                if showPredictionCorrectness:
-                    wasPredictive = cellID+(colID*self.nOfCellsPerColumn) in prevPredictiveCells
-                else:
-                    wasPredictive = False
-
-                if isPredictive:
-                    oneOfCellPredictive=True
-
-                if isActive:
-                    nOfActiveCells = nOfActiveCells + 1
-
-
-                self.minicolumns[colID].cells[cellID].UpdateState(active = isActive, predictive = isPredictive,winner = isWinner, showPredictionCorrectness = showPredictionCorrectness, prev_predictive = wasPredictive)
-
-                if showPredictionCorrectness:
-                    #get correct/false prediction info
-                    if self.minicolumns[colID].cells[cellID].correctlyPredicted:
-                        oneOfCellCorrectlyPredicted = True
-
-                    if self.minicolumns[colID].cells[cellID].falselyPredicted:
-                        oneOfCellFalselyPredicted = True
-
-            if showBursting and self.nOfCellsPerColumn>1: # not for layers with only 1 cell/column
-                bursting = nOfActiveCells == self.nOfCellsPerColumn #if all cells in column are active -> the column is bursting
-
-            else:
-                bursting = False
-
-            self.minicolumns[colID].UpdateState(bursting=bursting, activeColumn = colID in activeColumns, oneOfCellPredictive=oneOfCellPredictive,
-                                                    oneOfCellCorrectlyPredicted=oneOfCellCorrectlyPredicted, oneOfCellFalselyPredicted=oneOfCellFalselyPredicted)
-        
-        
-#        for cellID in winnerCells:
-#            self.minicolumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = False)
-#        
-#        for cellID in predictiveCells:
-#            self.minicolumns[(int)(cellID/self.nOfCellsPerColumn)].cells[(int)(cellID%self.nOfCellsPerColumn)].UpdateState(active = True, predictive = True)
-        
+    @abstractmethod
+    def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
+        pass
 
     def updateWireframe(self, value):
-        for col in self.minicolumns:
-            col.updateWireframe(value)
+        for obj in self.subObjects:
+            obj.updateWireframe(value)
             
     def getNode(self):
-        return self.__node
+        return self._node
 
     def ShowProximalSynapses(self, column, permanences, inputNames, inputObj, thresholdConnected, showOnlyActive):
         # update columns with proximal Synapses
@@ -172,22 +120,23 @@ class cRegion:
         )
 
     def DestroyProximalSynapses(self):
-        for col in self.minicolumns:
-            col.DestroyProximalSynapses()
+        for obj in self.subObjects:
+            obj.DestroyProximalSynapses()
     
     def DestroyDistalSynapses(self):
-        for col in self.minicolumns:
-            col.DestroyDistalSynapses()
+        for obj in self.subObjects:
+            obj.DestroyDistalSynapses()
             
     def setTransparency(self,transparency):
         self.transparency = transparency
-        for col in self.minicolumns:
-            col.setTransparency(transparency)
+        for obj in self.subObjects:
+            obj.setTransparency(transparency)
 
     def LODUpdateSwitch(self, lodDistance, lodDistance2):
-        for col in self.minicolumns:
-            col.LODUpdateSwitch(lodDistance, lodDistance2)
+        for obj in self.subObjects:
+            if isinstance(obj, cMinicolumn):
+                obj.LODUpdateSwitch(lodDistance, lodDistance2)
 
     def resetPresynapticFocus(self):
-        for col in self.minicolumns:
-            col.resetPresynapticFocus()
+        for obj in self.subObjects:
+            obj.resetPresynapticFocus()

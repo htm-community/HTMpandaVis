@@ -15,12 +15,8 @@ class cRegionData:
         self.type = type
         self.parameters = parameters
 
-        # dynamic vars ----------------------------------------------------------------------
-        self.activeColumns = np.empty(0)  # currently active columns (sparse) in this layer
-        self.winnerCells = np.empty(0)
-        self.activeCells = np.empty(0)
-        self.predictiveCells = np.empty(0)
-        self.prev_predictiveCells = np.empty(0) # filled in only when we want to see prediction correctness
+        # dict containing data like "activeCells", "predictiveCells" etc.. these corresponds to region outputs
+        self.data = {}  # if empty, it contains np.empty(0)
 
 
 def Params(sp, tm):

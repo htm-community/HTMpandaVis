@@ -29,6 +29,8 @@ def printLog(txt, verbosity=verbosityLow):
         
 class cCell:
     def __init__(self, column):
+
+        self.gfxCreated = False
         self.active = False
         self.predictive = False
         self.winner = False
@@ -41,20 +43,21 @@ class cCell:
         self.idx = -1
         self.showPredictionCorrectness = False
 
+
     def CreateGfx(
         self, loader, idx
     ):  # idx is neccesary to be able to track it down for mouse picking
 
         self.idx = idx
-        self.__node = loader.loadModel(os.path.join(os.getcwd(),"models/cube"))
-        self.__node.setPos(0, 0, 0)
-        self.__node.setScale(0.5, 0.5, 0.5)
-        self.__node.setTag("clickable", str(idx))  # to be able to click on it
-        self.__node.setName("cell")
+        self._node = loader.loadModel(os.path.join(os.getcwd(),"models/cube"))
+        self._node.setPos(0, 0, 0)
+        self._node.setScale(0.5, 0.5, 0.5)
+        self._node.setTag("clickable", str(idx))  # to be able to click on it
+        self._node.setName("cell")
 
         # COLLISION
-        collBox = CollisionBox(self.__node.getPos(), 1.0, 1.0, 1.0)
-        cnodePath = self.__node.attachNewNode(CollisionNode("cnode"))
+        collBox = CollisionBox(self._node.getPos(), 1.0, 1.0, 1.0)
+        cnodePath = self._node.attachNewNode(CollisionNode("cnode"))
         cnodePath.node().addSolid(collBox)
 
         self.UpdateState(False, False, False)
@@ -89,32 +92,32 @@ class cCell:
         self.presynapticFocus = presynapticFocus
         
         if self.focused:
-            self.__node.setColor(COL_CELL_FOCUSED)
+            self._node.setColor(COL_CELL_FOCUSED)
         elif self.correctlyPredicted:
             col = COL_CELL_CORRECTLY_PREDICTED
-            self.__node.setColor(col)
+            self._node.setColor(col)
         elif self.falselyPredicted:
             col = COL_CELL_FALSELY_PREDICTED
-            self.__node.setColor(col)
+            self._node.setColor(col)
         elif self.winner:
             col = COL_CELL_WINNER
-            self.__node.setColor(col)
+            self._node.setColor(col)
         elif self.predictive and self.active:
             col = COL_CELL_ACTIVE_AND_PREDICTIVE
-            self.__node.setColor(col)
+            self._node.setColor(col)
         elif self.predictive:
             col = COL_CELL_PREDICTIVE
-            self.__node.setColor(col)
+            self._node.setColor(col)
         elif self.active:
             col = COL_CELL_ACTIVE
-            self.__node.setColor(col)
+            self._node.setColor(col)
         elif self.presynapticFocus:
             col = COL_CELL_PRESYNAPTIC_FOCUS
-            self.__node.setColor(col)
+            self._node.setColor(col)
         else:
             COL_CELL_INACTIVE.setW(self.transparency)
             col = COL_CELL_INACTIVE
-            self.__node.setColor(col)
+            self._node.setColor(col)
 
     def setFocus(self):
         self.UpdateState(self.active, self.predictive, self.winner, True)  #no change except focus
@@ -134,14 +137,14 @@ class cCell:
 
         self.UpdateState(self.active, self.predictive, self.winner, self.focused, self.presynapticFocus)
         
-    def updateWireframe(self,value):
+    def updateWireframe(self, value):
         if value:
-            self.__node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
+            self._node.setRenderModeFilledWireframe(LColor(0,0,0,1.0))
         else:
-            self.__node.setRenderModeFilled()
+            self._node.setRenderModeFilled()
             
     def getNode(self):
-        return self.__node
+        return self._node
     
     def CreateDistalSynapses(self, HTMObject, layer, data, inputObjects):
 
@@ -200,7 +203,7 @@ class cCell:
                 vertex.addData3f(
                     presynCell
                     .getNode()
-                    .getPos(self.__node)
+                    .getPos(self._node)
                 )
                 vertex.addData3f(0, 0, 0)
                
@@ -214,7 +217,7 @@ class cCell:
                 node = GeomNode("DistalSynapse")
                 node.addGeom(geom)
                 
-                nodePath = self.__node.attachNewNode(node)
+                nodePath = self._node.attachNewNode(node)
                 
                 nodePath.setRenderModeThickness(2)
 
@@ -237,5 +240,5 @@ class cCell:
         return txt
 
     def DestroyDistalSynapses(self):
-        for syn in self.__node.findAllMatches("DistalSynapse"):
+        for syn in self._node.findAllMatches("DistalSynapse"):
             syn.removeNode()

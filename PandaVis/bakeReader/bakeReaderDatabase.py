@@ -9,7 +9,7 @@ def adapt_array(arr):
     return arr.tobytes()
 
 def convert_array(text):
-    return np.frombuffer(text,dtype=np.float32)
+    return np.frombuffer(text, dtype=np.float32)
 
 sqlite3.register_adapter(np.array, adapt_array)
 sqlite3.register_converter("array", convert_array)
@@ -18,7 +18,7 @@ def adapt_sdr(arr):
     return arr.tobytes()
 
 def convert_sdr(text):
-    return np.frombuffer(text,dtype=np.uint32)
+    return np.frombuffer(text, dtype=np.uint32)
 
 sqlite3.register_adapter(np.array, adapt_sdr)
 sqlite3.register_converter("sdr", convert_sdr)
@@ -98,7 +98,7 @@ class Database(object):
         
     # used on tables where iteration is unique value
     def SelectByIteration(self, tableName, iteration):
-
+        print(tableName)
         self.curs.execute("SELECT * FROM " + tableName + " WHERE iteration=(?);",(iteration,))
         self.conn.commit()
         data = self.curs.fetchone() # returns single row

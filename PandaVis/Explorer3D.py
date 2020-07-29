@@ -75,7 +75,7 @@ class cExplorer3D(ShowBase):
         self.allHTMobjectsCreated = False
         self.oneOfObjectsCreationFinished = False
 
-        self.gfxCreationThread= threading.Thread(target=self.gfxCreationWorker, args=())
+        self.gfxCreationThread = threading.Thread(target=self.gfxCreationWorker, args=())
 
         #----
         self.iterationDataUpdate = False
@@ -101,7 +101,7 @@ class cExplorer3D(ShowBase):
 
             printLog("HTM object creation! Name:" + str(obj))
             # create HTM object
-            newObj = cHTM(self, self.loader, obj)
+            newObj = cHTM(self, self.loader, obj, self.gui)
             newObj.getNode().reparentTo(self.render)
 
             # create regions
@@ -123,15 +123,13 @@ class cExplorer3D(ShowBase):
         for obj in self.HTMObjects:
 
             for reg in self.HTMObjects[obj].regions:
-                self.bakeReader.LoadActiveColumns(reg, iteration)
-                self.bakeReader.LoadWinnerCells(reg, iteration)
-                self.bakeReader.LoadPredictiveCells(reg, iteration+1)#take predictions for t+1
-                if self.gui.showPredictionCorrectness:
-                    self.bakeReader.LoadPredictiveCells(reg, iteration, loadPrevious=True)#take also predictions for t to be able to calculate correctness
-                self.bakeReader.LoadActiveCells(reg, iteration)
+                self.bakeReader.LoadAllRegionData(reg, iteration)
+
+                # we need to store also predictive cells for t+1
+                self.bakeReader.LoadRegionData(reg, iteration+1, "predictedCells", "next_predictedCells")
 
                 #self.bakeReader.LoadProximalSynapses(reg,[self.gui.columnID,], iteration)
-                #can't load distal synapses here, because they are a big size
+                # can't load distal synapses here, because they are a big size
                 # loading just for one cell per - user click
 
 
@@ -142,22 +140,14 @@ class cExplorer3D(ShowBase):
         printLog("Data change! Updating HTM state", verbosityMedium)
 
         self.gui.setIteration(self.iteration)
-        obj = "HTM1"
+        obj = "HTM1"  # hardcoded for now
 
         # go through all regions
         for reg in self.bakeReader.regions:  # dict
             if self.HTMObjects[obj].regions[reg].gfxCreationFinished:
                 printLog("Updating state of region: " + str(reg), verbosityHigh)
-                # find matching layer in local structure
-                self.HTMObjects[obj].regions[reg].UpdateState(
-                    self.bakeReader.regions[reg].activeColumns,
-                    self.bakeReader.regions[reg].activeCells,
-                    self.bakeReader.regions[reg].winnerCells,
-                    self.bakeReader.regions[reg].predictiveCells,
-                    self.bakeReader.regions[reg].prev_predictiveCells,
-                    showPredictionCorrectness=self.gui.showPredictionCorrectness,
-                    showBursting = self.gui.showBursting
-                )
+
+                self.HTMObjects[obj].regions[reg].UpdateState(self.bakeReader.regions[reg])
 
         self.oneOfObjectsCreationFinished = False
 
@@ -272,4 +262,10 @@ class cExplorer3D(ShowBase):
             if self.gui.terminating:
                 break
         printLog("GFX worker: quit")
+
+if __name__ == "__main__":
+    import sys
+    app = cExplorer3D(sys.argv[1])  # first argument is database path
+    app.run()
+
 
