@@ -16,7 +16,7 @@ class cColumnPoolerRegion(cRegion):
         self.subObjects = self.cells
 
     def getVerticalSize(self):
-        return 10
+        return 3
 
     def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
         super().UpdateState(regionData)

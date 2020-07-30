@@ -23,7 +23,7 @@ class cApicalTMPairRegion(cRegion):
 
 
     def getVerticalSize(self):
-        return 10
+        return 3
 
     def UpdateState(self, regionData):
         super().UpdateState(regionData)
