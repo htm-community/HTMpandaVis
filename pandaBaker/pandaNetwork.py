@@ -33,8 +33,10 @@ class Network(BaseNetwork):
         structure["regions"] = regions
         structure["links"] = links
 
+        #print(self.getSpecJSON("py.ColumnPoolerRegion"))
         for region in self.getRegions():
-            print(region[1])
+            print(region[1].getType())
+            print(region[1].getParameters())
             regions[region[0]] = [region[1].getType(), region[1]]
 
         i = 0

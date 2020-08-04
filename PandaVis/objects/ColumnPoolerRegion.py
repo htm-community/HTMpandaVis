@@ -6,7 +6,7 @@ class cColumnPoolerRegion(cRegion):
     def __init__(self, name, cellData, gui):
         super().__init__(name, cellData, gui)
 
-        self.cellCount = 2048
+        self.cellCount = self.parameters["cellCount"]# 2048
         self.cells = []
 
         for i in range(self.cellCount):

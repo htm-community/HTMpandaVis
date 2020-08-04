@@ -147,8 +147,9 @@ def getOutputsOfRegion(regionType):
 def getParametersOfRegion(regionType, regionInstance):
     if 'py.' in regionType:
         # python region
-        regionTypeClass = eval(regionType.split('.')[1])# get rid of the py. in py.ColumnPoolerRegion for example
-        parList = list(regionTypeClass.getSpec()['parameters'].keys())
+        parList = json.loads(regionInstance.getParameters())
+        #regionTypeClass = eval(regionType.split('.')[1])# get rid of the py. in py.ColumnPoolerRegion for example
+        #parList = list(regionTypeClass.getSpec()['parameters'].keys())
 
         resultDict = {}
         #for par in parList:
@@ -163,7 +164,7 @@ def getParametersOfRegion(regionType, regionInstance):
         return resultDict
     else:
         # c++ region
-        return list(eval(regionType).getSpec()['parameters'].keys())
+        return json.loads(regionInstance.getParameters())
 
 def Log(s):
     print(str(s))
