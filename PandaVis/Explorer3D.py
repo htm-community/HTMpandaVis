@@ -16,7 +16,10 @@ from panda3d.core import loadPrcFileData, GraphicsWindow
 
 loadPrcFileData('', 'win-size 1600 900')
 
-#import faulthandler; faulthandler.enable()
+from panda3d.core import Thread
+print(Thread.isThreadingSupported())
+
+import faulthandler; faulthandler.enable()
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -242,7 +245,7 @@ class cExplorer3D(ShowBase):
 
     def gfxCreationWorker(self):
 
-        time.sleep(5) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
+        time.sleep(20) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
         printLog("Starting GFX worker thread")
         while True:
             # finishing HTM objects creation on the run

@@ -65,7 +65,7 @@ class PandaBaker(object):
         self.db.CreateTable(tableName, "region TEXT, regionType TEXT, parameters TEXT")
 
         for regionName, regionInstance in structure["regions"].items():
-            self.db.Insert(tableName, regionName,regionInstance[0], json.dumps(getParametersOfRegion(regionInstance[0], regionInstance[1])))
+            self.db.Insert(tableName, regionName,regionInstance[0], json.dumps(regionInstance[1].getParameters()))
 
         self.db.CreateTable('links',
                             "id INTEGER, sourceRegion TEXT, sourceOutput TEXT, destinationRegion TEXT, destinationInput TEXT")
@@ -144,27 +144,6 @@ def getOutputsOfRegion(regionType):
         # c++ region
         return list(eval(regionType).getSpec()['outputs'].keys())
 
-def getParametersOfRegion(regionType, regionInstance):
-    if 'py.' in regionType:
-        # python region
-        parList = json.loads(regionInstance.getParameters())
-        #regionTypeClass = eval(regionType.split('.')[1])# get rid of the py. in py.ColumnPoolerRegion for example
-        #parList = list(regionTypeClass.getSpec()['parameters'].keys())
-
-        resultDict = {}
-        #for par in parList:
-            # regionInstance.__class__ = regionTypeClass
-            # print(regionInstance)
-            # print(par)
-            # print(type(regionInstance))
-            # import inspect
-            # print(inspect.getmembers(ApicalTMPairRegion, predicate=inspect.ismethod))
-            # resultDict[par] = eval("regionInstance."+par)
-        resultDict = parList
-        return resultDict
-    else:
-        # c++ region
-        return json.loads(regionInstance.getParameters())
 
 def Log(s):
     print(str(s))

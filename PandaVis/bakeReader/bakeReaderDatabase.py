@@ -98,7 +98,6 @@ class Database(object):
         
     # used on tables where iteration is unique value
     def SelectByIteration(self, tableName, iteration):
-        print(tableName)
         self.curs.execute("SELECT * FROM " + tableName + " WHERE iteration=(?);",(iteration,))
         self.conn.commit()
         data = self.curs.fetchone() # returns single row

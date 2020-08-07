@@ -8,21 +8,18 @@ class cGridCellLocationRegion(cRegion):
 
     self.gridCellModules = []
 
-    self.gridCellModulesCount = 5;
-    self.cellPerAxis = 10
-    self.dimensions = 2
-
-    if self.dimensions != 2:
-      raise RuntimeError("Dimension of GridCellLocation Region must be 2!")
+    self.gridCellModulesCount = self.parameters["moduleCount"]
+    self.cellPerAxis = self.parameters["cellsPerAxis"]
+    self.dimensions = self.parameters["dimensions"]
 
     for i in range(self.gridCellModulesCount):
-      c = cGridCellModule(name)
+      c = cGridCellModule(self.cellPerAxis)  # each with own scale and orientation
       self.gridCellModules.append(c)
 
     self.subObjects = self.gridCellModules
 
-    self.SUBOBJ_DISTANCE_X = 3
-    self.SUBOBJ_DISTANCE_Y = 2
+    self.SUBOBJ_DISTANCE_X = 0.2 * self.cellPerAxis
+    self.SUBOBJ_DISTANCE_Y = 0.3 * self.cellPerAxis
 
   def getVerticalSize(self):
     return 3

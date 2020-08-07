@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 
 from objects.minicolumn import cMinicolumn
+from objects.gridCellModule import cGridCellModule
 from panda3d.core import NodePath, PandaNode, TextNode
 import warnings
 
@@ -73,7 +74,7 @@ class cRegion(ABC):
             if not o.gfxCreated:
                 o.CreateGfx(self.loader, self.offset_idx)
                 self.offset_idx += 1
-                o.getNode().setPos(self.offset_row * self.SUBOBJ_DISTANCE_X, self.offset_y, 0)
+                o.getNode().setPos(self.offset_row * self.SUBOBJ_DISTANCE_X, self.offset_y * self.SUBOBJ_DISTANCE_Y, 0)
                 self.offset_y += self.SUBOBJ_DISTANCE_Y
 
                 if self.offset_y > cRegion.ONE_ROW_SIZE:
@@ -134,7 +135,7 @@ class cRegion(ABC):
 
     def LODUpdateSwitch(self, lodDistance, lodDistance2):
         for obj in self.subObjects:
-            if isinstance(obj, cMinicolumn):
+            if isinstance(obj, cMinicolumn) or isinstance(obj, cGridCellModule):
                 obj.LODUpdateSwitch(lodDistance, lodDistance2)
 
     def resetPresynapticFocus(self):

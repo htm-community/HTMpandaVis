@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-
+import json
 
 # structs for easier manipulation with data from database
 class cLinkData:
@@ -13,7 +13,7 @@ class cLinkData:
 class cRegionData:
     def __init__(self, type, parameters):
         self.type = type
-        self.parameters = parameters
+        self.parameters = json.loads(json.loads(parameters))  # must parse it twice, because sqlite adds backslashes like \\n and \\"
 
         # dict containing data like "activeCells", "predictiveCells" etc.. these corresponds to region outputs
         self.data = {}  # if empty, it contains np.empty(0)
