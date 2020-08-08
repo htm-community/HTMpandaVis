@@ -78,7 +78,8 @@ class cExplorer3D(ShowBase):
         self.allHTMobjectsCreated = False
         self.oneOfObjectsCreationFinished = False
 
-        self.gfxCreationThread = threading.Thread(target=self.gfxCreationWorker, args=())
+        self.taskMgr.add(self.gfxCreationWorker, "gfxCreation")
+        #self.gfxCreationThread = threading.Thread(target=self.gfxCreationWorker, args=())
 
         #----
         self.iterationDataUpdate = False
@@ -117,7 +118,7 @@ class cExplorer3D(ShowBase):
 
             self.HTMObjects[obj] = newObj
 
-            self.gfxCreationThread.start()
+            #self.gfxCreationThread.start()
 
 
     def LoadIteration(self, iteration):
@@ -243,28 +244,27 @@ class cExplorer3D(ShowBase):
 
         return task.cont
 
-    def gfxCreationWorker(self):
-
-        time.sleep(20) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
+    def gfxCreationWorker(self, task):
+        #time.sleep(20) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
         printLog("Starting GFX worker thread")
-        while True:
-            # finishing HTM objects creation on the run
-            if not self.allHTMobjectsCreated:
-                allFinished = True
-                for obj in self.HTMObjects:
-                    if not self.HTMObjects[obj].gfxCreationFinished:
-                        allFinished = False
-                        self.HTMObjects[obj].CreateGfxProgressively()
+        # finishing HTM objects creation on the run
+        if not self.allHTMobjectsCreated:
+            allFinished = True
+            for obj in self.HTMObjects:
+                if not self.HTMObjects[obj].gfxCreationFinished:
+                    allFinished = False
+                    self.HTMObjects[obj].CreateGfxProgressively()
 
-                        if self.HTMObjects[obj].gfxCreationFinished:  # it just finished GFX creation
-                            self.oneOfObjectsCreationFinished = True
-                if allFinished:
-                    self.allHTMobjectsCreated = True
-                    printLog("GFX worker: all objects finished")
-                    break
-            if self.gui.terminating:
-                break
-        printLog("GFX worker: quit")
+                    if self.HTMObjects[obj].gfxCreationFinished:  # it just finished GFX creation
+                        self.oneOfObjectsCreationFinished = True
+            if allFinished:
+                self.allHTMobjectsCreated = True
+                printLog("GFX worker: all objects finished")
+
+        if self.allHTMobjectsCreated or self.gui.terminating:
+            return 0 # this return causes not to call this method anymore
+        else:
+            return task.cont
 
 if __name__ == "__main__":
     import sys
