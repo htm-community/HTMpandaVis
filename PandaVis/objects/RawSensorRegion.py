@@ -15,7 +15,7 @@ class cRawSensorRegion(cRegion):
       self.subObjects = self.cells
 
     def getVerticalSize(self):
-      return 2
+      return 1
 
     def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
       super().UpdateState(regionData)

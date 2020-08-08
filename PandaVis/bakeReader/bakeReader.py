@@ -30,7 +30,7 @@ class BakeReader(object):
         self.db = Database(self.databaseFilePath)  # connect to the database
 
     def LoadParameters(self):
-        regions = self.db.SelectAll('region_parameters')
+        regions = self.db.SelectAll('region_parameters', orderAscending = False) # reversed alphabetical order
 
         resultRegions = {}
         for region in regions:
@@ -63,7 +63,8 @@ class BakeReader(object):
         self.links = links
 
         # figure out how many iterations there are
-        self.cntIterations = self.LoadMaxIteration("region__"+next(iter(self.regions))+"__activeCells")# get first region
+
+        self.cntIterations = self.LoadMaxIteration(next(x for x in self.tableNames if x.endswith("activeCells")))# get first region
         if self.cntIterations is None:
             raise RuntimeError("Database contains no data!")
         Log("Database contains data for "+str(self.cntIterations)+" iterations.")

@@ -18,12 +18,18 @@ class cGridCellLocationRegion(cRegion):
 
     self.subObjects = self.gridCellModules
 
-    self.SUBOBJ_DISTANCE_X = 0.2 * self.cellPerAxis
-    self.SUBOBJ_DISTANCE_Y = 0.3 * self.cellPerAxis
+    self.MODULE_OFFSET = c.width*0.2 # space between modules
+
+    self.SUBOBJ_DISTANCE_X = c.width + self.MODULE_OFFSET # take some module width and add space between modules
+    self.SUBOBJ_DISTANCE_Y = c.width + self.MODULE_OFFSET # take some module width and add space between modules
 
   def getVerticalSize(self):
-    return 3
+    return 1 + 10
 
 
   def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
-    return
+    idx = 0
+    moduleCellsCnt = self.cellPerAxis*self.cellPerAxis
+    for module in self.gridCellModules:
+      module.UpdateState(regionData.data["activeCells"][idx*moduleCellsCnt : moduleCellsCnt + idx*moduleCellsCnt]) # take over only appropriate active cells for each module
+      idx+=1

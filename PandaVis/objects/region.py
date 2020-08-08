@@ -5,11 +5,12 @@ from abc import ABC, abstractmethod
 from objects.minicolumn import cMinicolumn
 from objects.gridCellModule import cGridCellModule
 from panda3d.core import NodePath, PandaNode, TextNode
+import math
 import warnings
 
 
 class cRegion(ABC):
-    ONE_ROW_SIZE = 150
+
     MAX_CREATED_OBJ_PER_CYCLE = 50
 
     def __init__(self, name, cellData, gui):
@@ -21,19 +22,23 @@ class cRegion(ABC):
 
 
         # for creation of GFX
-        self.offset_y = 0
-        self.offset_idx = 0
-        self.offset_row = 0
         self.loader = None
         self.gfxCreationFinished = False
         self._node = None
         self.text = None
 
         # can be overidden by derived classes
-        self.SUBOBJ_DISTANCE_X = 1.5
-        self.SUBOBJ_DISTANCE_Y = 1.5
+        self.SUBOBJ_DISTANCE_X = 2
+        self.SUBOBJ_DISTANCE_Y = 2
 
         self.subObjects = []  # subObjects can be now minicolumn or cells
+
+        # determine how many object must be in one row to achieve square like placement
+        self.offset_idx = 0
+        self.offset_x = 0
+        self.offset_y = 0
+        self.SUBOBJ_PER_ROW = 0
+
 
     def CreateGfx(self, loader):
 
@@ -53,9 +58,6 @@ class cRegion(ABC):
         self._node.setScale(1, 1, 1)
 
         self.loader = loader
-        self.offset_y = 0
-        self.offset_idx = 0
-        self.offset_row = 0
 
         print("GFX created for "+self.name)
 
@@ -70,16 +72,20 @@ class cRegion(ABC):
         currentlyCreatedObjs = 0
         allFinished = True
 
+        if self.SUBOBJ_PER_ROW == 0:
+            self.SUBOBJ_PER_ROW = int(math.sqrt(len(self.subObjects)))
+
+
         for o in self.subObjects:
             if not o.gfxCreated:
                 o.CreateGfx(self.loader, self.offset_idx)
                 self.offset_idx += 1
-                o.getNode().setPos(self.offset_row * self.SUBOBJ_DISTANCE_X, self.offset_y * self.SUBOBJ_DISTANCE_Y, 0)
-                self.offset_y += self.SUBOBJ_DISTANCE_Y
+                o.getNode().setPos(self.offset_x * self.SUBOBJ_DISTANCE_X, self.offset_y * self.SUBOBJ_DISTANCE_Y, 0)
+                self.offset_y += 1
 
-                if self.offset_y > cRegion.ONE_ROW_SIZE:
+                if self.offset_idx % self.SUBOBJ_PER_ROW == 0:
                     self.offset_y = 0
-                    self.offset_row += 1
+                    self.offset_x += 1
                 o.getNode().reparentTo(self._node)
                 o.gfxCreated = True
                 currentlyCreatedObjs += 1

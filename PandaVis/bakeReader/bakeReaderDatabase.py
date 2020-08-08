@@ -81,9 +81,9 @@ class Database(object):
 
         return table_names
         
-    def SelectAll(self, tableName):
+    def SelectAll(self, tableName, orderAscending = True):
 
-        self.curs.execute("SELECT * FROM " + tableName + ";")
+        self.curs.execute("SELECT * FROM " + tableName + " order by region desc" if not orderAscending else "" +";")
         self.conn.commit()
         data = self.curs.fetchall()
 

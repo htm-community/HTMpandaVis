@@ -20,7 +20,7 @@ verbosityMedium = 1
 verbosityHigh = 2
 FILE_VERBOSITY = verbosityHigh  # change this to change printing verbosity of this file
 
-CELL_OFFSET = 0.4 # space between cells
+
 
 
 def printLog(txt, verbosity=verbosityLow):
@@ -33,6 +33,8 @@ class cGridCellModule:
     self.cells = []
     self.nOfCellsPerAxis = nOfCellsPerAxis
 
+    self.CELL_OFFSET = 0.4 # space between cells
+
 
     for i in range(nOfCellsPerAxis*nOfCellsPerAxis):
       self.cells.append(cCell(self))
@@ -43,6 +45,8 @@ class cGridCellModule:
     self.gfxCreated = False
     self.LodDistance1Stored = 100.0
     self.LodDistance2Stored = 5000.0
+
+    self.width = self.nOfCellsPerAxis * (1 + self.CELL_OFFSET) # width of the module
 
 
   def CreateGfx(self, loader, idx):
@@ -61,18 +65,18 @@ class cGridCellModule:
 
     # self.__node.setTag('clickable',str(idx))#to be able to click on it
 
-    width = self.nOfCellsPerAxis * (1 + CELL_OFFSET)/2
 
-    self.__columnBox = loader.loadModel(os.path.join(os.getcwd(), "models/cube"))
-    self.__columnBox.setPos(
-      0.0,0.0,0.0#-width/2, -width/2, 0.0
+
+    self.__rhombusEnvelope = loader.loadModel(os.path.join(os.getcwd(), "models/rhombus"))
+    self.__rhombusEnvelope.setPos(
+      self.width/2, self.width/2, 0.0
     )
 
 
-    self.__columnBox.setScale(
-      width, width, 0.5
+    self.__rhombusEnvelope.setScale(
+      self.width/2, self.width/2, 0.5
     )
-    self.__columnBox.setName("columnBox")
+    self.__rhombusEnvelope.setName("columnBox")
 
     self.__cellsNodePath = NodePath(
       PandaNode("cellsNode")
@@ -86,7 +90,7 @@ class cGridCellModule:
     self.lod.addSwitch(5000.0, 100.0)
 
     self.__cellsNodePath.reparentTo(self.__node)
-    self.__columnBox.reparentTo(self.__node)
+    self.__rhombusEnvelope.reparentTo(self.__node)
 
     x = 0
     y = 0
@@ -95,7 +99,7 @@ class cGridCellModule:
       n.CreateGfx(loader, idx)
       idx += 1
 
-      pos = self._TransformRhombToGlob([x, y], 1+CELL_OFFSET, 0.0)
+      pos = self._TransformRhombToGlob([x, y], 1+self.CELL_OFFSET, 0.0)
 
       n.getNode().setPos(pos[0], pos[1], 0)
 
@@ -147,8 +151,13 @@ class cGridCellModule:
   def LODUpdateSwitch_normal(self):
     self.LODUpdateSwitch(self.lodDistance1Stored, self.lodDistance2Stored)
 
-  def UpdateState(self):
-    pass
+  def UpdateState(self, activeCells):
+    for cellID in range(len(self.cells)):  # for each cell
+      isActive = activeCells[cellID]
+
+      self.cells[cellID].UpdateState(active=isActive, predictive=False, winner=False, focused=False,
+                                     presynapticFocus=False,
+                                     showPredictionCorrectness=False, prev_predictive=False)
 
   def getNode(self):
     return self.__node
@@ -157,17 +166,15 @@ class cGridCellModule:
     for cell in self.cells:
       cell.updateWireframe(value)
     if value:
-      self.__columnBox.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
+      self.__rhombusEnvelope.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
     else:
-      self.__columnBox.setRenderModeFilled()
+      self.__rhombusEnvelope.setRenderModeFilled()
 
 
   def setTransparency(self, transparency):
     self.transparency = transparency
     for cell in self.cells:
       cell.setTransparency(transparency)
-
-    self.UpdateState()
 
   def DestroyProximalSynapses(self):
     if not self.gfxCreated:

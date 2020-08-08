@@ -66,7 +66,7 @@ class cHTM:
         region.getNode().reparentTo(self.__node)
         # self.__node = NodePath()
 
-        cHTM.layerOffset += region.getVerticalSize() + 40
+        cHTM.layerOffset += region.getVerticalSize() + 20
 
 
     def getNode(self):

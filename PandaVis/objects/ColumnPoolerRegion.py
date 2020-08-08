@@ -15,8 +15,14 @@ class cColumnPoolerRegion(cRegion):
 
         self.subObjects = self.cells
 
+        self.CELL_OFFSET = 0.4  # space between cells
+
+        self.SUBOBJ_DISTANCE_X = 1 + self.CELL_OFFSET
+        self.SUBOBJ_DISTANCE_Y = 1 + self.CELL_OFFSET
+
+
     def getVerticalSize(self):
-        return 3
+        return 1
 
     def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
         super().UpdateState(regionData)

@@ -57,12 +57,12 @@ class cInteraction:
 
         move_x = deltaT * speed * -self.keys["a"] + deltaT * speed * self.keys["d"]
         move_y = deltaT * speed * self.keys["s"] + deltaT * speed * -self.keys["w"]
-        self.base.move_z += (
+        self.base.move_z = (
             deltaT * speed * self.keys["shift"] + deltaT * speed * -self.keys["control"]
         )
 
         self.base.camera.setPos(self.base.camera, move_x, -move_y, 0)
-        self.base.camera.setZ(self.base.move_z)
+        self.base.camera.setZ(self.base.camera.getPos()[2] + self.base.move_z)
 
         self.base.camHeading += (
             deltaT * 90 * self.keys["arrow_left"]

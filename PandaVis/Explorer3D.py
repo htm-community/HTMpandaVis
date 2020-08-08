@@ -16,8 +16,6 @@ from panda3d.core import loadPrcFileData, GraphicsWindow
 
 loadPrcFileData('', 'win-size 1600 900')
 
-from panda3d.core import Thread
-print(Thread.isThreadingSupported())
 
 import faulthandler; faulthandler.enable()
 
@@ -44,7 +42,7 @@ class cExplorer3D(ShowBase):
         self.mouseX_last = 0
         self.mouseY_last = 0
         self.rotateCamera = False
-        self.move_z = 50
+        self.move_z = 0
 
         self.env = cEnvironment(self)
         
@@ -61,6 +59,7 @@ class cExplorer3D(ShowBase):
             self.loader,
             visApp = self
         )
+        self.env.SetCameraLoc(self.gui.cameraStartLoc)
 
         self.databaseFilePath = databaseFilePath
 
@@ -236,7 +235,7 @@ class cExplorer3D(ShowBase):
         if self.gui.capture:
             self.LoadIteration(self.autoRunIteration)
             self.autoRunIteration += 1
-            if self.autoRunIteration > 997:
+            if self.autoRunIteration > self.gui.cntIterations:
                 self.gui.capture =False
                 os.system("ffmpeg -y -framerate 10 -i screenshots/%01d.jpg -codec copy screenshots/recording.mkv")
             self.win.saveScreenshot('screenshots/'+str(self.autoRunIteration)+'.jpg')
@@ -246,7 +245,7 @@ class cExplorer3D(ShowBase):
 
     def gfxCreationWorker(self, task):
         #time.sleep(20) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
-        printLog("Starting GFX worker thread")
+        #printLog("Starting GFX worker thread")
         # finishing HTM objects creation on the run
         if not self.allHTMobjectsCreated:
             allFinished = True

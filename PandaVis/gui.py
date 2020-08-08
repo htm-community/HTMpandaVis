@@ -74,6 +74,8 @@ class cGUI:
         self.iteration = 0
         self.cntIterations = 0
 
+        self.cameraStartLoc = self.getDefault("cameraStartLoc")
+
 
 
         layout = [[sg.Text('Iteration no. 0     ', key = 'iteration')],
@@ -138,6 +140,7 @@ class cGUI:
             self.defaults["legendWinPos"] = self.legend.window.current_location()
         if self.description is not None:
             self.defaults["descWinPos"] = self.description.window.current_location()
+        self.defaults["cameraStartLoc"] = self.visApp.env.GetCameraLoc()
 
     def update(self):
 
