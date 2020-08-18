@@ -126,14 +126,14 @@ class PandaBaker(object):
             #     f.write("2")
             #     f.close()
 
-            # ---------------- DATA STREAMS -----------------------------------
+        # ---------------- DATA STREAMS -----------------------------------
 
-            for pl in self.dataStreams:
-                tableName = 'dataStream_' + pl
-                
-                if(type(self.dataStreams[pl].value)not in [float, int]):
-                    raise RuntimeError("Datatype:"+str(type(self.dataStreams[pl].value))+" is not supported!")
-                self.db.InsertDataArray(tableName, iteration, self.dataStreams[pl].value)
+        for pl in self.dataStreams:
+            tableName = 'dataStream_' + pl
+
+            if(type(self.dataStreams[pl].value)not in [float, int]):
+                raise RuntimeError("Datatype:"+str(type(self.dataStreams[pl].value))+" is not supported!")
+            self.db.InsertDataArray(tableName, iteration, self.dataStreams[pl].value)
 
 
 def getOutputsOfRegion(regionType):
