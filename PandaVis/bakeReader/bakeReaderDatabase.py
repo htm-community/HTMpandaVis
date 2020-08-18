@@ -83,7 +83,7 @@ class Database(object):
         
     def SelectAll(self, tableName, orderAscending = True):
 
-        self.curs.execute("SELECT * FROM " + tableName + " order by region desc" if not orderAscending else "" +";")
+        self.curs.execute("SELECT * FROM " + tableName + (" order by region desc" if not orderAscending else "") +";")
         self.conn.commit()
         data = self.curs.fetchall()
 

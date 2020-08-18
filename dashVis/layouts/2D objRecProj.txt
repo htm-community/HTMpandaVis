@@ -1,0 +1,7 @@
+{"plotsPerRow" : 3,
+"streams": [{"name" : "sparsity",
+			 "type" : "line",
+			 "yaxis": "sparsity"}
+		   ]
+}
+

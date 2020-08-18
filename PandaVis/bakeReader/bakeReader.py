@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from bakeReader.bakeReaderDatabase import Database
-from bakeReader.dataStructs import cLinkData, cRegionData
+from bakeReader.dataStructs import cLinkData, cRegionData, cDataStream
 
 import numpy as np
 import os
@@ -28,6 +28,10 @@ class BakeReader(object):
 
     def OpenDatabase(self):
         self.db = Database(self.databaseFilePath)  # connect to the database
+        Log("Opening "+str(self.databaseFilePath))
+
+        # load all table names to be able then to check if table exists quickly
+        self.tableNames = self.db.getTableNames()
 
     def LoadParameters(self):
         regions = self.db.SelectAll('region_parameters', orderAscending = False) # reversed alphabetical order
@@ -41,9 +45,6 @@ class BakeReader(object):
         resultLinks = {}
         for link in links:
             resultLinks[link['id']] = cLinkData(link['sourceRegion'], link['sourceOutput'], link['destinationRegion'], link['destinationInput'])
-
-        # load all table names to be able then to check if table exists quickly
-        self.tableNames = self.db.getTableNames()
 
         return resultRegions, resultLinks
 
@@ -71,7 +72,6 @@ class BakeReader(object):
 
     def LoadDataStreams(self):
         # DATA STREAMS - loaded all at once
-
         parStreamTables = [q for q in self.tableNames if q.startswith("dataStream_")]
         for streamTable in parStreamTables:
             streamName = streamTable.replace("dataStream_","")
