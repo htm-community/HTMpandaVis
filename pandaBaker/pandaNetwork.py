@@ -18,6 +18,7 @@ class Network(BaseNetwork):
         super().__init__()
 
     def run(self, n):
+        self.iteration += n
         if not self.bakePandaData:
             super().run(n)  # if not baking, just run as normal
             return

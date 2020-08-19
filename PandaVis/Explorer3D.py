@@ -233,12 +233,16 @@ class cExplorer3D(ShowBase):
 
 
         if self.gui.capture:
+            path = os.path.join(os.path.dirname(self.databaseFilePath),"capture")
+            if not os.path.exists(path):
+                os.makedirs(path)
+
             self.LoadIteration(self.autoRunIteration)
             self.autoRunIteration += 1
             if self.autoRunIteration > self.gui.cntIterations:
                 self.gui.capture =False
-                os.system("ffmpeg -y -framerate 10 -i screenshots/%01d.jpg -codec copy screenshots/recording.mkv")
-            self.win.saveScreenshot('screenshots/'+str(self.autoRunIteration)+'.jpg')
+                os.system("ffmpeg -y -framerate 10 -i "+path+"/%01d.jpg -codec copy "+path+"/recording.mkv")
+            self.win.saveScreenshot(path+'/'+str(self.autoRunIteration)+'.jpg')
 
 
         return task.cont
