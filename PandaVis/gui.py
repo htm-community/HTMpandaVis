@@ -75,8 +75,11 @@ class cGUI:
         self.cntIterations = 0
 
         self.cameraStartLoc = self.getDefault("cameraStartLoc")
-
-
+        # timer to once upon a time save window position
+        # the problem behind this is, that we cant get win pos when user closes the window
+        # with cross button, because the event gets called when the window is already destroyed
+        self.tmrSaveWinPos = 100
+        self.lastWinPos = [0, 0]
 
         layout = [[sg.Text('Iteration no. 0     ', key = 'iteration')],
                   [sg.Button('STEP -1'), sg.Button('STEP +1')],
@@ -135,7 +138,7 @@ class cGUI:
                     print(e)
                     print("Default not for:"+str(o))
 
-        self.defaults["mainWinPos"] = self.window.current_location()
+        self.defaults["mainWinPos"] = self.lastWinPos
         if self.legend is not None:
             self.defaults["legendWinPos"] = self.legend.window.current_location()
         if self.description is not None:
@@ -175,6 +178,12 @@ class cGUI:
         if event is None or event == 'Exit':#gui was closed separately by user
             self.Terminate()
             return
+
+        if self.tmrSaveWinPos > 100:
+            self.lastWinPos = self.window.current_location()
+            self.tmrSaveWinPos = 0
+        else:
+            self.tmrSaveWinPos += 1
 
         if event != '__TIMEOUT__':
 
@@ -270,7 +279,6 @@ class cGUI:
 
 
     def Terminate(self): #  event when app exit
-        self.terminating = True
         self.retrieveDefaults()
         try:
             with open('guiValues.ini', 'w') as file:
@@ -278,3 +286,4 @@ class cGUI:
         except:
             self.defaults = {}
             print("Wasn't able to save defaults into file guiValues.ini !!")
+        self.terminating = True # this will terminate main app

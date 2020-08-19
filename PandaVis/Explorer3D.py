@@ -6,6 +6,7 @@ from bakeReader.bakeReader import BakeReader
 import math
 import os
 import time
+import sys
 
 from objects.htmObject import cHTM
 from gui import cGUI # Graphical user interface
@@ -244,6 +245,8 @@ class cExplorer3D(ShowBase):
                 os.system("ffmpeg -y -framerate 10 -i "+path+"/%01d.jpg -codec copy "+path+"/recording.mkv")
             self.win.saveScreenshot(path+'/'+str(self.autoRunIteration)+'.jpg')
 
+        if self.gui.terminating:
+            sys.exit()
 
         return task.cont
 
