@@ -18,12 +18,11 @@ class Network(BaseNetwork):
         super().__init__()
 
     def run(self, n):
-        self.iteration += n
         if not self.bakePandaData:
             super().run(n)  # if not baking, just run as normal
             return
 
-        print("Running "+str(n)+" times")
+        print("Running "+str(n)+" times (iter."+str(self.iteration)+")")
         for i in range(n):
             super().run(1)
             if self.firstRun:
