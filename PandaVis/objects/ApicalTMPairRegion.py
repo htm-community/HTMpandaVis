@@ -6,8 +6,8 @@ class cApicalTMPairRegion(cRegion):
     def __init__(self, name, cellData, gui):
         super().__init__(name, cellData, gui)
 
-        self.columnCount = 240
-        self.nOfCellsPerColumn = 10
+        self.columnCount = self.parameters["columnCount"]
+        self.nOfCellsPerColumn = self.parameters["cellsPerColumn"]
 
         self.minicolumns = []
 

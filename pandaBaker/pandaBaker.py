@@ -6,12 +6,18 @@ import numpy as np
 import os
 import json
 import time
-from htm.bindings.algorithms import TemporalMemory
-import multiprocessing as mp
-from multiprocessing import Pool
-from multiprocessing import get_context
+
+#import multiprocessing as mp
+#from multiprocessing import Pool
+#from multiprocessing import get_context
 
 from htm.bindings.sdr import SDR
+
+#algorithm classes
+from htm.bindings.algorithms import TemporalMemory
+from htm.advanced.algorithms.apical_tiebreak_temporal_memory import ApicalTiebreakTemporalMemory
+
+
 # import all python regions
 from htm.advanced.regions.ApicalTMPairRegion import ApicalTMPairRegion
 from htm.advanced.regions.ApicalTMSequenceRegion import ApicalTMSequenceRegion
@@ -22,9 +28,7 @@ from htm.advanced.regions.RawSensor import RawSensor
 from htm.advanced.regions.RawValues import RawValues
 
 
-CPU_CORES = 4
-
-a= ColumnPoolerRegion()
+#CPU_CORES = 4
 
 class PandaBaker(object):
     def __init__(self, databaseFilePath, bakeProximalSynapses = True, bakeDistalSynapses = True):
@@ -79,15 +83,16 @@ class PandaBaker(object):
                 self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
             #self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data array")#using float numpy array, not sparse SDR
 
-        # data streams ----------------
-        for pl in self.dataStreams:
-            if(pl.find(' ')!=-1):
-                raise RuntimeError("Name of datastream can't contain whitespaces. Name:"+str(pl))
-        
-            tableName = 'dataStream_' + pl
-            self.db.CreateTable(tableName, "iteration INTEGER PRIMARY KEY, value " + self.dataStreams[pl].dataType)
-
         self.CommitBatch()
+
+    def CreateDataStream(self, datastreamName, datastreamInstance): # datastreams are created on-the-go to avoid non-comfortable defining at start
+        self.dataStreams[datastreamName] = datastreamInstance # add it
+        # data streams ----------------
+        if (datastreamName.find(' ') != -1):
+            raise RuntimeError("Name of datastream can't contain whitespaces. Name:" + str(datastreamName))
+
+        tableName = 'dataStream_' + datastreamName
+        self.db.CreateTable(tableName, "iteration INTEGER PRIMARY KEY, value " + datastreamInstance.dataType)
 
     def CommitBatch(self):# writes to the file, do it reasonably, it takes time
         self.db.conn.commit()
@@ -104,27 +109,33 @@ class PandaBaker(object):
                 self.db.InsertDataArray('region__'+regName+'__'+out,
                                 iteration, regionOutArr)
 
+            dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
 
 
-            # dumpFilePath = os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump",""+str(ly)+"_"+str(iteration)+".dump")
-            #
-            # if isinstance(layer.tm, TemporalMemory):
-            #     layer.tm.saveToFile(dumpFilePath)
-            #
-            #     f = open(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump", str(ly)+"_version.txt"), 'wt')
-            #     f.write("1")
-            #     f.close()
-            # else:
-            #     #if apicalTM from advanced code
-            #     byteStream = layer.tm.basalConnections.save()
-            #     f = open(dumpFilePath, 'wb')
-            #     f.write(byteStream)
-            #     f.close()
-            #
-            #     f = open(os.path.join(os.path.splitext(self.databaseFilePath)[0] + "_distalDump",
-            #                                        str(ly) + "_version.txt"), 'wt')
-            #     f.write("2")
-            #     f.close()
+            print(str(regName) + " is type of "+str(type(regInstance[1])))
+            object_methods = [method_name for method_name in dir(regInstance[1])
+                              if callable(getattr(regInstance[1], method_name))]
+            conn = regInstance[1].getConnections("dummyName")
+            print(object_methods)
+            if regInstance[0]=="py.ApicalTMPairRegion":
+                regInstance[0].__class__ = ApicalTiebreakTemporalMemory
+                byteStream = regInstance[1].basalConnections.save()
+            if isinstance(regInstance[1], TemporalMemory):
+                layer.tm.saveToFile(os.path.join(dumpFilePath, str(regName) + "_completeTM_" + str(iteration) + ".dump"))
+
+                #f = open(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump", str(ly)+"_version.txt"), 'wt')
+                #f.write("1")
+                #f.close()
+            elif isinstance(regInstance[1], ApicalTiebreakTemporalMemory):
+                byteStream = layer.tm.basalConnections.save()
+                f = open(os.path.join(dumpFilePath, str(regName) + "_basalConn_" + str(iteration) + ".dump"), 'wb')
+                f.write(byteStream)
+                f.close()
+
+                byteStream = layer.tm.apicalConnections.save()
+                f = open(os.path.join(dumpFilePath, str(regName) + "_apicalConn_" + str(iteration) + ".dump"), 'wb')
+                f.write(byteStream)
+                f.close()
 
         # ---------------- DATA STREAMS -----------------------------------
 

@@ -14,7 +14,7 @@ class Network(BaseNetwork):
         self.iteration = 0
 
         self.updateDataStreams = None # callback for user method
-        self.dataStreams = []
+
         super().__init__()
 
     def run(self, n):
@@ -47,8 +47,6 @@ class Network(BaseNetwork):
         structure["regions"] = regions
         structure["links"] = links
 
-        self.pandaBaker.dataStreams = dict((name, cDataStream()) for name in self.dataStreams)  # create dicts for more comfortable code
-
         regionTypes = ""
         for region in self.getRegions():
             regionTypes += "," + str(region[1].getType())
@@ -64,7 +62,10 @@ class Network(BaseNetwork):
         self.pandaBaker.PrepareDatabase(structure)
 
     def UpdateDataStream(self, name, value):
-        self.pandaBaker.dataStreams[name].value = value
+        if name not in self.pandaBaker.dataStreams:
+            self.pandaBaker.CreateDataStream(name, cDataStream())
+
+        self.pandaBaker.dataStreams[name].value = value # assign value
 
 
 

@@ -5,7 +5,7 @@ class cRawSensorRegion(cRegion):
     def __init__(self, name, cellData, gui):
       super().__init__(name, cellData, gui)
 
-      self.cellCount = 100
+      self.cellCount = self.parameters["outputWidth"]
       self.cells = []
 
       for i in range(self.cellCount):
