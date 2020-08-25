@@ -72,13 +72,9 @@ class cHTM:
     def getNode(self):
         return self.__node
 
-    def DestroyProximalSynapses(self):
-        for ly in self.regions.values():
-            ly.DestroyProximalSynapses()
-
-    def DestroyDistalSynapses(self):
-        for ly in self.regions.values():
-            ly.DestroyDistalSynapses()
+    def DestroySynapses(self):
+        for reg in self.regions.values():
+            reg.DestroySynapses()
 
     def updateWireframe(self, value):
         for reg in self.regions.values():

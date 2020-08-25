@@ -114,25 +114,39 @@ class cRegion(ABC):
     def getNode(self):
         return self._node
 
-    def ShowProximalSynapses(self, column, permanences, inputNames, inputObj, thresholdConnected, showOnlyActive):
-        # update columns with proximal Synapses
-        self.minicolumns[
-            column
-        ].CreateProximalSynapses(
-            inputNames,
-            inputObj,
-            permanences,
-            thresholdConnected,
-            createOnlyActive=showOnlyActive
-        )
+    # this method shows requested synapse type on the specific column/cell
+    def ShowSynapses(self, regionObjects, bakeReader, synapsesType, column, cell):
 
-    def DestroyProximalSynapses(self):
+        inputName = "basalInput" if synapsesType == "basal" else "apicalInput"
+
+        if synapsesType == "proximal": # we are on minicolumns
+            self.minicolumns[
+                column
+            ].cells[cell].CreateSynapses(regionObjects, bakeReader.regions[self.name].columnConnections[synapsesType], self.FindSourceRegionOfInput(bakeReader, inputName))
+
+        else: # other than proximal - e.g. using cellConnections
+            if hasattr(self, "minicolumns"):
+                cellObj = self.minicolumns[column].cells[cell]
+            elif hasattr(self, "cells"):
+                cellObj = self.cells[cell]
+            elif hasattr(self, "gridCellModules"):
+                cellObj = self.gridCellModules.cells[cell]
+            else:
+                raise NotImplemented()
+
+            cellObj.CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType],
+                               self.FindSourceRegionOfInput(bakeReader, inputName))
+
+    def FindSourceRegionOfInput(self, bakeReader, thisRegionInput):
+        for id,link in bakeReader.links.items():
+            if link.destinationRegion == self.name and link.destinationInput == thisRegionInput:
+                return link.sourceRegion
+
+
+    def DestroySynapses(self):
         for obj in self.subObjects:
-            obj.DestroyProximalSynapses()
-    
-    def DestroyDistalSynapses(self):
-        for obj in self.subObjects:
-            obj.DestroyDistalSynapses()
+            obj.DestroySynapses()
+
             
     def setTransparency(self,transparency):
         self.transparency = transparency

@@ -60,6 +60,11 @@ class PandaBaker(object):
         else:
             Log("Creating new database file:"+self.databaseFilePath)
 
+        # dump folder path
+        self.dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
+        if not os.path.exists(self.dumpFolderPath):
+            os.mkdir(self.dumpFolderPath)
+
         self.db = Database(self.databaseFilePath)  # connect to the database
 
 
@@ -109,33 +114,13 @@ class PandaBaker(object):
                 self.db.InsertDataArray('region__'+regName+'__'+out,
                                 iteration, regionOutArr)
 
-            dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
 
-
-            print(str(regName) + " is type of "+str(type(regInstance[1])))
             object_methods = [method_name for method_name in dir(regInstance[1])
                               if callable(getattr(regInstance[1], method_name))]
-            conn = regInstance[1].getConnections("dummyName")
-            print(object_methods)
-            if regInstance[0]=="py.ApicalTMPairRegion":
-                regInstance[0].__class__ = ApicalTiebreakTemporalMemory
-                byteStream = regInstance[1].basalConnections.save()
-            if isinstance(regInstance[1], TemporalMemory):
-                layer.tm.saveToFile(os.path.join(dumpFilePath, str(regName) + "_completeTM_" + str(iteration) + ".dump"))
 
-                #f = open(os.path.join(os.path.splitext(self.databaseFilePath)[0]+"_distalDump", str(ly)+"_version.txt"), 'wt')
-                #f.write("1")
-                #f.close()
-            elif isinstance(regInstance[1], ApicalTiebreakTemporalMemory):
-                byteStream = layer.tm.basalConnections.save()
-                f = open(os.path.join(dumpFilePath, str(regName) + "_basalConn_" + str(iteration) + ".dump"), 'wb')
-                f.write(byteStream)
-                f.close()
-
-                byteStream = layer.tm.apicalConnections.save()
-                f = open(os.path.join(dumpFilePath, str(regName) + "_apicalConn_" + str(iteration) + ".dump"), 'wb')
-                f.write(byteStream)
-                f.close()
+            if regInstance[0] in ["py.ApicalTMPairRegion", "TMRegion"]: # here list all regions that have connections
+                byteStream = regInstance[1].executeCommand("saveConnectionsToFile",
+                                                           os.path.join(self.dumpFolderPath,str(regName) + "_" + str(iteration)))
 
         # ---------------- DATA STREAMS -----------------------------------
 

@@ -10,6 +10,7 @@ class cGridCellLocationRegion(cRegion):
 
     self.gridCellModulesCount = self.parameters["moduleCount"]
     self.cellPerAxis = self.parameters["cellsPerAxis"]
+    self.moduleCellCount = self.cellPerAxis*self.cellPerAxis
     self.dimensions = self.parameters["dimensions"]
 
     for i in range(self.gridCellModulesCount):

@@ -15,7 +15,7 @@ from interaction import cInteraction # handles keys, user interaction etc..
 from direct.stdpy import threading
 from panda3d.core import loadPrcFileData, GraphicsWindow
 
-loadPrcFileData('', 'win-size 1600 900')
+loadPrcFileData('', 'win-size 100 100')
 
 
 import faulthandler; faulthandler.enable()
@@ -155,68 +155,51 @@ class cExplorer3D(ShowBase):
 
         self.oneOfObjectsCreationFinished = False
 
-        self.UpdateProximalAndDistalData()
+        self.UpdateConnections()
         self.gui.UpdateCellDescription()
 
-    def UpdateProximalAndDistalData(self):
+    # this updates focused cell / column connections
+    def UpdateConnections(self):
         if self.gui.focusedCell is None:
             return
-        # -------- proximal and distal synapses -----------------------
-        if self.gui.showProximalSynapses:
-            self.ShowProximalSynapses(self.gui.focusedPath[0],self.gui.focusedPath[1],self.gui.columnID, self.gui.showOnlyActiveProximalSynapses)
 
-        if self.gui.showDistalSynapses:
-            self.ShowDistalSynapses(self.gui.focusedPath[0], self.gui.focusedPath[1], self.gui.columnID, self.gui.cellID)
-
-        # if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
-        #     self.client.reqProximalData()
-        # else:
-        #     for obj in self.base.HTMObjects.values():
-        #         obj.DestroyProximalSynapses()
-        #
-        # #do not request distal data if we don't want to show them or if this layer doesn't have TM
-        # if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
-        #     self.client.reqDistalData()
-        # else:
-        #     for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
-        #         obj.DestroyDistalSynapses()
-        # -----------------------------------------------------------
-
-    def ShowProximalSynapses(self, obj, regionName, column, showOnlyActive):# reads the synapses from the database and show them
-
-        region = self.bakeReader.regions[regionName]
-        self.bakeReader.LoadProximalSynapses(regionName, [column], self.iteration) # load it
-
-        if column not in region.proximalSynapses:
-            printLog("Don't have proximal data for requested column:"+str(column) + " of region:"+str(regionName))
-            self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
-            return
-        self.HTMObjects[obj].regions[regionName].ShowProximalSynapses(column, region.proximalSynapses[column],
-                                                                       region.proximalInputs,#names of inputs
-                                                                        self.HTMObjects[obj].inputs,
-                                                                        region.params['sp_synPermConnected'],
-                                                                        showOnlyActive)
-    def ShowDistalSynapses(self, obj, regionName, column, cell):
+        obj = self.gui.focusedPath[0]
+        regionName = self.gui.focusedPath[1]
+        column = self.gui.columnID
+        cell = self.gui.cellID
 
         region = self.bakeReader.regions[regionName]
 
-        gotSomeData = self.bakeReader.LoadDistalSynapses(regionName, column, cell, self.iteration)  # load it
+        # cleans all data, do not call if you want to stack data for more cells/columns for example
+        self.bakeReader.CleanCellConnections(regionName)
+        self.bakeReader.CleanColumnConnections(regionName)
 
-        if not gotSomeData:
-            printLog("Don't have any distal synapses to show for this cell.")
-            self.HTMObjects[obj].regions[regionName].minicolumns[
-                column
-            ].cells[cell].DestroyDistalSynapses()
-            return
+        # ---------------------------- PROXIMAL SYNAPSES ---------------------------------------------------------------
+        if self.gui.showProximalSynapses and region.type in ["TMRegion"]:# only for those regions proximal data applies
+            # load the data
+            self.bakeReader.LoadColumnConnections("proximal", regionName, self.iteration, column)
 
-        self.HTMObjects[obj].regions[regionName].minicolumns[
-            column
-        ].cells[cell].CreateDistalSynapses(
-            self.HTMObjects[obj],
-            self.HTMObjects[obj].regions[regionName],
-            region.distalSynapses[cell],
-            region.distalInputs
-        )
+            if column not in region.columnConnections:
+                printLog("Don't have column data for requested column:"+str(column) + " of region:"+str(regionName))
+                #self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
+                return
+            self.HTMObjects[obj].regions[regionName].DestroySynapses()
+            self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                  synapsesType="proximal", column=column, cell=-1)
+
+        # ---------------------------- DISTAL/BASAL SYNAPSES -----------------------------------------------------------
+        if self.gui.showDistalSynapses and region.type in ["py.ApicalTMPairRegion"]:
+            self.bakeReader.LoadCellConnections("basal", regionName, self.iteration, # basal = distal
+                                                column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell)  # load it
+
+            self.HTMObjects[obj].regions[regionName].DestroySynapses()
+            self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                  synapsesType="basal", column=column, cell=cell)
+
+        # ---------------------------- APICAL SYNAPSES -----------------------------------------------------------------
+        if self.gui.showApicalSynapses and region.type in ["py.ApicalTMPairRegion"]:
+            print("TODO")
+
 
 
     def update(self, task):

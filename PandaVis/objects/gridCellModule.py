@@ -176,17 +176,12 @@ class cGridCellModule:
     for cell in self.cells:
       cell.setTransparency(transparency)
 
-  def DestroyProximalSynapses(self):
-    if not self.gfxCreated:
-      return
-    for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
-      syn.removeNode()
 
-  def DestroyDistalSynapses(self):
+  def DestroySynapses(self):
     if not self.gfxCreated:
       return
     for cell in self.cells:
-      cell.DestroyDistalSynapses()
+      cell.DestroySynapses()
 
     self.resetPresynapticFocus()
 
@@ -198,5 +193,5 @@ class cGridCellModule:
 
   def getDescription(self):
     txt = ""
-    txt += "TODO:" + str(self.idx) + "\n"
+    txt += "TODO GridCellModule desc ID:" + str(self.idx) + "\n"
     return txt

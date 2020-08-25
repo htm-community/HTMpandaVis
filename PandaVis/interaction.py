@@ -136,9 +136,7 @@ class cInteraction:
             return
         # unfocus all
         for obj in self.base.HTMObjects.values():
-            obj.DestroyProximalSynapses()
-        for obj in self.base.HTMObjects.values():
-            obj.DestroyDistalSynapses()
+            obj.DestroySynapses()
 
         self.gui.focusedCell.resetFocus()  # reset previous
         self.gui.focusedCell = None
@@ -215,23 +213,43 @@ class cInteraction:
 
         parent = obj.getParent()  # skip LOD node
         tag = parent.getTag("id")
-        if tag == "":
-            printLog("Parent is not clickable!", verbosityHigh)
-            return
-        else:
+        parentClickable = False
+        if tag != "":
             parentId = int(tag)
             printLog("PARENT TAG:" + str(parentId), verbosityHigh)
+            parentClickable = True
 
         if obj.getName() == "cell":
             printLog("We clicked on cell", verbosityHigh)
 
             focusedHTMObject = str(obj).split("/")[1]
-            focusedLayer = str(obj).split("/")[2]
+            focusedRegion = str(obj).split("/")[2]
 
             HTMObj = self.base.HTMObjects[focusedHTMObject]
-            Layer = HTMObj.layers[focusedLayer]
-            newCellFocus = Layer.minicolumns[parentId].cells[thisId]
-            focusedPath = [focusedHTMObject, focusedLayer]
+            region = HTMObj.regions[focusedRegion]
+
+
+            if parentClickable:
+                if hasattr(region,"minicolumns"):
+                    newCellFocus = region.minicolumns[parentId].cells[thisId]
+                    self.gui.columnID = parentId
+                    self.gui.cellID = thisId
+
+                elif hasattr(region,"gridCellModules"):
+                    newCellFocus = region.gridCellModules[parentId].cells[thisId]
+                    self.gui.gridModuleID = parentId
+                    self.gui.cellID = thisId
+                else:
+                    printLog("Not able to get data on clicked object!")
+                    return
+
+            else:
+                newCellFocus = region.cells[thisId]
+                self.gui.gridModuleID = -1
+                self.gui.columnID = -1
+                self.gui.cellID = thisId
+
+            focusedPath = [focusedHTMObject, focusedRegion]
 
 
             if self.gui.focusedCell is not None:
@@ -240,18 +258,15 @@ class cInteraction:
             self.gui.focusedCell.setFocus()
 
             # unfocus all
-            for obj in self.base.HTMObjects.values():
-                obj.DestroyProximalSynapses()
-            for obj in self.base.HTMObjects.values():
-                obj.DestroyDistalSynapses()
+            # for obj in self.base.HTMObjects.values():
+            #     obj.DestroyProximalSynapses()
+            # for obj in self.base.HTMObjects.values():
+            #     obj.DestroyDistalSynapses()
 
 
             self.gui.focusedPath = focusedPath
-            
-            self.gui.columnID = Layer.minicolumns.index(self.gui.focusedCell.column)
-            self.gui.cellID = Layer.minicolumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
-            self.base.UpdateProximalAndDistalData()
+            self.base.UpdateConnections()
 
             self.gui.UpdateCellDescription()
             

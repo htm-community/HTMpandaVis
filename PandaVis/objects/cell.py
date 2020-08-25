@@ -15,7 +15,7 @@ from panda3d.core import (
     GeomLines,
     GeomNode,
 )
-
+import objects.ConnectionFactory as ConnectionFactory
 from Colors import *
 
 verbosityLow = 0
@@ -86,7 +86,7 @@ class cCell:
         self.winner = winner
         self.focused = focused
 
-        if self.focused:# if we have this cell focused, modify LOD to long distance
+        if self.focused and self.column is not None:# if we have this cell focused, modify LOD to long distance
             self.column.LODUpdateSwitch_long()
 
         self.presynapticFocus = presynapticFocus
@@ -124,7 +124,8 @@ class cCell:
 
     def resetFocus(self):
         self.UpdateState(self.active, self.predictive, self.winner, False)  #reset focus
-        self.column.LODUpdateSwitch_normal()
+        if self.column is not None:
+            self.column.LODUpdateSwitch_normal()
 
     def setPresynapticFocus(self):
         self.UpdateState(self.active, self.predictive, self.winner, self.focused, True)  # no change except presynaptic focus
@@ -145,100 +146,70 @@ class cCell:
             
     def getNode(self):
         return self._node
-    
-    def CreateDistalSynapses(self, HTMObject, layer, data, inputObjects):
 
-        self.DestroyDistalSynapses()
+    def CreateSynapses(self, regionObjects, cellConnections, sourceRegion):
+        printLog("Creating synapses", verbosityMedium)
 
-        printLog("Creating distal synapses", verbosityMedium)
+        if self.column is not None:
+            myID = self.column.idx * self.column.nOfCellsPerColumn + self.idx
+        else:
+            myID = self.idx
 
-        #printLog("EXTERNAL DISTAL:"+str(inputObjects))
-        #printLog("HTM inputs:"+str(HTMObject.inputs))
-        #printLog("HTM layers:" + str(HTMObject.layers))
+        ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse, regionObjects=regionObjects,
+                                         cellConnections=cellConnections, sourceRegion = sourceRegion, idx = myID )
 
-        #input object could be either input or layer instance
-        for inputObj in inputObjects:
-            if inputObj in HTMObject.inputs:
-                HTMObject.inputs[inputObj].resetPresynapticFocus()
-            elif inputObj in HTMObject.layers:
-                HTMObject.layers[inputObj].resetPresynapticFocus()
-            else:
-                raise SyntaxError("Wrongly defined distal input to the layer! Input name:" + str(inputObj))
+    # creates synapse, that will go from presynCell to this cell
+    # presynCell - cell object
+    def _CreateOneSynapse(self, presynCell):
 
-        for segment in data:
+        presynCell.setPresynapticFocus()  # highlight presynaptic cells
 
-            for presynCellID in data[segment]:
-                
-                cellID = presynCellID % layer.nOfCellsPerColumn
-                colID = (int)(presynCellID / layer.nOfCellsPerColumn)
+        form = GeomVertexFormat.getV3()
+        vdata = GeomVertexData("SynapseLine", form, Geom.UHStatic)
+        vdata.setNumRows(1)
+        vertex = GeomVertexWriter(vdata, "vertex")
 
-                if colID < len(layer.minicolumns):
-                    presynCell = layer.minicolumns[colID].cells[cellID] # it is within current layer
-                else: # it is for external distal input
-                    cellID = presynCellID - len(layer.minicolumns)*layer.nOfCellsPerColumn
-                    for inputObj in inputObjects:
+        vertex.addData3f(
+            presynCell
+                .getNode()
+                .getPos(self._node)
+        )
+        vertex.addData3f(0, 0, 0)
 
-                        if inputObj in HTMObject.inputs:
-                            if cellID < HTMObject.inputs[inputObj].count:
-                                presynCell = HTMObject.inputs[inputObj].inputBits[cellID]
-                                break
-                            else: # not this one
-                                cellID -= HTMObject.inputs[inputObj].count
+        prim = GeomLines(Geom.UHStatic)
+        prim.addVertices(0, 1)
 
-                        elif inputObj in HTMObject.layers:
-                            if cellID < HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].minicolumns):
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
 
-                                presynCell = HTMObject.layers[inputObj].minicolumns[(int)(cellID / HTMObject.layers[inputObj].nOfCellsPerColumn)].cells[cellID % HTMObject.layers[inputObj].nOfCellsPerColumn]
-                                break
-                            else: # not this one
-                                cellID -= HTMObject.layers[inputObj].nOfCellsPerColumn * len(HTMObject.layers[inputObj].minicolumns)
+        node = GeomNode("Synapse")
+        node.addGeom(geom)
 
-                presynCell.setPresynapticFocus()  # highlight presynaptic cells
-        
-                form = GeomVertexFormat.getV3()
-                vdata = GeomVertexData("DistalSynapseLine", form, Geom.UHStatic)
-                vdata.setNumRows(1)
-                vertex = GeomVertexWriter(vdata, "vertex")
+        nodePath = self._node.attachNewNode(node)
 
-                vertex.addData3f(
-                    presynCell
-                    .getNode()
-                    .getPos(self._node)
-                )
-                vertex.addData3f(0, 0, 0)
-               
+        nodePath.setRenderModeThickness(2)
 
-                prim = GeomLines(Geom.UHStatic)
-                prim.addVertices(0, 1)
-
-                geom = Geom(vdata)
-                geom.addPrimitive(prim)
-
-                node = GeomNode("DistalSynapse")
-                node.addGeom(geom)
-                
-                nodePath = self._node.attachNewNode(node)
-                
-                nodePath.setRenderModeThickness(2)
-
-                # color of the line
-                if presynCell.active:
-                    nodePath.setColor(COL_DISTAL_SYNAPSES_ACTIVE)
-                else:
-                    nodePath.setColor(COL_DISTAL_SYNAPSES_INACTIVE)
+        # color of the line
+        if presynCell.active:
+            nodePath.setColor(COL_DISTAL_SYNAPSES_ACTIVE)
+        else:
+            nodePath.setColor(COL_DISTAL_SYNAPSES_INACTIVE)
 
 
     def getDescription(self):
         txt = ""
-        txt += "ID:" + str(self.idx) + "  ABS ID:"+ str(len(self.column.cells)*self.column.idx + self.idx) +"\n"
+        if self.column is not None:# for regions with columns
+            txt += "ID:" + str(self.idx) + "  ABS ID:"+ str(len(self.column.cells)*self.column.idx + self.idx) +"\n"
+        else:
+            txt += "ID:" + str(self.idx) + "\n"
         txt += "Active:" + str(self.active)+"\n"
         txt += "Winner:" + str(self.winner) + "\n"
         txt += "Predictive:" + str(self.predictive)+"\n"
-        txt += "Correctly predicted:" + 'N/A' if not self.showPredictionCorrectness else str(self.correctlyPredicted)+"\n"
-        txt += "Falsely predicted:" + 'N/A' if not self.showPredictionCorrectness else str(self.falselyPredicted)+"\n"
+        txt += "Correctly predicted:" + ('N/A' if not self.showPredictionCorrectness else str(self.correctlyPredicted))+"\n"
+        txt += "Falsely predicted:" + ('N/A' if not self.showPredictionCorrectness else str(self.falselyPredicted))+"\n"
 
         return txt
 
-    def DestroyDistalSynapses(self):
-        for syn in self._node.findAllMatches("DistalSynapse"):
+    def DestroySynapses(self):
+        for syn in self._node.findAllMatches("Synapse"):
             syn.removeNode()

@@ -49,6 +49,7 @@ class cGUI:
         self.showProximalSynapses = self.getDefault("proximalSynapses")
         self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyProximalSynapses")
         self.showDistalSynapses = self.getDefault("distalSynapses")
+        self.showApicalSynapses = self.getDefault("apicalSynapses")
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
         self.showPredictionCorrectness = self.getDefault("predictionCorrectness")
         self.showBursting = self.getDefault("showBursting")
@@ -266,10 +267,11 @@ class cGUI:
         desc += str(self.focusedPath) + "\n"
         desc += "\n---CELL:\n"
         desc += self.focusedCell.getDescription()
-        desc += "\n---COLUMN:\n"
-        desc += self.focusedCell.column.getDescription()
+        if self.focusedCell.column is not None:
+            desc += "\n---COLUMN:\n"
+            desc += self.focusedCell.column.getDescription()
 
-        self.UpdateDescription(desc);
+        self.UpdateDescription(desc)
 
     def ResetCommands(self):
         self.cmdRun = False
