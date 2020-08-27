@@ -18,7 +18,7 @@ from panda3d.core import loadPrcFileData, GraphicsWindow
 loadPrcFileData('', 'win-size 100 100')
 
 
-import faulthandler; faulthandler.enable()
+import faulthandler; faulthandler.enable() # detailed debug for SIGFAULTS for example
 
 verbosityLow = 0
 verbosityMedium = 1

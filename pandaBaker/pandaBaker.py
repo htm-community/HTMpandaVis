@@ -59,6 +59,7 @@ class PandaBaker(object):
             os.remove(self.databaseFilePath)
         else:
             Log("Creating new database file:"+self.databaseFilePath)
+            os.mkdir(os.path.dirname(self.databaseFilePath))
 
         # dump folder path
         self.dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
@@ -83,9 +84,13 @@ class PandaBaker(object):
 
         # DATA carying tables creation ---------------------------------------------------------------------------------
         for regName, regInstance in structure["regions"].items():
-            outs = getOutputsOfRegion(regInstance[0])#get outputs from name
-            for out in outs:
-                self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
+            print(regInstance[0])
+            print(regInstance[1].getSpec())
+            print(regInstance[1].getSpec())
+
+            #outs = getOutputsOfRegion(regInstance[0])#get outputs from name
+            #for out in outs:
+                #self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
             #self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data array")#using float numpy array, not sparse SDR
 
         self.CommitBatch()

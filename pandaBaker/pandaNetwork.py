@@ -9,7 +9,7 @@ BAKE_DATABASE_FILE_PATH = os.path.join(os.getcwd(), 'bakedDatabase', 'pandaVis.d
 class Network(BaseNetwork):
     def __init__(self):
         self.firstRun = True
-        self.bakePandaData = False
+        self.bakePandaData = True
         self.pandaBaker = PandaBaker(BAKE_DATABASE_FILE_PATH)
         self.iteration = 0
 
