@@ -59,7 +59,8 @@ class PandaBaker(object):
             os.remove(self.databaseFilePath)
         else:
             Log("Creating new database file:"+self.databaseFilePath)
-            os.mkdir(os.path.dirname(self.databaseFilePath))
+            if not os.path.exists(os.path.dirname(self.databaseFilePath)):
+                os.mkdir(os.path.dirname(self.databaseFilePath))
 
         # dump folder path
         self.dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
