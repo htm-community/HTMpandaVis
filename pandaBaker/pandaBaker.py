@@ -85,13 +85,13 @@ class PandaBaker(object):
 
         # DATA carying tables creation ---------------------------------------------------------------------------------
         for regName, regInstance in structure["regions"].items():
-            print(regInstance[0])
-            print(regInstance[1].getSpec())
-            print(regInstance[1].getSpec())
 
-            #outs = getOutputsOfRegion(regInstance[0])#get outputs from name
-            #for out in outs:
-                #self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
+            print(regInstance[0])
+            print(regInstance[1].getSpec().toString().replace("\n", ""))
+
+            outs = getOutputsOfRegion(regInstance[1])#get outputs from name
+            for out in outs:
+                self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
             #self.db.CreateTable('layer_proximalSynapses_'+ ly, "iteration INTEGER, column INTEGER, data array")#using float numpy array, not sparse SDR
 
         self.CommitBatch()
@@ -112,7 +112,7 @@ class PandaBaker(object):
 
         #region data
         for regName, regInstance in self.structure['regions'].items():
-            for out in getOutputsOfRegion(regInstance[0]):
+            for out in getOutputsOfRegion(regInstance[1]):
                 regionOutArr = np.array(network.getRegion(regName).getOutputArray(out), dtype=np.float32)
                 #regionOutSDR = SDR(regionOutArr.size)
                 #regionOutSDR.dense = regionOutArr
@@ -138,13 +138,17 @@ class PandaBaker(object):
             self.db.InsertDataArray(tableName, iteration, self.dataStreams[pl].value)
 
 
-def getOutputsOfRegion(regionType):
-    if 'py.' in regionType:
-        # python region
-        return list(eval(regionType.split('.')[1]).getSpec()['outputs'].keys())
-    else:
-        # c++ region
-        return list(eval(regionType).getSpec()['outputs'].keys())
+def getOutputsOfRegion(region):
+    outs = json.loads(region.getSpec().toString().replace("\n", ""))["outputs"].keys()
+
+    return outs
+
+    # if 'py.' in regionType:
+    #     # python region
+    #     return list(eval(regionType.split('.')[1]).getSpec()['outputs'].keys())
+    # else:
+    #     # c++ region
+    #     return list(eval(regionType).getSpec()['outputs'].keys())
 
 
 def Log(s):
