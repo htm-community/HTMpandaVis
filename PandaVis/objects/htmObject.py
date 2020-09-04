@@ -17,6 +17,11 @@ from objects.RawSensorRegion import cRawSensorRegion
 from objects.RawValuesRegion import cRawValuesRegion
 from objects.GridCellLocationRegion import cGridCellLocationRegion
 
+from objects.SPRegion import cSPRegion
+from objects.TMRegion import cTMRegion
+from objects.RDSEEncoderRegion import cRDSEEncoderRegion
+from objects.DateEncoderRegion import cDateEncoderRegion
+
 class cHTM:
 
     layerOffset = 0
@@ -37,6 +42,7 @@ class cHTM:
 
     @classmethod
     def getClassByType(cls, type):
+        # python implemented regions -------------------------------
         if type == 'py.ColumnPoolerRegion':
             return cColumnPoolerRegion
         elif type == 'py.ApicalTMPairRegion':
@@ -47,7 +53,15 @@ class cHTM:
             return cRawValuesRegion
         elif type == 'py.RawSensor':
             return cRawSensorRegion
-
+        # C++ implemented regions -----------------------------------
+        elif type == 'SPRegion':
+            return cSPRegion
+        elif type == 'TMRegion':
+            return cTMRegion
+        elif type == 'RDSEEncoderRegion':
+            return cRDSEEncoderRegion
+        elif type == 'DateEncoderRegion':
+            return cDateEncoderRegion
         else:
             warnings.warn(type + ' region is not implemented!', UserWarning)
             return None
@@ -57,6 +71,7 @@ class cHTM:
         regionClass = cHTM.getClassByType(regionData.type)
         if regionClass is None:
             return  # not implemented
+
         self.regions[name] = regionClass(name, regionData, self.gui)
         region = self.regions[name]
 
@@ -67,6 +82,15 @@ class cHTM:
         # self.__node = NodePath()
 
         cHTM.layerOffset += region.getVerticalSize() + 20
+
+    # unificated region means like SP is bundled with TM.
+    # SP operates on TM objects, does not have any own objects
+    def CreateUnificatedRegion(self, name, regionData):
+        regionClass = cHTM.getClassByType(regionData.type)
+        if regionClass is None:
+            return  # not implemented
+
+        self.regions[name] = regionClass(name, regionData, self.gui, unifiedWithColumnRegion=True)
 
 
     def getNode(self):

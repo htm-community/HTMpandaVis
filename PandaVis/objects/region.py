@@ -99,9 +99,11 @@ class cRegion(ABC):
         if allFinished:
             if not self.gfxCreationFinished:
                 self.gfxCreationFinished = True
-                self.text.setText(self.name)
+                if self.text is not None:
+                    self.text.setText(self.name)
         else:
-            self.text.setText(self.name + "(creating:" + str(int(100 * createdObjs / len(self.subObjects))) + " %)")
+            if self.text is not None:
+                self.text.setText(self.name + "(creating:" + str(int(100 * createdObjs / len(self.subObjects))) + " %)")
 
     @abstractmethod
     def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py

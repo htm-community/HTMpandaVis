@@ -110,15 +110,40 @@ class cExplorer3D(ShowBase):
 
             # create regions
             for reg in self.bakeReader.regions:
-                printLog("Creating region: " + str(reg), verbosityHigh)
-                newObj.CreateRegion(
-                    name=reg,
-                    regionData = self.bakeReader.regions[reg]
-                )
+
+                if self.CheckForUnification(reg) is not None: # check if there is region for unification
+                    printLog("Creating unificated region: " + str(reg), verbosityHigh)
+                    newObj.CreateUnificatedRegion(
+                        name=reg,
+                        regionData=self.bakeReader.regions[reg]
+                    )
+                else:
+                    printLog("Creating region: " + str(reg), verbosityHigh)
+                    newObj.CreateRegion(
+                        name=reg,
+                        regionData = self.bakeReader.regions[reg]
+                    )
 
             self.HTMObjects[obj] = newObj
 
+            for reg in self.HTMObjects[obj].regions:
+                uniReg = self.CheckForUnification(reg)
+                if uniReg is not None:
+                    self.HTMObjects[obj].regions[reg].SetUnifiedRegion(self.HTMObjects[obj].regions[uniReg])
+
             #self.gfxCreationThread.start()
+
+
+    def CheckForUnification(self, reg):
+        if self.bakeReader.regions[reg].type in ['SPRegion']:# applies only for SPRegion now
+            # check if SP is connected to TM or TM like region, with minicolumns
+
+            for link in self.bakeReader.links.values():# SP region is source and his out is bottomUpOut
+                if link.sourceRegion == reg and link.sourceOutput == 'bottomUpOut' and\
+                    self.bakeReader.regions[link.destinationRegion].type in ['TMRegion', 'ApicalTMPairRegion']:
+                    return link.destinationRegion
+
+        return None
 
 
     def LoadIteration(self, iteration):
@@ -148,7 +173,7 @@ class cExplorer3D(ShowBase):
 
         # go through all regions
         for reg in self.bakeReader.regions:  # dict
-            if self.HTMObjects[obj].regions[reg].gfxCreationFinished:
+            if reg in self.HTMObjects[obj].regions and self.HTMObjects[obj].regions[reg].gfxCreationFinished:
                 printLog("Updating state of region: " + str(reg), verbosityHigh)
 
                 self.HTMObjects[obj].regions[reg].UpdateState(self.bakeReader.regions[reg])
@@ -177,7 +202,7 @@ class cExplorer3D(ShowBase):
         # ---------------------------- PROXIMAL SYNAPSES ---------------------------------------------------------------
         if self.gui.showProximalSynapses and region.type in ["TMRegion"]:# only for those regions proximal data applies
             # load the data
-            self.bakeReader.LoadColumnConnections("proximal", regionName, self.iteration, column)
+            self.bakeReader.LoadColumnConnections(connectionType="proximal", connectionTypeFile="", regionName= regionName, iteration=self.iteration, colID=column) # proximal, but without prefix, because they are the only one
 
             if column not in region.columnConnections:
                 printLog("Don't have column data for requested column:"+str(column) + " of region:"+str(regionName))
@@ -189,12 +214,12 @@ class cExplorer3D(ShowBase):
 
         # ---------------------------- DISTAL/BASAL SYNAPSES -----------------------------------------------------------
         if self.gui.showDistalSynapses and region.type in ["py.ApicalTMPairRegion"]:
-            self.bakeReader.LoadCellConnections("basal", regionName, self.iteration, # basal = distal
-                                                column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell)  # load it
+            self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="basal", regionName=regionName, iteration=self.iteration, # basal = distal
+                                                cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell)  # load it
 
             self.HTMObjects[obj].regions[regionName].DestroySynapses()
             self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
-                                                                  synapsesType="basal", column=column, cell=cell)
+                                                                  synapsesType="distal", column=column, cell=cell)
 
         # ---------------------------- APICAL SYNAPSES -----------------------------------------------------------------
         if self.gui.showApicalSynapses and region.type in ["py.ApicalTMPairRegion"]:

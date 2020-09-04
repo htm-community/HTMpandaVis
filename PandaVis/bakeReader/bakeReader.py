@@ -125,39 +125,40 @@ class BakeReader(object):
         else:
             self.regions[region].prev_predictiveCells = row['data'] if row['data'] is not None else np.empty(0)
 
-    def LoadConnections(self,connectionType, regionName, type, iteration): # loads connections (can be more then one)
+    def LoadConnections(self,connectionType, regionName, iteration): # loads connections (can be more then one)
 
         self.dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
-
-        with open(os.path.join(self.dumpFolderPath,str(regionName) + "_" + str(iteration)) +"_"+ connectionType+".dump", "rb") as f:
+        if connectionType != '':
+            connectionType = "_" + connectionType
+        with open(os.path.join(self.dumpFolderPath,str(regionName) + "_" + str(iteration)) + connectionType+".dump", "rb") as f:
             connections = Connections.load(f.read())
 
         return connections
 
 
     # used by Spatial pooler, loads connections that belongs to one column
-    def LoadColumnConnections(self, connectionType, regionName, iteration, colID):
+    def LoadColumnConnections(self, connectionType, connectionTypeFile, regionName, iteration, colID):
         # note here "cells" means "columns" because Connection class is universal
 
-        connections = self.LoadConnections(connectionType, regionName, "", iteration)
+        connections = self.LoadConnections(connectionTypeFile, regionName, iteration)
 
         # gets presynaptic cells grouped by segments
-        presynCells = getPresynapticCellsForCell(connections, colID)
+        presynCells = self.getPresynapticCellsForCell(connections, colID)
 
         found = False
         # if this column is already in the array, replace the data
-        for c in range(len(self.regions[region].columnConnections)):
-            if colID == self.regions[region].columnConnections[c][0]:
-                self.regions[region].columnConnections[c] = [colID, presynCells] # replacing
+        for c in range(len(self.regions[regionName].columnConnections)):
+            if colID == self.regions[regionName].columnConnections[c][0]:
+                self.regions[regionName].columnConnections[c] = [colID, presynCells] # replacing
                 found = True
                 break
         if not found:
-            self.regions[region].columnConnections += [colID, presynCells] # appending
+            self.regions[regionName].columnConnections[connectionType] = [[colID, presynCells]] # appending
 
     # loads connections that belongs to one cell
-    def LoadCellConnections(self, connectionType, regionName, iteration, cellID):
+    def LoadCellConnections(self, connectionType, connectionTypeFile, regionName, iteration, cellID):
 
-        connections = self.LoadConnections(connectionType, regionName, "", iteration)
+        connections = self.LoadConnections(connectionTypeFile, regionName, "", iteration)
 
         # gets presynaptic cells grouped by segments
         presynCells = self.getPresynapticCellsForCell(connections, cellID)
