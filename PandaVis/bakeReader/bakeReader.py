@@ -137,31 +137,43 @@ class BakeReader(object):
 
 
     # used by Spatial pooler, loads connections that belongs to one column
-    def LoadColumnConnections(self, connectionType, connectionTypeFile, regionName, iteration, colID):
+    # connectionType - under what name it will by stored in internal data structure
+    # connectionTypeFile - what is suffix of dump file with connections
+    # regionName - region name
+    # connectedOnly - loads only connected synapses
+    def LoadColumnConnections(self, connectionType, connectionTypeFile, regionName, iteration, colID, connectedOnly):
         # note here "cells" means "columns" because Connection class is universal
 
         connections = self.LoadConnections(connectionTypeFile, regionName, iteration)
 
         # gets presynaptic cells grouped by segments
-        presynCells = self.getPresynapticCellsForCell(connections, colID)
+        presynCells = self.getPresynapticCellsForCell(connections, colID, connectedOnly)
 
         found = False
+        newConnType = False
         # if this column is already in the array, replace the data
-        for c in range(len(self.regions[regionName].columnConnections)):
-            if colID == self.regions[regionName].columnConnections[c][0]:
-                self.regions[regionName].columnConnections[c] = [colID, presynCells] # replacing
-                found = True
-                break
+        if connectionType in self.regions[regionName].columnConnections:
+            for c in range(len(self.regions[regionName].columnConnections[connectionType])):
+                if colID == self.regions[regionName].columnConnections[connectionType][c][0]:
+                    self.regions[regionName].columnConnections[connectionType][c] = [colID, presynCells] # replacing
+                    found = True
+                    break
+        else:
+            newConnType = True
         if not found:
-            self.regions[regionName].columnConnections[connectionType] = [[colID, presynCells]] # appending
+            if newConnType:# add new connection type
+                self.regions[regionName].columnConnections[connectionType] = [[colID, presynCells]]
+            else:# append data
+                self.regions[regionName].columnConnections[connectionType] += [[colID, presynCells]]
+
 
     # loads connections that belongs to one cell
-    def LoadCellConnections(self, connectionType, connectionTypeFile, regionName, iteration, cellID):
+    def LoadCellConnections(self, connectionType, connectionTypeFile, regionName, iteration, cellID, connectedOnly):
 
-        connections = self.LoadConnections(connectionTypeFile, regionName, "", iteration)
+        connections = self.LoadConnections(connectionTypeFile, regionName, iteration)
 
         # gets presynaptic cells grouped by segments
-        presynCells = self.getPresynapticCellsForCell(connections, cellID)
+        presynCells = self.getPresynapticCellsForCell(connections, cellID, connectedOnly)
 
         if connectionType in self.regions[regionName].cellConnections:# already present connectionType
             connType = self.regions[regionName].cellConnections[connectionType]
@@ -186,7 +198,7 @@ class BakeReader(object):
         self.regions[regionName].columnConnections = {}
 
 
-    def getPresynapticCellsForCell(self, connections, cellID):
+    def getPresynapticCellsForCell(self, connections, cellID, connectedOnly=False):
         start_time = time.time()
         segments = connections.segmentsForCell(cellID)
 
@@ -198,6 +210,8 @@ class BakeReader(object):
         for seg in segments:
             time1 = time.time()
             synapsesForSegment = connections.synapsesForSegment(seg)
+
+
             # Log("synapsesForSegment() took %s ms " % ((time.time() - time1)*1000))
             # Log("synapses for segment len:" + str(len(segments)))
             # Log("datatype:" + str(type(synapsesForSegment)))
@@ -208,8 +222,10 @@ class BakeReader(object):
 
             presynapticCells = []
             for syn in synapsesForSegment:
+
+                if not connectedOnly or (connectedOnly and connections.permanenceForSynapse(syn) >= connections.connectedThreshold):
                 # time2 = time.time()
-                presynapticCells += [connections.presynapticCellForSynapse(syn)]
+                    presynapticCells += [connections.presynapticCellForSynapse(syn)]
                 # Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
             res += [np.array(presynapticCells)]
 

@@ -147,7 +147,7 @@ class cCell:
     def getNode(self):
         return self._node
 
-    def CreateSynapses(self, regionObjects, cellConnections, sourceRegion):
+    def CreateSynapses(self, regionObjects, cellConnections, sourceRegions):
         printLog("Creating synapses", verbosityMedium)
 
         if self.column is not None:
@@ -156,7 +156,7 @@ class cCell:
             myID = self.idx
 
         ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse, regionObjects=regionObjects,
-                                         cellConnections=cellConnections, sourceRegion = sourceRegion, idx = myID )
+                                         connections=cellConnections, idx = myID, sourceRegions = sourceRegions )
 
     # creates synapse, that will go from presynCell to this cell
     # presynCell - cell object

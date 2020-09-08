@@ -170,13 +170,11 @@ class cMinicolumn:
             self.__columnBox.setRenderModeFilled()
             
 
-    def CreateSynapses(self, regionObjects, cellConnections, sourceRegion):
+    def CreateSynapses(self, regionObjects, columnConnections, sourceRegions):
         printLog("Creating synapses", verbosityMedium)
 
-        myID = self.column.idx * self.column.nOfCellsPerColumn + self.idx
-
         ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse, regionObjects=regionObjects,
-                                         cellConnections=cellConnections, sourceRegion=sourceRegion, idx=myID)
+                                         connections=columnConnections, idx=self.idx, sourceRegions=sourceRegions )
 
     # creates synapse, that will go from presynCell to this cell
     # presynCell - cell object

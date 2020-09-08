@@ -47,7 +47,8 @@ class cGUI:
 
 
         self.showProximalSynapses = self.getDefault("proximalSynapses")
-        self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyProximalSynapses")
+        self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyActiveProximalSynapses")
+        self.showOnlyConnectedSynapses = self.getDefault("showOnlyConnectedSynapses")
         self.showDistalSynapses = self.getDefault("distalSynapses")
         self.showApicalSynapses = self.getDefault("apicalSynapses")
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
@@ -88,6 +89,8 @@ class cGUI:
                   [sg.InputText(self.getDefault("iterationGoto"), key="iterationGoto"), sg.Button('GOTO step')],
                   [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
                   [sg.Checkbox('Show only active proximal synapes', key="onlyActiveProximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show only connected synapes', key="showOnlyConnectedSynapses",
+                               enable_events=True)],
                   [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
                   [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Show prediction correctness', key="predictionCorrectness", enable_events=True)],
@@ -244,6 +247,7 @@ class cGUI:
 
             self.showProximalSynapses = values["proximalSynapses"]
             self.showOnlyActiveProximalSynapses = values["onlyActiveProximalSynapses"]
+            self.showOnlyConnectedSynapses = values["showOnlyConnectedSynapses"]
             self.showDistalSynapses = values["distalSynapses"]
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]

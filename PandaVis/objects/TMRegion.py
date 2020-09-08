@@ -22,7 +22,14 @@ class cTMRegion(cRegion):
         self.SUBOBJ_DISTANCE_X = 2 + self.COL_OFFSET
         self.SUBOBJ_DISTANCE_Y = 1 + self.COL_OFFSET
 
+        self.unifiedWithSPRegion = False
 
+
+    def SetUnifiedSPRegion(self, region):
+        print("Setting link for unification: TMregion -> " + region)
+        self.unifiedSPRegion = region
+
+        self.unifiedWithSPRegion = True
 
     def getVerticalSize(self):
         return self.nOfCellsPerColumn

@@ -126,14 +126,17 @@ class cExplorer3D(ShowBase):
 
             self.HTMObjects[obj] = newObj
 
+            # need to do it here due to unknown order creation
             for reg in self.HTMObjects[obj].regions:
                 uniReg = self.CheckForUnification(reg)
                 if uniReg is not None:
-                    self.HTMObjects[obj].regions[reg].SetUnifiedRegion(self.HTMObjects[obj].regions[uniReg])
+                    self.HTMObjects[obj].regions[reg].SetUnifiedTMRegion(uniReg) # link SP->TM
+                    self.HTMObjects[obj].regions[uniReg].SetUnifiedSPRegion(reg) # link TM -> SP
 
             #self.gfxCreationThread.start()
 
 
+    # checks if the "reg" SPregion is unified with TMregion, returning name of TMRegion
     def CheckForUnification(self, reg):
         if self.bakeReader.regions[reg].type in ['SPRegion']:# applies only for SPRegion now
             # check if SP is connected to TM or TM like region, with minicolumns
@@ -193,18 +196,20 @@ class cExplorer3D(ShowBase):
         column = self.gui.columnID
         cell = self.gui.cellID
 
-        region = self.bakeReader.regions[regionName]
+        region = self.HTMObjects[obj].regions[regionName]
+        regionData = self.bakeReader.regions[regionName]
 
         # cleans all data, do not call if you want to stack data for more cells/columns for example
         self.bakeReader.CleanCellConnections(regionName)
         self.bakeReader.CleanColumnConnections(regionName)
 
         # ---------------------------- PROXIMAL SYNAPSES ---------------------------------------------------------------
-        if self.gui.showProximalSynapses and region.type in ["TMRegion"]:# only for those regions proximal data applies
+        if self.gui.showProximalSynapses and regionData.type in ["TMRegion"] and region.unifiedWithSPRegion:# only for those regions proximal data applies
             # load the data
-            self.bakeReader.LoadColumnConnections(connectionType="proximal", connectionTypeFile="", regionName= regionName, iteration=self.iteration, colID=column) # proximal, but without prefix, because they are the only one
+            self.bakeReader.LoadColumnConnections(connectionType="proximal", connectionTypeFile="", regionName = region.unifiedSPRegion, iteration=self.iteration, colID=column, connectedOnly= self.gui.showOnlyConnectedSynapses) # proximal, but without prefix, because they are the only one
 
-            if column not in region.columnConnections:
+            if 'proximal' not in self.bakeReader.regions[region.unifiedSPRegion].columnConnections or\
+                    column not in [x[0] for x in self.bakeReader.regions[region.unifiedSPRegion].columnConnections['proximal']]:
                 printLog("Don't have column data for requested column:"+str(column) + " of region:"+str(regionName))
                 #self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
                 return
@@ -213,16 +218,25 @@ class cExplorer3D(ShowBase):
                                                                   synapsesType="proximal", column=column, cell=-1)
 
         # ---------------------------- DISTAL/BASAL SYNAPSES -----------------------------------------------------------
-        if self.gui.showDistalSynapses and region.type in ["py.ApicalTMPairRegion"]:
+
+        if self.gui.showDistalSynapses and regionData.type in ["TMRegion"]:
+            self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="", regionName=regionName, iteration=self.iteration, # basal = distal
+                                                cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell,connectedOnly= self.gui.showOnlyConnectedSynapses)  # load it
+
+            self.HTMObjects[obj].regions[regionName].DestroySynapses()
+            self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                  synapsesType="distal", column=column, cell=cell)
+
+        if self.gui.showDistalSynapses and regionData.type in ["py.ApicalTMPairRegion"]:
             self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="basal", regionName=regionName, iteration=self.iteration, # basal = distal
-                                                cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell)  # load it
+                                                cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell, connectedOnly=self.gui.showOnlyConnectedSynapses)  # load it
 
             self.HTMObjects[obj].regions[regionName].DestroySynapses()
             self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
                                                                   synapsesType="distal", column=column, cell=cell)
 
         # ---------------------------- APICAL SYNAPSES -----------------------------------------------------------------
-        if self.gui.showApicalSynapses and region.type in ["py.ApicalTMPairRegion"]:
+        if self.gui.showApicalSynapses and regionData.type in ["py.ApicalTMPairRegion"]:
             print("TODO")
 
 

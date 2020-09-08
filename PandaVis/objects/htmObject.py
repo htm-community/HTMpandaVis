@@ -90,7 +90,7 @@ class cHTM:
         if regionClass is None:
             return  # not implemented
 
-        self.regions[name] = regionClass(name, regionData, self.gui, unifiedWithColumnRegion=True)
+        self.regions[name] = regionClass(name, regionData, self.gui, unifiedWithTMRegion=True)
 
 
     def getNode(self):
@@ -108,7 +108,7 @@ class cHTM:
         allFinished = True
         for reg in self.regions:
             if not self.regions[reg].gfxCreationFinished:
-                self.regions[reg].CreateGfxProgressively()
+                self.regions[reg].CreateGfxProgressively(self.regions)
                 allFinished = False
 
         if allFinished:

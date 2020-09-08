@@ -116,7 +116,11 @@ class PandaBaker(object):
                 regionOutArr = np.array(network.getRegion(regName).getOutputArray(out), dtype=np.float32)
                 #regionOutSDR = SDR(regionOutArr.size)
                 #regionOutSDR.dense = regionOutArr
-
+                # if regName=='scalarEncoder' and out=='encoded':
+                #     from htm.bindings.sdr import SDR
+                #     s = SDR(len(regionOutArr))
+                #     s.dense = regionOutArr
+                #     print(s.sparse)
                 self.db.InsertDataArray('region__'+regName+'__'+out,
                                 iteration, regionOutArr)
 
@@ -124,7 +128,7 @@ class PandaBaker(object):
             object_methods = [method_name for method_name in dir(regInstance[1])
                               if callable(getattr(regInstance[1], method_name))]
 
-            if regInstance[0] in ["py.ApicalTMPairRegion", "TMRegion"]: # here list all regions that have connections
+            if regInstance[0] in ["SPRegion", "py.ApicalTMPairRegion", "TMRegion"]: # here list all regions that have connections
                 byteStream = regInstance[1].executeCommand("saveConnectionsToFile",
                                                            os.path.join(self.dumpFolderPath,str(regName) + "_" + str(iteration)))
 

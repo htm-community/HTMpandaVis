@@ -67,7 +67,7 @@ class cRegion(ABC):
         pass
 
     # creating gfx per chunks, to avoid lagging
-    def CreateGfxProgressively(self):
+    def CreateGfxProgressively(self, regions):
         createdObjs = 0
         currentlyCreatedObjs = 0
         allFinished = True
@@ -101,6 +101,10 @@ class cRegion(ABC):
                 self.gfxCreationFinished = True
                 if self.text is not None:
                     self.text.setText(self.name)
+
+                    if self.type in ['TMRegion', 'py.ApicalTMPairRegion'] and self.unifiedWithSPRegion:
+                        self.text.setText(self.name +' + '+ self.unifiedSPRegion)
+
         else:
             if self.text is not None:
                 self.text.setText(self.name + "(creating:" + str(int(100 * createdObjs / len(self.subObjects))) + " %)")
@@ -116,17 +120,36 @@ class cRegion(ABC):
     def getNode(self):
         return self._node
 
-    # this method shows requested synapse type on the specific column/cell
+    # this method shows requested synapse type on the specific column/cell of this region
     def ShowSynapses(self, regionObjects, bakeReader, synapsesType, column, cell):
 
-        inputName = "basalInput" if synapsesType == "basal" else "apicalInput"
 
-        if synapsesType == "proximal": # we are on minicolumns
+        if synapsesType in ['proximal','distal'] : # SPRegion, TMRegion
+            inputName = 'bottomUpIn'
+        elif synapsesType == 'basal': # ApicalTMRegion
+            inputName = 'basalInput'
+        elif synapsesType == 'apical': # ApicalTMRegion
+            inputName = 'apicalInput'
+        else:
+            raise NotImplemented("Synapses type:"+str(synapsesType)+' not implemented!')
+
+        #TMRegion takes distal input from his own
+        if synapsesType == 'distal' and self.type == 'TMRegion':
+            self.minicolumns[column].cells[cell]\
+                .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType],
+                            [self.name])
+
+        elif synapsesType == "proximal": # we are on minicolumns
+            if hasattr(self, 'unifiedWithSPRegion') and self.unifiedWithSPRegion:
+                regName = self.unifiedSPRegion
+            else:
+                regName = self.name
+
             self.minicolumns[
                 column
-            ].cells[cell].CreateSynapses(regionObjects, bakeReader.regions[self.name].columnConnections[synapsesType], self.FindSourceRegionOfInput(bakeReader, inputName))
+            ].CreateSynapses(regionObjects, bakeReader.regions[regName].columnConnections[synapsesType], self.FindSourceRegionsOfInput(bakeReader, regName, inputName))
 
-        else: # other than proximal - e.g. using cellConnections
+        else: # other than proximal
             if hasattr(self, "minicolumns"):
                 cellObj = self.minicolumns[column].cells[cell]
             elif hasattr(self, "cells"):
@@ -137,12 +160,18 @@ class cRegion(ABC):
                 raise NotImplemented()
 
             cellObj.CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType],
-                               self.FindSourceRegionOfInput(bakeReader, inputName))
+                               self.FindSourceRegionsOfInput(bakeReader, self.name, inputName))
 
-    def FindSourceRegionOfInput(self, bakeReader, thisRegionInput):
-        for id,link in bakeReader.links.items():
-            if link.destinationRegion == self.name and link.destinationInput == thisRegionInput:
-                return link.sourceRegion
+    # finds all source regions that matches this region's input
+    @classmethod
+    def FindSourceRegionsOfInput(cls, bakeReader, regionName, regionInput):
+        result = []
+
+        for idx, link in bakeReader.links.items():
+            if link.destinationRegion == regionName and link.destinationInput == regionInput:
+                result += [link.sourceRegion]
+
+        return result
 
 
     def DestroySynapses(self):
