@@ -29,8 +29,8 @@ class cSPRegion(cRegion):
         print("Setting link for unification: SPregion -> "+region)
         self.unifiedTMRegion = region
 
-    def getVerticalSize(self):
-        return 1
+    def getBoundingBoxSize(self):
+        return [int(self.SUBOBJ_DISTANCE_X*len(self.subObjects)), 1]  # [horizontal, vertical]
 
     def UpdateState(self, regionData):
         super().UpdateState(regionData)

@@ -31,7 +31,8 @@ class cRawValuesRegion(cRegion):
     for i in range(len(self.textNodes)):
       self.textNodes[i].setText(str(newValues[i]))
 
-  def getVerticalSize(self):
-    return 1
+  def getBoundingBoxSize(self):
+    return [3, 1]  # [horizontal, vertical]
+
 
 

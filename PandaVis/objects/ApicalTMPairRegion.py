@@ -1,5 +1,6 @@
 from objects.region import cRegion
 from objects.minicolumn import cMinicolumn
+import math
 
 class cApicalTMPairRegion(cRegion):
 
@@ -24,8 +25,8 @@ class cApicalTMPairRegion(cRegion):
 
 
 
-    def getVerticalSize(self):
-        return self.nOfCellsPerColumn
+    def getBoundingBoxSize(self):
+        return [self.SUBOBJ_PER_ROW * self.SUBOBJ_DISTANCE_X, self.nOfCellsPerColumn]# [horizontal, vertical]
 
     def UpdateState(self, regionData):
         super().UpdateState(regionData)

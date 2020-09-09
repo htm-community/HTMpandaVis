@@ -46,11 +46,13 @@ class cGUI:
                 self.defaults = json.loads(file.read())
 
 
-        self.showProximalSynapses = self.getDefault("proximalSynapses")
-        self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyActiveProximalSynapses")
+        self.showProximalSynapses = self.getDefault("showProximalSynapses")
+        self.showDistalSynapses = self.getDefault("showDistalSynapses")
+        self.showApicalSynapses = self.getDefault("showApicalSynapses")
+
+        self.showOnlyActiveSynapses = self.getDefault("showOnlyActiveSynapses")
         self.showOnlyConnectedSynapses = self.getDefault("showOnlyConnectedSynapses")
-        self.showDistalSynapses = self.getDefault("distalSynapses")
-        self.showApicalSynapses = self.getDefault("apicalSynapses")
+
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
         self.showPredictionCorrectness = self.getDefault("predictionCorrectness")
         self.showBursting = self.getDefault("showBursting")
@@ -66,6 +68,7 @@ class cGUI:
 
         self.updateLegend = True
         self.updateDescriptionWindow = True
+        self.updateConnections = False
         self.legend = None
         self.description = None
         self.showLegend = self.getDefault("legend")
@@ -87,11 +90,12 @@ class cGUI:
                   [sg.Button('STEP -1'), sg.Button('STEP +1')],
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.InputText(self.getDefault("iterationGoto"), key="iterationGoto"), sg.Button('GOTO step')],
-                  [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
-                  [sg.Checkbox('Show only active proximal synapes', key="onlyActiveProximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show proximal synapes', key="showProximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show distal synapes', key="showDistalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show apical synapes', key="showApicalSynapses", enable_events=True)],
                   [sg.Checkbox('Show only connected synapes', key="showOnlyConnectedSynapses",
                                enable_events=True)],
-                  [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show only active synapes', key="showOnlyActiveSynapses", enable_events=True)],
                   [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Show prediction correctness', key="predictionCorrectness", enable_events=True)],
                   [sg.Checkbox('Show bursting', key="showBursting", enable_events=True)],
@@ -223,8 +227,6 @@ class cGUI:
                     self.LODvalue2 = values["LODSlider2"]
 
                     self.LODChanged = True
-            elif event in ["proximalSynapses", "distalSynapses", "inputPrevStepOverlap", "predictionCorrectness","showBursting"]:
-                self.updateLegend = True
 
             elif event == "legend":
                 if values["legend"]:
@@ -241,14 +243,21 @@ class cGUI:
             elif event == 'capture':
                 self.capture = True
 
+            # general settings change detection
+            if event in ["showProximalSynapses", "showDistalSynapses", "inputPrevStepOverlap", "predictionCorrectness", "showBursting"]:
+                self.updateLegend = True
+            if event in ["showProximalSynapses", "showDistalSynapses", "showApicalSynapses", "showOnlyActiveSynapses", "showOnlyConnectedSynapses"]:
+                self.updateConnections = True
+
 
             self.wireframe = values["wireFrame"]
             self.wireframeChanged = event == "wireFrame"
 
-            self.showProximalSynapses = values["proximalSynapses"]
-            self.showOnlyActiveProximalSynapses = values["onlyActiveProximalSynapses"]
+            self.showProximalSynapses = values["showProximalSynapses"]
+            self.showOnlyActiveSynapses = values["showOnlyActiveSynapses"]
             self.showOnlyConnectedSynapses = values["showOnlyConnectedSynapses"]
-            self.showDistalSynapses = values["distalSynapses"]
+            self.showDistalSynapses = values["showDistalSynapses"]
+            self.showApicalSynapses = values["showApicalSynapses"]
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]
             self.showBursting = values["showBursting"]

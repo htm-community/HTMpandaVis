@@ -42,6 +42,7 @@ class cCell:
         self.column = column  # to be able to track column that this cell belongs to
         self.idx = -1
         self.showPredictionCorrectness = False
+        self.cntSegments = None # info about how many segments are on this cell
 
 
     def CreateGfx(
@@ -147,7 +148,7 @@ class cCell:
     def getNode(self):
         return self._node
 
-    def CreateSynapses(self, regionObjects, cellConnections, sourceRegions):
+    def CreateSynapses(self, regionObjects, cellConnections, synapsesType, sourceRegions, activeOnly):
         printLog("Creating synapses", verbosityMedium)
 
         if self.column is not None:
@@ -155,12 +156,16 @@ class cCell:
         else:
             myID = self.idx
 
-        ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse, regionObjects=regionObjects,
-                                         connections=cellConnections, idx = myID, sourceRegions = sourceRegions )
+        ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse, synapsesType=synapsesType, regionObjects=regionObjects,
+                                         connections=cellConnections, idx = myID, sourceRegions = sourceRegions, activeOnly=activeOnly )
+        for arr in cellConnections:
+            if arr[0] == myID:# find this cell
+                self.cntSegments = len(arr[1])
+                break
 
     # creates synapse, that will go from presynCell to this cell
     # presynCell - cell object
-    def _CreateOneSynapse(self, presynCell):
+    def _CreateOneSynapse(self, presynCell, synapsesType):
 
         presynCell.setPresynapticFocus()  # highlight presynaptic cells
 
@@ -182,7 +187,7 @@ class cCell:
         geom = Geom(vdata)
         geom.addPrimitive(prim)
 
-        node = GeomNode("Synapse")
+        node = GeomNode("Synapse_"+str(synapsesType))
         node.addGeom(geom)
 
         nodePath = self._node.attachNewNode(node)
@@ -202,14 +207,17 @@ class cCell:
             txt += "ID:" + str(self.idx) + "  ABS ID:"+ str(len(self.column.cells)*self.column.idx + self.idx) +"\n"
         else:
             txt += "ID:" + str(self.idx) + "\n"
-        txt += "Active:" + str(self.active)+"\n"
-        txt += "Winner:" + str(self.winner) + "\n"
-        txt += "Predictive:" + str(self.predictive)+"\n"
+        txt += "Active:" + str(self.active==1)+"\n"
+        txt += "Winner:" + str(self.winner==1) + "\n"
+        txt += "Predictive:" + str(self.predictive==1)+"\n"
+        txt += "Number of segments:" + str(self.cntSegments) + "\n"
         txt += "Correctly predicted:" + ('N/A' if not self.showPredictionCorrectness else str(self.correctlyPredicted))+"\n"
         txt += "Falsely predicted:" + ('N/A' if not self.showPredictionCorrectness else str(self.falselyPredicted))+"\n"
 
         return txt
 
-    def DestroySynapses(self):
-        for syn in self._node.findAllMatches("Synapse"):
+    def DestroySynapses(self, synapseType=None):
+        if synapseType is None:
+            synapseType='*'
+        for syn in self._node.findAllMatches("Synapse_"+str(synapseType)):
             syn.removeNode()

@@ -24,8 +24,9 @@ class cGridCellLocationRegion(cRegion):
     self.SUBOBJ_DISTANCE_X = c.width + self.MODULE_OFFSET # take some module width and add space between modules
     self.SUBOBJ_DISTANCE_Y = c.width + self.MODULE_OFFSET # take some module width and add space between modules
 
-  def getVerticalSize(self):
-    return 1 + 10
+
+  def getBoundingBoxSize(self):
+    return [(int)(self.MODULE_OFFSET*self.gridCellModulesCount), 1+10]  # [horizontal, vertical]
 
 
   def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py

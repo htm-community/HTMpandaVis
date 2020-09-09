@@ -161,7 +161,10 @@ class cInteraction:
             self.onClickObject()
             
     def onClickObject(self):
-        mpos = self.base.mouseWatcherNode.getMouse()
+        if self.base.mouseWatcherNode.hasMouse():
+            mpos = self.base.mouseWatcherNode.getMouse()
+        else:
+            return
         self.pickerRay.setFromLens(self.base.camNode, mpos.getX(), mpos.getY())
 
         self.myTraverser.traverse(self.render)

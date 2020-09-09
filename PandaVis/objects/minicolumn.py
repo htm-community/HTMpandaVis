@@ -49,6 +49,9 @@ class cMinicolumn:
         self.oneOfCellCorrectlyPredicted = False
         self.oneOfCellFalselyPredicted = False
 
+        self.cntSegments = None # info about how many segments are on this cell
+
+
     def CreateGfx(self, loader, idx):
         #                __node
         #                /   \
@@ -170,15 +173,20 @@ class cMinicolumn:
             self.__columnBox.setRenderModeFilled()
             
 
-    def CreateSynapses(self, regionObjects, columnConnections, sourceRegions):
+    def CreateSynapses(self, regionObjects, columnConnections, synapsesType, sourceRegions, activeOnly):
         printLog("Creating synapses", verbosityMedium)
 
-        ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse, regionObjects=regionObjects,
-                                         connections=columnConnections, idx=self.idx, sourceRegions=sourceRegions )
+        ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse,synapsesType=synapsesType, regionObjects=regionObjects,
+                                         connections=columnConnections, idx=self.idx, sourceRegions=sourceRegions, activeOnly=activeOnly)
+
+        for arr in columnConnections:
+            if arr[0] == self.idx:# find this column
+                self.cntSegments = len(arr[1])
+                break
 
     # creates synapse, that will go from presynCell to this cell
     # presynCell - cell object
-    def _CreateOneSynapse(self, presynCell):
+    def _CreateOneSynapse(self, presynCell, synapsesType):
 
         form = GeomVertexFormat.getV3()
         vdata = GeomVertexData("SynapseLine", form, Geom.UHStatic)
@@ -202,7 +210,7 @@ class cMinicolumn:
         geom = Geom(vdata)
         geom.addPrimitive(prim)
 
-        node = GeomNode("Synapse")
+        node = GeomNode("Synapse_"+str(synapsesType))
         node.addGeom(geom)
 
         nodePath = self.__cellsNodePath.attachNewNode(node)
@@ -221,14 +229,17 @@ class cMinicolumn:
 
         self.UpdateState(self.bursting, self.active, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalselyPredicted)
 
-    def DestroySynapses(self):
+    def DestroySynapses(self, synapseType=None):
+        if synapseType is None:
+            synapseType='*'
+
         if not self.gfxCreated:
             return
-        for syn in self.__cellsNodePath.findAllMatches("Synapse"):
+        for syn in self.__cellsNodePath.findAllMatches("Synapse_"+str(synapseType)):
             syn.removeNode()
 
         for cell in self.cells:
-            cell.DestroySynapses()
+            cell.DestroySynapses(synapseType)
 
     def getDescription(self):
         txt = ""
@@ -237,4 +248,5 @@ class cMinicolumn:
         txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
         txt += "One of cell correctly predicted:" + str(self.oneOfCellCorrectlyPredicted) + "\n"
         txt += "One of cell false predicted:" + str(self.oneOfCellFalselyPredicted) + "\n"
+        txt += "Number of segments:" + str(self.cntSegments) + "\n"
         return txt

@@ -31,8 +31,8 @@ class cTMRegion(cRegion):
 
         self.unifiedWithSPRegion = True
 
-    def getVerticalSize(self):
-        return self.nOfCellsPerColumn
+    def getBoundingBoxSize(self):
+        return [int(self.SUBOBJ_DISTANCE_X*len(self.subObjects)), self.nOfCellsPerColumn]  # [horizontal, vertical]
 
     def UpdateState(self, regionData):
         super().UpdateState(regionData)

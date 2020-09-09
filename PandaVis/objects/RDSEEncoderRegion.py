@@ -14,8 +14,9 @@ class cRDSEEncoderRegion(cRegion):
 
       self.subObjects = self.cells
 
-    def getVerticalSize(self):
-      return 1
+    def getBoundingBoxSize(self):
+        return [self.SUBOBJ_PER_ROW * self.SUBOBJ_DISTANCE_X + 20, 1]  # [horizontal, vertical]
+
 
     def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
       super().UpdateState(regionData)

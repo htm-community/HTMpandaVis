@@ -1,7 +1,7 @@
 
 # this method calls callback 'createSynapse' for each synapse going from 'sourceRegion'. Using data 'connection' specified by 'idx'
 # 'idx' can be cellID or colID
-def CreateSynapses(callbackCreateSynapse, regionObjects, connections, idx ,sourceRegions ):
+def CreateSynapses(callbackCreateSynapse, synapsesType, regionObjects, connections, idx ,sourceRegions, activeOnly ):
     lenOffset = 0
     for sourceRegion in sourceRegions:
         try:
@@ -37,7 +37,8 @@ def CreateSynapses(callbackCreateSynapse, regionObjects, connections, idx ,sourc
 
                                 presynCell = regionObjects[sourceRegion].cells[cell]
 
-                            callbackCreateSynapse(presynCell)
+                            if not activeOnly or activeOnly and presynCell.active:# if we are creating only active synapses (synapses with active presynaptic cell)
+                                callbackCreateSynapse(presynCell, synapsesType)
 
                     foundMyData = True
                     break

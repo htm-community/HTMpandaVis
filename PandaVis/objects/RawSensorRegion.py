@@ -1,6 +1,6 @@
 from .region import cRegion
 from objects.cell import cCell
-
+import math
 class cRawSensorRegion(cRegion):
     def __init__(self, name, cellData, gui):
       super().__init__(name, cellData, gui)
@@ -14,8 +14,8 @@ class cRawSensorRegion(cRegion):
 
       self.subObjects = self.cells
 
-    def getVerticalSize(self):
-      return 1
+    def getBoundingBoxSize(self):
+        return [self.SUBOBJ_PER_ROW * self.SUBOBJ_DISTANCE_X + 20, 1]  # [horizontal, vertical]
 
     def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
       super().UpdateState(regionData)

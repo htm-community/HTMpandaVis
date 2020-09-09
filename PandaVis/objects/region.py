@@ -6,6 +6,7 @@ from objects.minicolumn import cMinicolumn
 from objects.gridCellModule import cGridCellModule
 from panda3d.core import NodePath, PandaNode, TextNode
 import math
+from panda3d.core import LColor
 import warnings
 
 
@@ -51,6 +52,7 @@ class cRegion(ABC):
 
         textNodePath = self._node.attachNewNode(self.text)
         textNodePath.setScale(5)
+        textNodePath.setColor(LColor(0.0, 0.0, 0.0, 1.0)) # black
 
         textNodePath.setPos(0, -5, 0)
 
@@ -59,21 +61,25 @@ class cRegion(ABC):
 
         self.loader = loader
 
+        if self.SUBOBJ_PER_ROW == 0:
+            self.SUBOBJ_PER_ROW = int(math.sqrt(len(self.subObjects)))
+
         print("GFX created for "+self.name)
 
 
     @abstractmethod
-    def getVerticalSize(self):
+    def getBoundingBoxSize(self): # return [horizontal, vertical]
         pass
+
+    def setPosition(self, pos):
+        if self.getNode() is not None: # check if region has physical objects
+            self.getNode().setPos(pos[0], 0, pos[1])
 
     # creating gfx per chunks, to avoid lagging
     def CreateGfxProgressively(self, regions):
         createdObjs = 0
         currentlyCreatedObjs = 0
         allFinished = True
-
-        if self.SUBOBJ_PER_ROW == 0:
-            self.SUBOBJ_PER_ROW = int(math.sqrt(len(self.subObjects)))
 
 
         for o in self.subObjects:
@@ -103,7 +109,7 @@ class cRegion(ABC):
                     self.text.setText(self.name)
 
                     if self.type in ['TMRegion', 'py.ApicalTMPairRegion'] and self.unifiedWithSPRegion:
-                        self.text.setText(self.name +' + '+ self.unifiedSPRegion)
+                        self.text.setText(self.name + ' + ' + self.unifiedSPRegion)
 
         else:
             if self.text is not None:
@@ -121,7 +127,7 @@ class cRegion(ABC):
         return self._node
 
     # this method shows requested synapse type on the specific column/cell of this region
-    def ShowSynapses(self, regionObjects, bakeReader, synapsesType, column, cell):
+    def ShowSynapses(self, regionObjects, bakeReader, synapsesType, column, cell, onlyActive):
 
 
         if synapsesType in ['proximal','distal'] : # SPRegion, TMRegion
@@ -136,8 +142,8 @@ class cRegion(ABC):
         #TMRegion takes distal input from his own
         if synapsesType == 'distal' and self.type == 'TMRegion':
             self.minicolumns[column].cells[cell]\
-                .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType],
-                            [self.name])
+                .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
+                            [self.name], onlyActive)
 
         elif synapsesType == "proximal": # we are on minicolumns
             if hasattr(self, 'unifiedWithSPRegion') and self.unifiedWithSPRegion:
@@ -147,7 +153,7 @@ class cRegion(ABC):
 
             self.minicolumns[
                 column
-            ].CreateSynapses(regionObjects, bakeReader.regions[regName].columnConnections[synapsesType], self.FindSourceRegionsOfInput(bakeReader, regName, inputName))
+            ].CreateSynapses(regionObjects, bakeReader.regions[regName].columnConnections[synapsesType], synapsesType, self.FindSourceRegionsOfInput(bakeReader, regName, inputName), onlyActive)
 
         else: # other than proximal
             if hasattr(self, "minicolumns"):
@@ -159,7 +165,7 @@ class cRegion(ABC):
             else:
                 raise NotImplemented()
 
-            cellObj.CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType],
+            cellObj.CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
                                self.FindSourceRegionsOfInput(bakeReader, self.name, inputName))
 
     # finds all source regions that matches this region's input
@@ -174,9 +180,9 @@ class cRegion(ABC):
         return result
 
 
-    def DestroySynapses(self):
+    def DestroySynapses(self, synapseType):
         for obj in self.subObjects:
-            obj.DestroySynapses()
+            obj.DestroySynapses(synapseType)
 
             
     def setTransparency(self,transparency):

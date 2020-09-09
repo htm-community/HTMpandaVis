@@ -81,7 +81,8 @@ class cHTM:
         region.getNode().reparentTo(self.__node)
         # self.__node = NodePath()
 
-        cHTM.layerOffset += region.getVerticalSize() + 20
+        w, h = region.getBoundingBoxSize()
+        cHTM.layerOffset += h + 20
 
     # unificated region means like SP is bundled with TM.
     # SP operates on TM objects, does not have any own objects
@@ -96,9 +97,9 @@ class cHTM:
     def getNode(self):
         return self.__node
 
-    def DestroySynapses(self):
+    def DestroySynapses(self, synapseType=None):
         for reg in self.regions.values():
-            reg.DestroySynapses()
+            reg.DestroySynapses(synapseType)
 
     def updateWireframe(self, value):
         for reg in self.regions.values():
