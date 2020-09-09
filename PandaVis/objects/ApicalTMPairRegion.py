@@ -23,7 +23,13 @@ class cApicalTMPairRegion(cRegion):
         self.SUBOBJ_DISTANCE_X = 2 + self.COL_OFFSET
         self.SUBOBJ_DISTANCE_Y = 1 + self.COL_OFFSET
 
+        self.unifiedWithSPRegion = False
 
+    def SetUnifiedSPRegion(self, region):
+        print("Setting link for unification: ApicalTMPairRegion -> " + region)
+        self.unifiedSPRegion = region
+
+        self.unifiedWithSPRegion = True
 
     def getBoundingBoxSize(self):
         return [self.SUBOBJ_PER_ROW * self.SUBOBJ_DISTANCE_X, self.nOfCellsPerColumn]# [horizontal, vertical]

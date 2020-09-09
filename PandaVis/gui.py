@@ -37,6 +37,9 @@ class cGUI:
         self.init = False
         self.terminating = False
 
+        self.event_last = None
+        self.values_last = None
+
         try:
             with open('guiValues.ini', 'r') as file:
                 self.defaults = json.loads(file.read())
@@ -135,8 +138,14 @@ class cGUI:
                 #print("Default not for:"+str(o))
 
     def retrieveDefaults(self):
-
         event, values = self.window.Read(timeout=10)
+
+        if values is None:
+            event = self.event_last
+            values = self.values_last
+        else:
+            self.event_last = event
+            self.values_last = values
 
         if values is not None:
             for o in values:
@@ -190,6 +199,7 @@ class cGUI:
         if self.tmrSaveWinPos > 100:
             self.lastWinPos = self.window.current_location()
             self.tmrSaveWinPos = 0
+            self.retrieveDefaults() # buffer default values regularly, because if user close gui window, we don't get anything
         else:
             self.tmrSaveWinPos += 1
 

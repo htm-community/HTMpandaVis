@@ -130,7 +130,14 @@ class cRegion(ABC):
     def ShowSynapses(self, regionObjects, bakeReader, synapsesType, column, cell, onlyActive):
 
 
-        if synapsesType in ['proximal','distal'] : # SPRegion, TMRegion
+        if self.type == 'py.ApicalTMPairRegion':
+            if synapsesType in ['distal']:
+                inputName = 'basalInput'
+            elif synapsesType in ['apical']:
+                inputName = 'apicalInput'
+            else:
+                raise NotImplemented("Not known synapsesType for py.ApicalTMPairRegion!")
+        elif synapsesType in ['proximal','distal'] : # SPRegion, TMRegion
             inputName = 'bottomUpIn'
         elif synapsesType == 'basal': # ApicalTMRegion
             inputName = 'basalInput'
@@ -166,7 +173,7 @@ class cRegion(ABC):
                 raise NotImplemented()
 
             cellObj.CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
-                               self.FindSourceRegionsOfInput(bakeReader, self.name, inputName))
+                               self.FindSourceRegionsOfInput(bakeReader, self.name, inputName), onlyActive)
 
     # finds all source regions that matches this region's input
     @classmethod
