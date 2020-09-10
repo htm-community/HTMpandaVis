@@ -100,6 +100,9 @@ class cCell:
         elif self.falselyPredicted:
             col = COL_CELL_FALSELY_PREDICTED
             self._node.setColor(col)
+        elif self.predictive and self.winner:
+            col = COL_CELL_WINNER_AND_PREDICTIVE
+            self._node.setColor(col)
         elif self.winner:
             col = COL_CELL_WINNER
             self._node.setColor(col)
