@@ -85,10 +85,6 @@ class PandaBaker(object):
 
         # DATA carying tables creation ---------------------------------------------------------------------------------
         for regName, regInstance in structure["regions"].items():
-
-            print(regInstance[0])
-            print(regInstance[1].getSpec().toString().replace("\n", ""))
-
             outs = getOutputsOfRegion(regInstance[1])#get outputs from name
             for out in outs:
                 self.db.CreateTable('region__'+regName+'__'+out, "iteration INTEGER, data ARRAY")
