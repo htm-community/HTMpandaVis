@@ -86,14 +86,14 @@ python setup.py
 # Run example
 There is NetworkAPI hotgym example in the [htm.core repository](https://github.com/htm-community/htm.core/tree/master/py/htm/examples/networkAPI).
 
-All you have to bake it, is changing one line!
+All you have to do to bake it, is changing one line!
 
 1. For baking change :
 `from htm.bindings.engine_internal import Network`
 to
 `from pandaBaker.pandaNetwork import Network`
 
-when you run the script, database will be created inside script folder in /bakedDatabase
+when you run the script, database and dump files will be created inside script folder in /bakedDatabase
 
 2. Run client - pandaVis tool
 ```
