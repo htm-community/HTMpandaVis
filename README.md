@@ -3,6 +3,7 @@
 </p>
 
 # HTMpandaVis
+**UPDATE 9/2020 - major change - using solely NetworkAPI of HTM.core - fully AUTOMATIC baking process !**
 **UPDATE 6/2020 - major change - SQLITE3 instead of TCP sockets + Dash plots visualization in web browser !**
 
 **See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
@@ -35,8 +36,19 @@ You can also browse SQLite3 dabase file (.db) directly with ordinary browser suc
 
 ## Baking
 
-To bake your simulation, you must use [htm.core](https://github.com/htm-community/htm.core) and extend your script with small amount of code to do the baking.
+To bake your simulation, you must use [htm.core](https://github.com/htm-community/htm.core) networkAPI.
+Only difference is, that you need to import instead of
+`from htm.bindings.engine_internal import Network`
+this
+`from pandaBaker.pandaNetwork import Network`
+
+That is all.
+PandaVis will generate automatically all data.
+
+If you don't want to change imports and keep using panda, you can modify flag `Network.bakePandaData = True/False`
+
 See [baking readme](pandaBaker/README.md).
+
 ## Dash plots visualization
 
 HTMpandaVis can be used also to record custom dataStreams with pandaBaker and then visualize it in web browser.
@@ -72,14 +84,16 @@ python -m pip install -r requirements.txt
 python setup.py 
 ```
 # Run example
-There is hotgym example ported from [htm.core](https://github.com/htm-community/htm.core/tree/master/py/htm/examples) modified for baking.
+There is NetworkAPI hotgym example in the [htm.core repository](https://github.com/htm-community/htm.core/tree/master/py/htm/examples/networkAPI).
 
-1. To bake database just navigate into /HotgymExample folder and run hotgym.py:
-```
-cd HTMpandaVis/HotgymExample
-python hotgym.py
-```
-database will be created inside folder /bakedDatabase
+All you have to bake it, is changing one line!
+
+1. For baking change :
+`from htm.bindings.engine_internal import Network`
+to
+`from pandaBaker.pandaNetwork import Network`
+
+when you run the script, database will be created inside script folder in /bakedDatabase
 
 2. Run client - pandaVis tool
 ```
