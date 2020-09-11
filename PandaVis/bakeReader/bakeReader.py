@@ -197,36 +197,21 @@ class BakeReader(object):
     def CleanColumnConnections(self, regionName):
         self.regions[regionName].columnConnections = {}
 
-
+    # gets all presynaptic cells for specified cell
     def getPresynapticCellsForCell(self, connections, cellID, connectedOnly=False):
-        start_time = time.time()
+        #start_time = time.time()
         segments = connections.segmentsForCell(cellID)
 
-        # synapses = []
         res = []
 
-        # if len(segments) > 0:
-        # Log("segments len:"+str(len(segments)))
         for seg in segments:
-            time1 = time.time()
             synapsesForSegment = connections.synapsesForSegment(seg)
-
-
-            # Log("synapsesForSegment() took %s ms " % ((time.time() - time1)*1000))
-            # Log("synapses for segment len:" + str(len(segments)))
-            # Log("datatype:" + str(type(synapsesForSegment)))
-            # Log("synapsesForSegment len:" + str(len(synapsesForSegment)))
-
-            # for syn in synapsesForSegment:
-            # synapses += [syn]
 
             presynapticCells = []
             for syn in synapsesForSegment:
 
                 if not connectedOnly or (connectedOnly and connections.permanenceForSynapse(syn) >= connections.connectedThreshold):
-                # time2 = time.time()
                     presynapticCells += [connections.presynapticCellForSynapse(syn)]
-                # Log("presynapticCellForSynapse() took %s ms " % ((time.time() - time2)*1000))
             res += [np.array(presynapticCells)]
 
         # if len(segments) > 0:
