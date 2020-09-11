@@ -22,7 +22,7 @@ class Network(BaseNetwork):
             super().run(n)  # if not baking, just run as normal
             return
 
-        print("Running "+str(n)+" times (iter."+str(self.iteration)+")")
+        print("Iteration "+str(self.iteration)+" running "+str(n)+"x")
         for i in range(n):
             super().run(1)
             if self.firstRun:

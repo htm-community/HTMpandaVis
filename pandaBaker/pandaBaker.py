@@ -7,28 +7,6 @@ import os
 import json
 import time
 
-#import multiprocessing as mp
-#from multiprocessing import Pool
-#from multiprocessing import get_context
-
-from htm.bindings.sdr import SDR
-
-#algorithm classes
-from htm.bindings.algorithms import TemporalMemory
-from htm.advanced.algorithms.apical_tiebreak_temporal_memory import ApicalTiebreakTemporalMemory
-
-
-# import all python regions
-from htm.advanced.regions.ApicalTMPairRegion import ApicalTMPairRegion
-from htm.advanced.regions.ApicalTMSequenceRegion import ApicalTMSequenceRegion
-from htm.advanced.regions.ColumnPoolerRegion import ColumnPoolerRegion
-from htm.advanced.regions.GridCellLocationRegion import GridCellLocationRegion
-from htm.advanced.regions.ColumnPoolerRegion import ColumnPoolerRegion
-from htm.advanced.regions.RawSensor import RawSensor
-from htm.advanced.regions.RawValues import RawValues
-
-
-#CPU_CORES = 4
 
 class PandaBaker(object):
     def __init__(self, databaseFilePath, bakeProximalSynapses = True, bakeDistalSynapses = True):
@@ -68,7 +46,6 @@ class PandaBaker(object):
             os.mkdir(self.dumpFolderPath)
 
         self.db = Database(self.databaseFilePath)  # connect to the database
-
 
         # structure definition tables creation -------------------------------------------------------------------------
 
@@ -110,22 +87,13 @@ class PandaBaker(object):
         for regName, regInstance in self.structure['regions'].items():
             for out in getOutputsOfRegion(regInstance[1]):
                 regionOutArr = np.array(network.getRegion(regName).getOutputArray(out), dtype=np.float32)
-                #regionOutSDR = SDR(regionOutArr.size)
-                #regionOutSDR.dense = regionOutArr
-                # if regName=='scalarEncoder' and out=='encoded':
-                #     from htm.bindings.sdr import SDR
-                #     s = SDR(len(regionOutArr))
-                #     s.dense = regionOutArr
-                #     print(s.sparse)
+
                 self.db.InsertDataArray('region__'+regName+'__'+out,
                                 iteration, regionOutArr)
 
 
-            object_methods = [method_name for method_name in dir(regInstance[1])
-                              if callable(getattr(regInstance[1], method_name))]
-
-            if regInstance[0] in ["SPRegion", "py.ApicalTMPairRegion", "TMRegion"]: # here list all regions that have connections
-                byteStream = regInstance[1].executeCommand("saveConnectionsToFile",
+            if regInstance[0] in ["SPRegion", "py.ApicalTMPairRegion", "TMRegion", 'py.ColumnPoolerRegion']: # here list all regions that have connections
+                regInstance[1].executeCommand("saveConnectionsToFile",
                                                            os.path.join(self.dumpFolderPath,str(regName) + "_" + str(iteration)))
 
         # ---------------- DATA STREAMS -----------------------------------
@@ -140,16 +108,7 @@ class PandaBaker(object):
 
 def getOutputsOfRegion(region):
     outs = json.loads(region.getSpec().toString().replace("\n", ""))["outputs"].keys()
-
     return outs
-
-    # if 'py.' in regionType:
-    #     # python region
-    #     return list(eval(regionType.split('.')[1]).getSpec()['outputs'].keys())
-    # else:
-    #     # c++ region
-    #     return list(eval(regionType).getSpec()['outputs'].keys())
-
 
 def Log(s):
     print(str(s))
