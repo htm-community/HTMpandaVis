@@ -9,7 +9,7 @@ def adapt_array(arr):
     return arr.tobytes()
 
 def convert_array(text):
-    return np.frombuffer(text,dtype=np.float32)
+    return np.frombuffer(text, dtype=np.float32)
 
 sqlite3.register_adapter(np.array, adapt_array)
 sqlite3.register_converter("array", convert_array)
@@ -18,7 +18,7 @@ def adapt_sdr(arr):
     return arr.tobytes()
 
 def convert_sdr(text):
-    return np.frombuffer(text,dtype=np.uint32)
+    return np.frombuffer(text, dtype=np.uint32)
 
 sqlite3.register_adapter(np.array, adapt_sdr)
 sqlite3.register_converter("sdr", convert_sdr)
@@ -45,20 +45,17 @@ class Database(object):
         return s
 
     # inserts array of values into table
-    def Insert(self,tableName, values):
+    def Insert(self, tableName, *values):
         values = [Database.AddParanthesis(v) for v in values]
 
-        query = "INSERT INTO " + tableName + " VALUES (%s);"%(",".join(values))
+        query = "INSERT INTO " + tableName + " VALUES (%s);" % (",".join(values))
 
         self.curs.execute(query)
 
 
-    # inserts dictionary items into table with "name" and "value" column
-    def InsertParameters(self,tableName, _dict):
-
+    def InsertDictItems(self, tableName, _dict):
         for i in _dict:
             query = "INSERT INTO " + tableName + " (name,value) VALUES (%s,%s);"%(Database.AddParanthesis(i),_dict[i])
-
             self.curs.execute(query)
 
 
@@ -84,9 +81,9 @@ class Database(object):
 
         return table_names
         
-    def SelectAll(self, tableName):
+    def SelectAll(self, tableName, orderAscending = True):
 
-        self.curs.execute("SELECT * FROM " + tableName + ";")
+        self.curs.execute("SELECT * FROM " + tableName + (" order by region desc" if not orderAscending else "") +";")
         self.conn.commit()
         data = self.curs.fetchall()
 
@@ -101,7 +98,6 @@ class Database(object):
         
     # used on tables where iteration is unique value
     def SelectByIteration(self, tableName, iteration):
-
         self.curs.execute("SELECT * FROM " + tableName + " WHERE iteration=(?);",(iteration,))
         self.conn.commit()
         data = self.curs.fetchone() # returns single row

@@ -57,12 +57,12 @@ class cInteraction:
 
         move_x = deltaT * speed * -self.keys["a"] + deltaT * speed * self.keys["d"]
         move_y = deltaT * speed * self.keys["s"] + deltaT * speed * -self.keys["w"]
-        self.base.move_z += (
+        self.base.move_z = (
             deltaT * speed * self.keys["shift"] + deltaT * speed * -self.keys["control"]
         )
 
         self.base.camera.setPos(self.base.camera, move_x, -move_y, 0)
-        self.base.camera.setZ(self.base.move_z)
+        self.base.camera.setZ(self.base.camera.getPos()[2] + self.base.move_z)
 
         self.base.camHeading += (
             deltaT * 90 * self.keys["arrow_left"]
@@ -136,9 +136,7 @@ class cInteraction:
             return
         # unfocus all
         for obj in self.base.HTMObjects.values():
-            obj.DestroyProximalSynapses()
-        for obj in self.base.HTMObjects.values():
-            obj.DestroyDistalSynapses()
+            obj.DestroySynapses()
 
         self.gui.focusedCell.resetFocus()  # reset previous
         self.gui.focusedCell = None
@@ -163,7 +161,10 @@ class cInteraction:
             self.onClickObject()
             
     def onClickObject(self):
-        mpos = self.base.mouseWatcherNode.getMouse()
+        if self.base.mouseWatcherNode.hasMouse():
+            mpos = self.base.mouseWatcherNode.getMouse()
+        else:
+            return
         self.pickerRay.setFromLens(self.base.camNode, mpos.getX(), mpos.getY())
 
         self.myTraverser.traverse(self.render)
@@ -215,23 +216,43 @@ class cInteraction:
 
         parent = obj.getParent()  # skip LOD node
         tag = parent.getTag("id")
-        if tag == "":
-            printLog("Parent is not clickable!", verbosityHigh)
-            return
-        else:
+        parentClickable = False
+        if tag != "":
             parentId = int(tag)
             printLog("PARENT TAG:" + str(parentId), verbosityHigh)
+            parentClickable = True
 
         if obj.getName() == "cell":
             printLog("We clicked on cell", verbosityHigh)
 
             focusedHTMObject = str(obj).split("/")[1]
-            focusedLayer = str(obj).split("/")[2]
+            focusedRegion = str(obj).split("/")[2]
 
             HTMObj = self.base.HTMObjects[focusedHTMObject]
-            Layer = HTMObj.layers[focusedLayer]
-            newCellFocus = Layer.minicolumns[parentId].cells[thisId]
-            focusedPath = [focusedHTMObject, focusedLayer]
+            region = HTMObj.regions[focusedRegion]
+
+
+            if parentClickable:
+                if hasattr(region,"minicolumns"):
+                    newCellFocus = region.minicolumns[parentId].cells[thisId]
+                    self.gui.columnID = parentId
+                    self.gui.cellID = thisId
+
+                elif hasattr(region,"gridCellModules"):
+                    newCellFocus = region.gridCellModules[parentId].cells[thisId]
+                    self.gui.gridModuleID = parentId
+                    self.gui.cellID = thisId
+                else:
+                    printLog("Not able to get data on clicked object!")
+                    return
+
+            else:
+                newCellFocus = region.cells[thisId]
+                self.gui.gridModuleID = -1
+                self.gui.columnID = -1
+                self.gui.cellID = thisId
+
+            focusedPath = [focusedHTMObject, focusedRegion]
 
 
             if self.gui.focusedCell is not None:
@@ -240,18 +261,15 @@ class cInteraction:
             self.gui.focusedCell.setFocus()
 
             # unfocus all
-            for obj in self.base.HTMObjects.values():
-                obj.DestroyProximalSynapses()
-            for obj in self.base.HTMObjects.values():
-                obj.DestroyDistalSynapses()
+            # for obj in self.base.HTMObjects.values():
+            #     obj.DestroyProximalSynapses()
+            # for obj in self.base.HTMObjects.values():
+            #     obj.DestroyDistalSynapses()
 
 
             self.gui.focusedPath = focusedPath
-            
-            self.gui.columnID = Layer.minicolumns.index(self.gui.focusedCell.column)
-            self.gui.cellID = Layer.minicolumns[self.gui.columnID].cells.index(self.gui.focusedCell)
 
-            self.base.UpdateProximalAndDistalData()
+            self.base.UpdateConnections()
 
             self.gui.UpdateCellDescription()
             
@@ -285,8 +303,8 @@ class cInteraction:
             self.gui.transparencyChanged = False
 
             for obj in self.base.HTMObjects.values():
-                for ly in obj.layers.values():
-                    ly.setTransparency(self.gui.transparency/100.0)
+                for reg in obj.regions.values():
+                    reg.setTransparency(self.gui.transparency/100.0)
 
         if self.gui.LODChanged and len(self.base.HTMObjects) > 0:
             self.gui.LODChanged = False
@@ -295,5 +313,5 @@ class cInteraction:
             self.base.cam.node().getLens().setFar(self.gui.LODvalue2)
 
             for obj in self.base.HTMObjects.values():
-                for ly in obj.layers.values():
-                    ly.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)
+                for reg in obj.regions.values():
+                    reg.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)

@@ -1,0 +1,40 @@
+{"plotsPerRow" : 3,
+"streams": [{"name" : "rawAnomaly",
+			 "type" : "line",
+			 "yaxis": "anomaly"},
+		   {"name" : "numberOfWinnerCells",
+			 "type" : "line",
+			 "yaxis": "cells"},
+			 
+		   {"name" : "numberOfPredictiveCells",
+			 "type" : "line",
+			 "yaxis": "cells"}, 
+		   {"name" : "sensor_sparsity",
+			 "type" : "line",
+			 "yaxis": "%"},
+		   {"name" : "location_sparsity",
+			 "type" : "line",
+			 "yaxis": "%"},
+			 
+		   {"name" : "SensoryLayer_SP_overlap_metric",
+			 "type" : "line",
+			 "yaxis": "avg cells"},
+		   {"name" : "SensoryLayer_TM_overlap_metric",
+			 "type" : "line",
+			 "yaxis": "avg cells"},			 
+		   {"name" : "SensoryLayer_SP_activation_frequency",
+			 "type" : "line",
+			 "yaxis": "Hz"},
+		   {"name" : "SensoryLayer_TM_activation_frequency",
+			 "type" : "line",
+			 "yaxis": "Hz"},
+			 
+		   {"name" : "SensoryLayer_SP_entropy",
+			 "type" : "line",
+			 "yaxis": "entropy"},
+		   {"name" : "SensoryLayer_TM_entropy",
+			 "type" : "line",
+			 "yaxis": "entropy"}
+		   ]
+}
+

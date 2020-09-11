@@ -44,9 +44,8 @@ class Database(object):
         return s
 
     # inserts array of values into table
-    def Insert(self,tableName, values):
+    def Insert(self,tableName, *values):
         values = [Database.AddParanthesis(v) for v in values]
-
         query = "INSERT INTO " + tableName + " VALUES (%s);"%(",".join(values))
 
         self.curs.execute(query)

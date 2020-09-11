@@ -5,8 +5,9 @@ COL_SEPARATOR = LColor(0.0, 0.0, 0.0, 0.0)#none
 
 COL_CELL_ACTIVE = LColor(1.0, 0.0, 0.0, 1.0)#red
 COL_CELL_PREDICTIVE = LColor(0.0, 0.0, 1.0, 1.0)#blue
-COL_CELL_WINNER = LColor(1.0, 0.5, 0.0, 1.0)#orange
-COL_CELL_ACTIVE_AND_PREDICTIVE = LColor(1.0, 0.0, 1.0, 1.0)#violet
+COL_CELL_WINNER = LColor(1.0, 0.0, 1.0, 1.0)#violet
+COL_CELL_WINNER_AND_PREDICTIVE = LColor(0.8, 0.2, 0.8, 1.0)#violet darker
+COL_CELL_ACTIVE_AND_PREDICTIVE = LColor(1.0, 0.5, 0.0, 1.0)#orange
 COL_CELL_FOCUSED = LColor(1.0, 1.0, 0.0, 1.0) # yellow
 COL_CELL_INACTIVE = LColor(1.0, 1.0, 1.0, 1.0)#white
 COL_CELL_CORRECTLY_PREDICTED = LColor(0.0, 1.0, 0.0, 1.0)#green

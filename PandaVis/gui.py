@@ -37,6 +37,9 @@ class cGUI:
         self.init = False
         self.terminating = False
 
+        self.event_last = None
+        self.values_last = None
+
         try:
             with open('guiValues.ini', 'r') as file:
                 self.defaults = json.loads(file.read())
@@ -46,9 +49,13 @@ class cGUI:
                 self.defaults = json.loads(file.read())
 
 
-        self.showProximalSynapses = self.getDefault("proximalSynapses")
-        self.showOnlyActiveProximalSynapses = self.getDefault("showOnlyProximalSynapses")
-        self.showDistalSynapses = self.getDefault("distalSynapses")
+        self.showProximalSynapses = self.getDefault("showProximalSynapses")
+        self.showDistalSynapses = self.getDefault("showDistalSynapses")
+        self.showApicalSynapses = self.getDefault("showApicalSynapses")
+
+        self.showOnlyActiveSynapses = self.getDefault("showOnlyActiveSynapses")
+        self.showOnlyConnectedSynapses = self.getDefault("showOnlyConnectedSynapses")
+
         self.showInputOverlapWithPrevStep = self.getDefault("inputPrevStepOverlap")
         self.showPredictionCorrectness = self.getDefault("predictionCorrectness")
         self.showBursting = self.getDefault("showBursting")
@@ -64,6 +71,7 @@ class cGUI:
 
         self.updateLegend = True
         self.updateDescriptionWindow = True
+        self.updateConnections = False
         self.legend = None
         self.description = None
         self.showLegend = self.getDefault("legend")
@@ -74,15 +82,23 @@ class cGUI:
         self.iteration = 0
         self.cntIterations = 0
 
-
+        self.cameraStartLoc = self.getDefault("cameraStartLoc")
+        # timer to once upon a time save window position
+        # the problem behind this is, that we cant get win pos when user closes the window
+        # with cross button, because the event gets called when the window is already destroyed
+        self.tmrSaveWinPos = 100
+        self.lastWinPos = [0, 0]
 
         layout = [[sg.Text('Iteration no. 0     ', key = 'iteration')],
                   [sg.Button('STEP -1'), sg.Button('STEP +1')],
                   [sg.Button('RUN'), sg.Button('STOP')],
                   [sg.InputText(self.getDefault("iterationGoto"), key="iterationGoto"), sg.Button('GOTO step')],
-                  [sg.Checkbox('Show proximal synapes', key="proximalSynapses", enable_events=True)],
-                  [sg.Checkbox('Show only active proximal synapes', key="onlyActiveProximalSynapses", enable_events=True)],
-                  [sg.Checkbox('Show distal synapes', key="distalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show proximal synapses', key="showProximalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show distal synapses', key="showDistalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show apical synapses', key="showApicalSynapses", enable_events=True)],
+                  [sg.Checkbox('Show only connected synapses', key="showOnlyConnectedSynapses",
+                               enable_events=True)],
+                  [sg.Checkbox('Show only active synapses', key="showOnlyActiveSynapses", enable_events=True)],
                   [sg.Checkbox('Show input overlap with prev.step', key="inputPrevStepOverlap", enable_events=True)],
                   [sg.Checkbox('Show prediction correctness', key="predictionCorrectness", enable_events=True)],
                   [sg.Checkbox('Show bursting', key="showBursting", enable_events=True)],
@@ -122,8 +138,14 @@ class cGUI:
                 #print("Default not for:"+str(o))
 
     def retrieveDefaults(self):
-
         event, values = self.window.Read(timeout=10)
+
+        if values is None:
+            event = self.event_last
+            values = self.values_last
+        else:
+            self.event_last = event
+            self.values_last = values
 
         if values is not None:
             for o in values:
@@ -133,11 +155,12 @@ class cGUI:
                     print(e)
                     print("Default not for:"+str(o))
 
-        self.defaults["mainWinPos"] = self.window.current_location()
+        self.defaults["mainWinPos"] = self.lastWinPos
         if self.legend is not None:
             self.defaults["legendWinPos"] = self.legend.window.current_location()
         if self.description is not None:
             self.defaults["descWinPos"] = self.description.window.current_location()
+        self.defaults["cameraStartLoc"] = self.visApp.env.GetCameraLoc()
 
     def update(self):
 
@@ -173,6 +196,13 @@ class cGUI:
             self.Terminate()
             return
 
+        if self.tmrSaveWinPos > 100:
+            self.lastWinPos = self.window.current_location()
+            self.tmrSaveWinPos = 0
+            self.retrieveDefaults() # buffer default values regularly, because if user close gui window, we don't get anything
+        else:
+            self.tmrSaveWinPos += 1
+
         if event != '__TIMEOUT__':
 
             if event == "STEP +1":
@@ -207,8 +237,6 @@ class cGUI:
                     self.LODvalue2 = values["LODSlider2"]
 
                     self.LODChanged = True
-            elif event in ["proximalSynapses", "distalSynapses", "inputPrevStepOverlap", "predictionCorrectness","showBursting"]:
-                self.updateLegend = True
 
             elif event == "legend":
                 if values["legend"]:
@@ -225,13 +253,21 @@ class cGUI:
             elif event == 'capture':
                 self.capture = True
 
+            # general settings change detection
+            if event in ["showProximalSynapses", "showDistalSynapses", "inputPrevStepOverlap", "predictionCorrectness", "showBursting"]:
+                self.updateLegend = True
+            if event in ["showProximalSynapses", "showDistalSynapses", "showApicalSynapses", "showOnlyActiveSynapses", "showOnlyConnectedSynapses"]:
+                self.updateConnections = True
+
 
             self.wireframe = values["wireFrame"]
             self.wireframeChanged = event == "wireFrame"
 
-            self.showProximalSynapses = values["proximalSynapses"]
-            self.showOnlyActiveProximalSynapses = values["onlyActiveProximalSynapses"]
-            self.showDistalSynapses = values["distalSynapses"]
+            self.showProximalSynapses = values["showProximalSynapses"]
+            self.showOnlyActiveSynapses = values["showOnlyActiveSynapses"]
+            self.showOnlyConnectedSynapses = values["showOnlyConnectedSynapses"]
+            self.showDistalSynapses = values["showDistalSynapses"]
+            self.showApicalSynapses = values["showApicalSynapses"]
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]
             self.showBursting = values["showBursting"]
@@ -254,10 +290,11 @@ class cGUI:
         desc += str(self.focusedPath) + "\n"
         desc += "\n---CELL:\n"
         desc += self.focusedCell.getDescription()
-        desc += "\n---COLUMN:\n"
-        desc += self.focusedCell.column.getDescription()
+        if self.focusedCell.column is not None:
+            desc += "\n---COLUMN:\n"
+            desc += self.focusedCell.column.getDescription()
 
-        self.UpdateDescription(desc);
+        self.UpdateDescription(desc)
 
     def ResetCommands(self):
         self.cmdRun = False
@@ -267,7 +304,6 @@ class cGUI:
 
 
     def Terminate(self): #  event when app exit
-        self.terminating = True
         self.retrieveDefaults()
         try:
             with open('guiValues.ini', 'w') as file:
@@ -275,3 +311,4 @@ class cGUI:
         except:
             self.defaults = {}
             print("Wasn't able to save defaults into file guiValues.ini !!")
+        self.terminating = True # this will terminate main app

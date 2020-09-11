@@ -13,6 +13,7 @@ from panda3d.core import (
     GeomNode,
 )
 from Colors import *
+import objects.ConnectionFactory as ConnectionFactory
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -29,6 +30,8 @@ def printLog(txt, verbosity=verbosityLow):
 class cMinicolumn:
     def __init__(self, nameOfLayer, nOfCellsPerColumn):
         self.cells = []
+        self.nOfCellsPerColumn = nOfCellsPerColumn
+
         for i in range(nOfCellsPerColumn):
             n = cCell(self)
             self.cells.append(n)
@@ -45,6 +48,9 @@ class cMinicolumn:
         self.oneOfCellPredictive = False
         self.oneOfCellCorrectlyPredicted = False
         self.oneOfCellFalselyPredicted = False
+
+        self.cntSegments = None # info about how many segments are on this cell
+
 
     def CreateGfx(self, loader, idx):
         #                __node
@@ -166,85 +172,55 @@ class cMinicolumn:
         else:
             self.__columnBox.setRenderModeFilled()
             
-    # -- Create proximal synapses
-    # inputNames - list of names of inputs(areas)
-    # inputObj - panda vis input object
-    # permanences - list of the second points of synapses (first point is this minicolumn)
-    # NOTE: synapses are now DENSE
 
-    def CreateProximalSynapses(self, inputNames, inputObj, permanences, thresholdConnected, createOnlyActive=False):
+    def CreateSynapses(self, regionObjects, columnConnections, synapsesType, sourceRegions, activeOnly):
+        printLog("Creating synapses", verbosityMedium)
 
-        self.DestroyProximalSynapses()
+        ConnectionFactory.CreateSynapses(callbackCreateSynapse=self._CreateOneSynapse,synapsesType=synapsesType, regionObjects=regionObjects,
+                                         connections=columnConnections, idx=self.idx, sourceRegions=sourceRegions, activeOnly=activeOnly)
 
-        printLog("Creating proximal permanences", verbosityMedium)
-        printLog("To inputObj called:" + str(inputNames), verbosityMedium)
-        printLog("permanences count:" + str(len(permanences)), verbosityMedium)
-        printLog("active:" + str(sum([i for i in permanences])), verbosityHigh)
+        for arr in columnConnections:
+            if arr[0] == self.idx:# find this column
+                self.cntSegments = len(arr[1])
+                break
 
-        # inputObj are divided into separate items in list - [input1,input2,input3]
-        # permanences are one united array [1,0,0,1,0,1,0...]
-        # length is the same
+    # creates synapse, that will go from presynCell to this cell
+    # presynCell - cell object
+    def _CreateOneSynapse(self, presynCell, synapsesType):
 
-        # synapses can be connected to one input or to several inputObj
-        # if to more than one - split synapses array
-        synapsesDiv = []
-        offset = 0
-        for inputName in inputNames:
-            synapsesDiv.append(permanences[offset : offset + inputObj[inputName].count])
-            offset += inputObj[inputName].count
+        form = GeomVertexFormat.getV3()
+        vdata = GeomVertexData("SynapseLine", form, Geom.UHStatic)
+        vdata.setNumRows(1)
+        vertex = GeomVertexWriter(vdata, "vertex")
 
-        for i in range(len(synapsesDiv)):  # for each input object
+        vertex.addData3f(
+            presynCell
+            .getNode()
+            .getPos(self.__node)
+        )
+        vertex.addData3f(0, 0, 0)
+        # vertex.addData3f(self.__node.getPos())
+        # printLog("inputObj:"+str(i)+"bits:"+str(y))
+        # printLog(inputObj[i].inputBits[y].getNode().getPos(self.__node))
 
-            inputObj[inputNames[i]].resetProximalFocus()  # clear color highlight
+        prim = GeomLines(Geom.UHStatic)
+        prim.addVertices(0, 1)
 
-            for y in range(
-                len(synapsesDiv[i])
-            ):  # go through every synapse and check if its connected (we are comparing permanences)
-                if synapsesDiv[i][y] >= thresholdConnected:
 
-                    if createOnlyActive and not inputObj[inputNames[i]].inputBits[y].active:# we want to show only active synapses
-                        continue
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
 
-                    form = GeomVertexFormat.getV3()
-                    vdata = GeomVertexData("ProximalSynapseLine", form, Geom.UHStatic)
-                    vdata.setNumRows(1)
-                    vertex = GeomVertexWriter(vdata, "vertex")
+        node = GeomNode("Synapse_"+str(synapsesType))
+        node.addGeom(geom)
 
-                    vertex.addData3f(
-                        inputObj[inputNames[i]]
-                        .inputBits[y]
-                        .getNode()
-                        .getPos(self.__node)
-                    )
-                    vertex.addData3f(0, 0, 0)
-                    # vertex.addData3f(self.__node.getPos())
-                    # printLog("inputObj:"+str(i)+"bits:"+str(y))
-                    # printLog(inputObj[i].inputBits[y].getNode().getPos(self.__node))
+        nodePath = self.__cellsNodePath.attachNewNode(node)
 
-                    # highlight
-                    inputObj[inputNames[i]].inputBits[
-                        y
-                    ].setProximalFocus()  # highlight connected bits
-
-                    prim = GeomLines(Geom.UHStatic)
-                    prim.addVertices(0, 1)
-                    
-
-                    geom = Geom(vdata)
-                    geom.addPrimitive(prim)
-
-                    node = GeomNode("ProximalSynapse")
-                    node.addGeom(geom)
-                                       
-
-                    nodePath = self.__cellsNodePath.attachNewNode(node)
-                    
-                    nodePath.setRenderModeThickness(2)
-                    # color of the line
-                    if inputObj[inputNames[i]].inputBits[y].active:
-                        nodePath.setColor(COL_PROXIMAL_SYNAPSES_ACTIVE)
-                    else:
-                        nodePath.setColor(COL_PROXIMAL_SYNAPSES_INACTIVE)
+        nodePath.setRenderModeThickness(2)
+        # color of the line
+        if presynCell.active:
+            nodePath.setColor(COL_PROXIMAL_SYNAPSES_ACTIVE)
+        else:
+            nodePath.setColor(COL_PROXIMAL_SYNAPSES_INACTIVE)
 
     def setTransparency(self, transparency):
         self.transparency = transparency
@@ -253,25 +229,17 @@ class cMinicolumn:
 
         self.UpdateState(self.bursting, self.active, self.oneOfCellPredictive, self.oneOfCellCorrectlyPredicted, self.oneOfCellFalselyPredicted)
 
-    def DestroyProximalSynapses(self):
+    def DestroySynapses(self, synapseType=None):
+        if synapseType is None:
+            synapseType='*'
+
         if not self.gfxCreated:
             return
-        for syn in self.__cellsNodePath.findAllMatches("ProximalSynapse"):
+        for syn in self.__cellsNodePath.findAllMatches("Synapse_"+str(synapseType)):
             syn.removeNode()
-    
-    def DestroyDistalSynapses(self):
-        if not self.gfxCreated:
-            return
-        for cell in self.cells:
-            cell.DestroyDistalSynapses()
 
-        self.resetPresynapticFocus()
-
-    def resetPresynapticFocus(self):
-        if not self.gfxCreated:
-            return
         for cell in self.cells:
-            cell.resetPresynapticFocus()  # also reset distal focus
+            cell.DestroySynapses(synapseType)
 
     def getDescription(self):
         txt = ""
@@ -280,4 +248,5 @@ class cMinicolumn:
         txt += "One of cell is predictive:" + str(self.oneOfCellPredictive) + "\n"
         txt += "One of cell correctly predicted:" + str(self.oneOfCellCorrectlyPredicted) + "\n"
         txt += "One of cell false predicted:" + str(self.oneOfCellFalselyPredicted) + "\n"
+        txt += "Number of segments:" + str(self.cntSegments) + "\n"
         return txt

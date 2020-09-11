@@ -31,7 +31,7 @@ class cEnvironment:
         self.base = base
         self.render = base.render
         
-    def SetupCamera(self):
+    def SetupCamera(self ):
         width = self.base.win.getProperties().getXSize()
         height = self.base.win.getProperties().getYSize()
         lens = PerspectiveLens()
@@ -43,10 +43,16 @@ class cEnvironment:
         lens.setFar(50000.0)
         self.base.cam.node().setLens(lens)
 
-        self.base.camera.setPos(100, -80, 0)
-        self.base.camHeading = 40.0
-        self.base.camPitch = -8.0
-        
+        self.SetCameraLoc([100, -80, 0, 40.0, -8.0])
+
+    def SetCameraLoc(self, cameraLoc):
+        self.base.camera.setPos(cameraLoc[0], cameraLoc[1], cameraLoc[2])
+        self.base.camHeading = cameraLoc[3]
+        self.base.camPitch = cameraLoc[4]
+
+    def GetCameraLoc(self):
+        return [*self.base.camera.getPos(), self.base.camHeading, self.base.camPitch]
+
     def SetupLights(self):
         # Create Ambient Light
         ambientLight = AmbientLight('ambientLight')
@@ -80,19 +86,19 @@ class cEnvironment:
     ):  # it will create basement object, just for case that nothing is drawn to be not lost
         # Load the environment model.
 
-        self.cube = self.base.loader.loadModel(os.path.join(os.getcwd(),"models/cube"))  # /media/Data/Data/Panda3d/
+        self.cube = self.base.loader.loadModel(os.path.join(os.getcwd(),"models/worldOrigin"))  # /media/Data/Data/Panda3d/
     
         # Reparent the model to render.
         self.cube.reparentTo(self.render)
         # Apply scale and position transforms on the model.
     
-        self.cube.setScale(10, 10, 10)
+        self.cube.setScale(3, 3, 3)
         self.cube.setPos(-8, -40, 0)
     
         self.cube.setColor(1.0, 0, 0, 1.0)
-        self.cube.setRenderModeThickness(5)
+        #self.cube.setRenderModeThickness(5)
     
-        self.cube.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
+        #self.cube.setRenderModeFilledWireframe(LColor(0, 0, 0, 1.0))
         # COLLISION
         collBox = CollisionBox(self.cube.getPos(), 10.0, 10.0, 10.0)
         cnodePath = self.cube.attachNewNode(CollisionNode("cnode"))

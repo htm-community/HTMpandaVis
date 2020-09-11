@@ -3,27 +3,36 @@
 
 import sys
 import os
+import warnings
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.realpath("__file__")))
 )  # adds parent directory to path
 
-from objects.layer import cLayer
-from objects.input import cInput
+from objects.region import cRegion
 from panda3d.core import NodePath, PandaNode
+from objects.ColumnPoolerRegion import cColumnPoolerRegion
+from objects.ApicalTMPairRegion import cApicalTMPairRegion
+from objects.RawSensorRegion import cRawSensorRegion
+from objects.RawValuesRegion import cRawValuesRegion
+from objects.GridCellLocationRegion import cGridCellLocationRegion
 
+from objects.SPRegion import cSPRegion
+from objects.TMRegion import cTMRegion
+from objects.RDSEEncoderRegion import cRDSEEncoderRegion
+from objects.DateEncoderRegion import cDateEncoderRegion
 
 class cHTM:
 
     layerOffset = 0
     inputOffset = 0
 
-    def __init__(self, baseApp, loader, name):
+    def __init__(self, baseApp, loader, name, gui):
 
         self.__base = baseApp
         self.__loader = loader
-        self.layers = {}
-        self.inputs = {}
+        self.regions = {}
+        self.gui = gui
 
         self.__gfx = None
         self.__node = None
@@ -31,59 +40,76 @@ class cHTM:
         self.gfxCreationFinished = False
         self.__node = NodePath(PandaNode(name))
 
-    def CreateLayer(self, name, nOfColumnsPerLayer, nOfCellsPerColumn):
+    @classmethod
+    def getClassByType(cls, type):
+        # python implemented regions -------------------------------
+        if type == 'py.ColumnPoolerRegion':
+            return cColumnPoolerRegion
+        elif type == 'py.ApicalTMPairRegion':
+            return cApicalTMPairRegion
+        elif type == 'py.GridCellLocationRegion':
+            return cGridCellLocationRegion
+        elif type == 'py.RawValues':
+            return cRawValuesRegion
+        elif type == 'py.RawSensor':
+            return cRawSensorRegion
+        # C++ implemented regions -----------------------------------
+        elif type == 'SPRegion':
+            return cSPRegion
+        elif type == 'TMRegion':
+            return cTMRegion
+        elif type == 'RDSEEncoderRegion':
+            return cRDSEEncoderRegion
+        elif type == 'DateEncoderRegion':
+            return cDateEncoderRegion
+        else:
+            warnings.warn(type + ' region is not implemented!', UserWarning)
+            return None
 
-        l = cLayer(name, nOfColumnsPerLayer, nOfCellsPerColumn)
-        self.layers[name] = l
+    def CreateRegion(self, name, regionData):
 
-        l.CreateGfx(self.__loader)
-        l.getNode().setPos(0, 0 , cHTM.layerOffset)
+        regionClass = cHTM.getClassByType(regionData.type)
+        if regionClass is None:
+            return  # not implemented
 
-        l.getNode().reparentTo(self.__node)
+        self.regions[name] = regionClass(name, regionData, self.gui)
+        region = self.regions[name]
+
+        region.CreateGfx(self.__loader)
+        region.getNode().setPos(0, 0, cHTM.layerOffset)
+
+        region.getNode().reparentTo(self.__node)
         # self.__node = NodePath()
 
-        cHTM.layerOffset += nOfCellsPerColumn + 40
+        w, h = region.getBoundingBoxSize()
+        cHTM.layerOffset += h + 20
 
-    def CreateInput(self, name, count, rows):
+    # unificated region means like SP is bundled with TM.
+    # SP operates on TM objects, does not have any own objects
+    def CreateUnificatedRegion(self, name, regionData):
+        regionClass = cHTM.getClassByType(regionData.type)
+        if regionClass is None:
+            return  # not implemented
 
-        i = cInput(self.__base, name, count, rows)
-        self.inputs[name] = i
+        self.regions[name] = regionClass(name, regionData, self.gui, unifiedWithTMRegion=True)
 
-        i.CreateGfx(self.__loader)
-        i.getNode().setPos(-40, cHTM.inputOffset, 0)
-
-        i.getNode().reparentTo(self.__node)
-
-        cHTM.inputOffset += 5 + rows * 3
 
     def getNode(self):
         return self.__node
 
-    def DestroyProximalSynapses(self):
-        for ly in self.layers.values():
-            ly.DestroyProximalSynapses()
+    def DestroySynapses(self, synapseType=None):
+        for reg in self.regions.values():
+            reg.DestroySynapses(synapseType)
 
-        for inp in self.inputs.values():
-                inp.resetProximalFocus()
-            
-    def DestroyDistalSynapses(self):
-        for ly in self.layers.values():
-            ly.DestroyDistalSynapses()
-
-        for inp in self.inputs.values():
-            inp.resetPresynapticFocus()
-        
     def updateWireframe(self, value):
-        for ly in self.layers.values():
-            ly.updateWireframe(value)
-        for i in self.inputs.values():
-            i.updateWireframe(value)
+        for reg in self.regions.values():
+            reg.updateWireframe(value)
 
     def CreateGfxProgressively(self):
         allFinished = True
-        for ly in self.layers:
-            if not self.layers[ly].gfxCreationFinished:
-                self.layers[ly].CreateGfxProgressively()
+        for reg in self.regions:
+            if not self.regions[reg].gfxCreationFinished:
+                self.regions[reg].CreateGfxProgressively(self.regions)
                 allFinished = False
 
         if allFinished:

@@ -1,0 +1,13 @@
+{"plotsPerRow" : 3,
+"streams": [{"name" : "L4PredictedCellCnt",
+			 "type" : "line",
+			 "yaxis": "cells"},
+	    {"name" : "L4ActiveCellCnt",
+			 "type" : "line",
+			 "yaxis": "cells"},
+	    {"name" : "L6ActiveCellCnt",
+			 "type" : "line",
+			 "yaxis": "cells"}
+		   ]
+}
+

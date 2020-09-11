@@ -6,6 +6,8 @@ from bakeReader.bakeReader import BakeReader
 import math
 import os
 import time
+import sys
+import json
 
 from objects.htmObject import cHTM
 from gui import cGUI # Graphical user interface
@@ -14,9 +16,10 @@ from interaction import cInteraction # handles keys, user interaction etc..
 from direct.stdpy import threading
 from panda3d.core import loadPrcFileData, GraphicsWindow
 
-loadPrcFileData('', 'win-size 1600 900')
+loadPrcFileData('', 'win-size 100 100')
 
-#import faulthandler; faulthandler.enable()
+
+import faulthandler; faulthandler.enable() # detailed debug for SIGFAULTS for example
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -41,7 +44,7 @@ class cExplorer3D(ShowBase):
         self.mouseX_last = 0
         self.mouseY_last = 0
         self.rotateCamera = False
-        self.move_z = 50
+        self.move_z = 0
 
         self.env = cEnvironment(self)
         
@@ -58,6 +61,7 @@ class cExplorer3D(ShowBase):
             self.loader,
             visApp = self
         )
+        self.env.SetCameraLoc(self.gui.cameraStartLoc)
 
         self.databaseFilePath = databaseFilePath
 
@@ -75,7 +79,8 @@ class cExplorer3D(ShowBase):
         self.allHTMobjectsCreated = False
         self.oneOfObjectsCreationFinished = False
 
-        self.gfxCreationThread= threading.Thread(target=self.gfxCreationWorker, args=())
+        self.taskMgr.add(self.gfxCreationWorker, "gfxCreation")
+        #self.gfxCreationThread = threading.Thread(target=self.gfxCreationWorker, args=())
 
         #----
         self.iterationDataUpdate = False
@@ -101,49 +106,91 @@ class cExplorer3D(ShowBase):
 
             printLog("HTM object creation! Name:" + str(obj))
             # create HTM object
-            newObj = cHTM(self, self.loader, obj)
+            newObj = cHTM(self, self.loader, obj, self.gui)
             newObj.getNode().reparentTo(self.render)
 
-            # create inputs
-            for inp in self.bakeReader.inputs:
-                printLog("Creating input: " + str(inp), verbosityHigh)
+            # create regions
+            for reg in self.bakeReader.regions:
 
-                newObj.CreateInput(
-                    name=inp,
-                    count=self.bakeReader.inputs[inp].size,
-                    rows=int(math.sqrt(self.bakeReader.inputs[inp].size)),
-                )
-            # create layers
-            for lay in self.bakeReader.layers:
-                printLog("Creating layer: " + str(lay), verbosityHigh)
-                newObj.CreateLayer(
-                    name=lay,
-                    nOfColumnsPerLayer=int(self.bakeReader.layers[lay].params['sp_columnCount']),
-                    nOfCellsPerColumn=int(self.bakeReader.layers[lay].params['tm_cellsPerColumn']),
-                )
+                if self.CheckForUnification(reg) is not None: # check if there is region for unification
+                    printLog("Creating unificated region: " + str(reg), verbosityHigh)
+                    newObj.CreateUnificatedRegion(
+                        name=reg,
+                        regionData=self.bakeReader.regions[reg]
+                    )
+                else:
+                    printLog("Creating region: " + str(reg), verbosityHigh)
+                    newObj.CreateRegion(
+                        name=reg,
+                        regionData = self.bakeReader.regions[reg]
+                    )
 
             self.HTMObjects[obj] = newObj
 
-            self.gfxCreationThread.start()
+            # need to do it here due to unknown order creation
+            for reg in self.HTMObjects[obj].regions:
+                uniReg = self.CheckForUnification(reg)
+                if uniReg is not None:
+                    self.HTMObjects[obj].regions[reg].SetUnifiedTMRegion(uniReg) # link SP->TM
+                    self.HTMObjects[obj].regions[uniReg].SetUnifiedSPRegion(reg) # link TM -> SP
+
+            # assign position of regions in 3D space
+
+            # load positionOverride
+            override = None
+            try:
+                with open('regionPositionOverride.ini', 'r') as file:
+                    override = json.loads(file.read())
+            except:
+                print("Error while loading position override file!")
+
+            xShift = 0
+            yShift = 0
+            layerHeight = 0
+            if override is not None:
+                for layer in override:
+                    for reg in override[layer]:
+                        if reg in self.HTMObjects[obj].regions.keys():
+                            region = self.HTMObjects[obj].regions[reg]
+                            region.setPosition([xShift, yShift])
+                            x, y = region.getBoundingBoxSize()
+                            xShift += x
+                            layerHeight = max(layerHeight, y)
+                    yShift += layerHeight + 20 # layer completed
+                    layerHeight = 0
+                    xShift = 0
+
+
+
+            #self.gfxCreationThread.start()
+
+
+    # checks if the "reg" SPregion is unified with TMregion, returning name of TMRegion
+    def CheckForUnification(self, reg):
+        if self.bakeReader.regions[reg].type in ['SPRegion']:# applies only for SPRegion now
+            # check if SP is connected to TM or TM like region, with minicolumns
+
+            for link in self.bakeReader.links.values():# SP region is source and his out is bottomUpOut
+                if link.sourceRegion == reg and link.sourceOutput == 'bottomUpOut' and\
+                    self.bakeReader.regions[link.destinationRegion].type in ['TMRegion', 'ApicalTMPairRegion']:
+                    return link.destinationRegion
+
+        return None
 
 
     def LoadIteration(self, iteration):
         self.iteration = iteration
 
         for obj in self.HTMObjects:
-            for inp in self.HTMObjects[obj].inputs:
-                self.bakeReader.LoadInput(inp, iteration)
 
-            for ly in self.HTMObjects[obj].layers:
-                self.bakeReader.LoadActiveColumns(ly, iteration)
-                self.bakeReader.LoadWinnerCells(ly, iteration)
-                self.bakeReader.LoadPredictiveCells(ly, iteration+1)#take predictions for t+1
-                if self.gui.showPredictionCorrectness:
-                    self.bakeReader.LoadPredictiveCells(ly, iteration, loadPrevious=True)#take also predictions for t to be able to calculate correctness
-                self.bakeReader.LoadActiveCells(ly, iteration)
+            for reg in self.HTMObjects[obj].regions:
+                self.bakeReader.LoadAllRegionData(reg, iteration)
 
-                self.bakeReader.LoadProximalSynapses(ly,[self.gui.columnID,], iteration)
-                #can't load distal synapses here, because they are a big size
+                # we need to store also predictive cells for t+1
+                self.bakeReader.LoadRegionData(reg, iteration+1, "predictedCells", "next_predictedCells")
+
+                #self.bakeReader.LoadProximalSynapses(reg,[self.gui.columnID,], iteration)
+                # can't load distal synapses here, because they are a big size
                 # loading just for one cell per - user click
 
 
@@ -154,96 +201,80 @@ class cExplorer3D(ShowBase):
         printLog("Data change! Updating HTM state", verbosityMedium)
 
         self.gui.setIteration(self.iteration)
-        obj = "HTM1"
-        # go through all incoming inputs
-        for i in self.bakeReader.inputs:  # dict
-            printLog("Updating state of input: " + str(i), verbosityHigh)
-            # find matching input in local structure
+        obj = "HTM1"  # hardcoded for now
 
-            self.HTMObjects[obj].inputs[i].UpdateState(
-                self.bakeReader.inputs[i].bits,
-                self.bakeReader.inputs[i].stringValue,
-            )
+        # go through all regions
+        for reg in self.bakeReader.regions:  # dict
+            if reg in self.HTMObjects[obj].regions and self.HTMObjects[obj].regions[reg].gfxCreationFinished:
+                printLog("Updating state of region: " + str(reg), verbosityHigh)
 
-        # go through all incoming layers
-        for l in self.bakeReader.layers:  # dict
-            if self.HTMObjects[obj].layers[l].gfxCreationFinished:
-                printLog("Updating state of layer: " + str(l), verbosityHigh)
-                # find matching layer in local structure
-                self.HTMObjects[obj].layers[l].UpdateState(
-                    self.bakeReader.layers[l].activeColumns,
-                    self.bakeReader.layers[l].activeCells,
-                    self.bakeReader.layers[l].winnerCells,
-                    self.bakeReader.layers[l].predictiveCells,
-                    self.bakeReader.layers[l].prev_predictiveCells,
-                    showPredictionCorrectness=self.gui.showPredictionCorrectness,
-                    showBursting = self.gui.showBursting
-                )
+                self.HTMObjects[obj].regions[reg].UpdateState(self.bakeReader.regions[reg])
 
         self.oneOfObjectsCreationFinished = False
 
-        self.UpdateProximalAndDistalData()
+        self.UpdateConnections()
         self.gui.UpdateCellDescription()
 
-    def UpdateProximalAndDistalData(self):
+    # this updates focused cell / column connections
+    def UpdateConnections(self):
         if self.gui.focusedCell is None:
             return
-        # -------- proximal and distal synapses -----------------------
-        if self.gui.showProximalSynapses:
-            self.ShowProximalSynapses(self.gui.focusedPath[0],self.gui.focusedPath[1],self.gui.columnID, self.gui.showOnlyActiveProximalSynapses)
 
-        if self.gui.showDistalSynapses:
-            self.ShowDistalSynapses(self.gui.focusedPath[0], self.gui.focusedPath[1], self.gui.columnID, self.gui.cellID)
+        obj = self.gui.focusedPath[0]
+        regionName = self.gui.focusedPath[1]
+        column = self.gui.columnID
+        cell = self.gui.cellID
 
-        # if self.gui.showProximalSynapses and self.gui.focusedCell is not None:
-        #     self.client.reqProximalData()
-        # else:
-        #     for obj in self.base.HTMObjects.values():
-        #         obj.DestroyProximalSynapses()
-        #
-        # #do not request distal data if we don't want to show them or if this layer doesn't have TM
-        # if self.gui.showDistalSynapses and self.gui.focusedCell is not None:
-        #     self.client.reqDistalData()
-        # else:
-        #     for obj in self.base.HTMObjects.values():  # destroy synapses if they not to be shown
-        #         obj.DestroyDistalSynapses()
-        # -----------------------------------------------------------
+        region = self.HTMObjects[obj].regions[regionName]
+        regionData = self.bakeReader.regions[regionName]
 
-    def ShowProximalSynapses(self, obj, layerName, column, showOnlyActive):# reads the synapses from the database and show them
+        # cleans all data, do not call if you want to stack data for more cells/columns for example
+        self.bakeReader.CleanCellConnections(regionName)
+        self.bakeReader.CleanColumnConnections(regionName)
 
-        layer = self.bakeReader.layers[layerName]
-        self.bakeReader.LoadProximalSynapses(layerName, [column], self.iteration) # load it
+        # ---------------------------- PROXIMAL SYNAPSES ---------------------------------------------------------------
+        if regionData.type in ["TMRegion"] and region.unifiedWithSPRegion:# only for those regions proximal data applies
+            if self.gui.showProximalSynapses:
+                # load the data
+                self.bakeReader.LoadColumnConnections(connectionType="proximal", connectionTypeFile="", regionName = region.unifiedSPRegion, iteration=self.iteration, colID=column, connectedOnly= self.gui.showOnlyConnectedSynapses) # proximal, but without prefix, because they are the only one
 
-        if column not in layer.proximalSynapses:
-            printLog("Don't have proximal data for requested column:"+str(column) + " of layer:"+str(layerName))
-            self.HTMObjects[obj].layers[layerName].DestroyProximalSynapses()
-            return
-        self.HTMObjects[obj].layers[layerName].ShowProximalSynapses(column, layer.proximalSynapses[column],
-                                                                       layer.proximalInputs,#names of inputs
-                                                                        self.HTMObjects[obj].inputs,
-                                                                        layer.params['sp_synPermConnected'],
-                                                                        showOnlyActive)
-    def ShowDistalSynapses(self, obj, layerName, column, cell):
+                if 'proximal' not in self.bakeReader.regions[region.unifiedSPRegion].columnConnections or\
+                        column not in [x[0] for x in self.bakeReader.regions[region.unifiedSPRegion].columnConnections['proximal']]:
+                    printLog("Don't have column data for requested column:"+str(column) + " of region:"+str(regionName))
+                    #self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
+                    return
+                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='proximal')
+                self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                      synapsesType="proximal", column=column, cell=-1, onlyActive=self.gui.showOnlyActiveSynapses)
+            else:
+                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='proximal')
+        # ---------------------------- DISTAL/BASAL SYNAPSES -----------------------------------------------------------
 
-        layer = self.bakeReader.layers[layerName]
+        if regionData.type in ["TMRegion"]:
+            if self.gui.showDistalSynapses:
+                self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="", regionName=regionName, iteration=self.iteration, # basal = distal
+                                                    cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell,connectedOnly= self.gui.showOnlyConnectedSynapses)  # load it
 
-        gotSomeData = self.bakeReader.LoadDistalSynapses(layerName, column, cell, self.iteration)  # load it
+                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
+                self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                      synapsesType="distal", column=column, cell=cell, onlyActive=self.gui.showOnlyActiveSynapses)
+            else:
+                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
 
-        if not gotSomeData:
-            printLog("Don't have any distal synapses to show for this cell.")
-            self.HTMObjects[obj].layers[layerName].minicolumns[
-                column
-            ].cells[cell].DestroyDistalSynapses()
-            return
+        if regionData.type in ["py.ApicalTMPairRegion"]:
+            if self.gui.showDistalSynapses:
+                self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="basal", regionName=regionName, iteration=self.iteration, # basal = distal
+                                                    cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell, connectedOnly=self.gui.showOnlyConnectedSynapses)  # load it
 
-        self.HTMObjects[obj].layers[layerName].minicolumns[
-            column
-        ].cells[cell].CreateDistalSynapses(
-            self.HTMObjects[obj],
-            self.HTMObjects[obj].layers[layerName],
-            layer.distalSynapses[cell],
-            layer.distalInputs
-        )
+                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
+                self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                   synapsesType="distal", column=column, cell=cell, onlyActive=self.gui.showOnlyActiveSynapses)
+            else:
+                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
+        # ---------------------------- APICAL SYNAPSES -----------------------------------------------------------------
+        if self.gui.showApicalSynapses and regionData.type in ["py.ApicalTMPairRegion"]:
+            print("TODO")
+
 
 
     def update(self, task):
@@ -261,36 +292,52 @@ class cExplorer3D(ShowBase):
 
 
         if self.gui.capture:
+            path = os.path.join(os.path.dirname(self.databaseFilePath),"capture")
+            if not os.path.exists(path):
+                os.makedirs(path)
+
             self.LoadIteration(self.autoRunIteration)
             self.autoRunIteration += 1
-            if self.autoRunIteration > 997:
+            if self.autoRunIteration > self.gui.cntIterations:
                 self.gui.capture =False
-                os.system("ffmpeg -y -framerate 10 -i screenshots/%01d.jpg -codec copy screenshots/recording.mkv")
-            self.win.saveScreenshot('screenshots/'+str(self.autoRunIteration)+'.jpg')
+                os.system("ffmpeg -y -framerate 10 -i "+path+"/%01d.jpg -codec copy "+path+"/recording.mkv")
+            self.win.saveScreenshot(path+'/'+str(self.autoRunIteration)+'.jpg')
 
+        if self.gui.updateConnections:
+            print("Updating connections due to change in GUI settings")
+            self.UpdateConnections()
+            self.gui.updateConnections = False
+
+        if self.gui.terminating:
+            sys.exit()
 
         return task.cont
 
-    def gfxCreationWorker(self):
+    def gfxCreationWorker(self, task):
+        #time.sleep(20) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
+        #printLog("Starting GFX worker thread")
+        # finishing HTM objects creation on the run
+        if not self.allHTMobjectsCreated:
+            allFinished = True
+            for obj in self.HTMObjects:
+                if not self.HTMObjects[obj].gfxCreationFinished:
+                    allFinished = False
+                    self.HTMObjects[obj].CreateGfxProgressively()
 
-        time.sleep(5) # need to delay this, there was SIGSEG faults, probably during creation of objects thread collision happens
-        printLog("Starting GFX worker thread")
-        while True:
-            # finishing HTM objects creation on the run
-            if not self.allHTMobjectsCreated:
-                allFinished = True
-                for obj in self.HTMObjects:
-                    if not self.HTMObjects[obj].gfxCreationFinished:
-                        allFinished = False
-                        self.HTMObjects[obj].CreateGfxProgressively()
+                    if self.HTMObjects[obj].gfxCreationFinished:  # it just finished GFX creation
+                        self.oneOfObjectsCreationFinished = True
+            if allFinished:
+                self.allHTMobjectsCreated = True
+                printLog("GFX worker: all objects finished")
 
-                        if self.HTMObjects[obj].gfxCreationFinished:  # it just finished GFX creation
-                            self.oneOfObjectsCreationFinished = True
-                if allFinished:
-                    self.allHTMobjectsCreated = True
-                    printLog("GFX worker: all objects finished")
-                    break
-            if self.gui.terminating:
-                break
-        printLog("GFX worker: quit")
+        if self.allHTMobjectsCreated or self.gui.terminating:
+            return 0 # this return causes not to call this method anymore
+        else:
+            return task.cont
+
+if __name__ == "__main__":
+    import sys
+    app = cExplorer3D(sys.argv[1])  # first argument is database path
+    app.run()
+
 

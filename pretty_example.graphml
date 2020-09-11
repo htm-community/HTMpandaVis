@@ -1,0 +1,165 @@
+<?xml version="1.0" ?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:java="http://www.yworks.com/xml/yfiles-common/1.0/java" xmlns:sys="http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0" xmlns:x="http://www.yworks.com/xml/yfiles-common/markup/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:y="http://www.yworks.com/xml/graphml" xmlns:yed="http://www.yworks.com/xml/yed/3" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd">
+	<key for="node" id="data_node" yfiles.type="nodegraphics"/>
+	<key for="edge" id="data_edge" yfiles.type="edgegraphics"/>
+	<graph edgedefault="directed" id="G">
+		<node id="L2_0">
+			<data key="data_node">
+				<y:ShapeNode>
+					<y:Fill color="#FF0000" transparent="false"/>
+					<y:BorderStyle color="#000000" type="line" width="1.0"/>
+					<y:NodeLabel alignment="center" fontFamily="Dialog" fontSize="12" fontStyle="plain" underlinedText="false">L2_0</y:NodeLabel>
+					<y:Shape type="roundrectangle"/>
+				</y:ShapeNode>
+			</data>
+		</node>
+		<node id="L4_0">
+			<data key="data_node">
+				<y:ShapeNode>
+					<y:Fill color="#FF0000" transparent="false"/>
+					<y:BorderStyle color="#000000" type="line" width="1.0"/>
+					<y:NodeLabel alignment="center" fontFamily="Dialog" fontSize="12" fontStyle="plain" underlinedText="false">L4_0</y:NodeLabel>
+					<y:Shape type="roundrectangle"/>
+				</y:ShapeNode>
+			</data>
+		</node>
+		<node id="L6a_0">
+			<data key="data_node">
+				<y:ShapeNode>
+					<y:Fill color="#FF0000" transparent="false"/>
+					<y:BorderStyle color="#000000" type="line" width="1.0"/>
+					<y:NodeLabel alignment="center" fontFamily="Dialog" fontSize="12" fontStyle="plain" underlinedText="false">L6a_0</y:NodeLabel>
+					<y:Shape type="roundrectangle"/>
+				</y:ShapeNode>
+			</data>
+		</node>
+		<node id="motorInput_0">
+			<data key="data_node">
+				<y:ShapeNode>
+					<y:Fill color="#FF0000" transparent="false"/>
+					<y:BorderStyle color="#000000" type="line" width="1.0"/>
+					<y:NodeLabel alignment="center" fontFamily="Dialog" fontSize="12" fontStyle="plain" underlinedText="false">motorInput_0</y:NodeLabel>
+					<y:Shape type="roundrectangle"/>
+				</y:ShapeNode>
+			</data>
+		</node>
+		<node id="sensorInput_0">
+			<data key="data_node">
+				<y:ShapeNode>
+					<y:Fill color="#FF0000" transparent="false"/>
+					<y:BorderStyle color="#000000" type="line" width="1.0"/>
+					<y:NodeLabel alignment="center" fontFamily="Dialog" fontSize="12" fontStyle="plain" underlinedText="false">sensorInput_0</y:NodeLabel>
+					<y:Shape type="roundrectangle"/>
+				</y:ShapeNode>
+			</data>
+		</node>
+		<edge id="1" source="L4_0" target="L2_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>winnerCells -&gt; feedforwardGrowthCandidates</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="2" source="L4_0" target="L2_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>activeCells -&gt; feedforwardInput</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="3" source="sensorInput_0" target="L2_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>resetOut -&gt; resetIn</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="4" source="sensorInput_0" target="L4_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>dataOut -&gt; activeColumns</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="5" source="L2_0" target="L4_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>feedForwardOutput -&gt; apicalInput</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="6" source="L6a_0" target="L4_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>learnableCells -&gt; basalGrowthCandidates</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="7" source="L6a_0" target="L4_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>activeCells -&gt; basalInput</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="8" source="sensorInput_0" target="L4_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>resetOut -&gt; resetIn</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="9" source="L4_0" target="L6a_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>winnerCells -&gt; anchorGrowthCandidates</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="10" source="L4_0" target="L6a_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>activeCells -&gt; anchorInput</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="11" source="motorInput_0" target="L6a_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>dataOut -&gt; displacement</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+		<edge id="12" source="sensorInput_0" target="L6a_0">
+			<data key="data_edge">
+				<y:PolyLineEdge>
+					<y:Arrows source="none" target="standard"/>
+					<y:LineStyle color="#0000FF" type="line" width="3.0"/>
+					<y:EdgeLabel>resetOut -&gt; resetIn</y:EdgeLabel>
+				</y:PolyLineEdge>
+			</data>
+		</edge>
+	</graph>
+</graphml>
