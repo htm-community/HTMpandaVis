@@ -33,7 +33,11 @@ class cGUI:
         self._defaultWidth = defaultWidth
         self._defaultHeight = defaultHeight
 
-        self.ResetCommands()
+        self.cmdRun = False
+        self.cmdStop = False
+        self.cmdStepForward = False
+        self.gotoReq = -1
+
         self.init = False
         self.terminating = False
 
@@ -225,9 +229,12 @@ class cGUI:
                         print("Larger than allowed!")
                     else:
                         self.gotoReq = int(values["iterationGoto"])
-                        print("GOTO")
+                        print("GOTO step:"+str(self.gotoReq))
                 except:
                     print("It is not a number!")
+            elif event == "Find references":
+                print("Finding references...")
+                self.cmdFindReferences = True
             elif event == "transparencySlider":
                 self.transparency = values["transparencySlider"]
                 self.transparencyChanged = True
@@ -295,12 +302,6 @@ class cGUI:
             desc += self.focusedCell.column.getDescription()
 
         self.UpdateDescription(desc)
-
-    def ResetCommands(self):
-        self.cmdRun = False
-        self.cmdStop = False
-        self.cmdStepForward = False
-        self.gotoReq = -1
 
 
     def Terminate(self): #  event when app exit

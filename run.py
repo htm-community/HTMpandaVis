@@ -24,7 +24,7 @@ if __name__ == "__main__":
     if entryWin.command == '-runBoth-':
         print("RUN DASH in thread")
         dashVis = cDashVis()
-        dashThread = threading.Thread(target=dashVis.run,args=(entryWin.databaseFilePath, entryWin.dashLayout))
+        dashThread = threading.Thread(target=dashVis.run,args=(entryWin.databaseFilePath, entryWin.dashLayout), daemon=True)
         dashThread.start()
 
     if entryWin.command == '-runDash-':

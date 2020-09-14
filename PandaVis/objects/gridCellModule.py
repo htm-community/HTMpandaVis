@@ -177,11 +177,11 @@ class cGridCellModule:
       cell.setTransparency(transparency)
 
 
-  def DestroySynapses(self):
+  def DestroySynapses(self, synapseType):
     if not self.gfxCreated:
       return
     for cell in self.cells:
-      cell.DestroySynapses()
+      cell.DestroySynapses(synapseType)
 
     self.resetPresynapticFocus()
 

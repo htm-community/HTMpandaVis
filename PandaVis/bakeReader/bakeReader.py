@@ -130,9 +130,11 @@ class BakeReader(object):
         self.dumpFolderPath = os.path.splitext(self.databaseFilePath)[0] + "_dumpData"
         if connectionType != '':
             connectionType = "_" + connectionType
-        with open(os.path.join(self.dumpFolderPath,str(regionName) + "_" + str(iteration)) + connectionType+".dump", "rb") as f:
-            connections = Connections.load(f.read())
-
+        try:
+            with open(os.path.join(self.dumpFolderPath,str(regionName) + "_" + str(iteration)) + connectionType+".dump", "rb") as f:
+                connections = Connections.load(f.read())
+        except FileNotFoundError:
+            connections = None
         return connections
 
 
@@ -143,7 +145,8 @@ class BakeReader(object):
     # connectedOnly - loads only connected synapses
     def LoadColumnConnections(self, connectionType, connectionTypeFile, regionName, iteration, colID, connectedOnly):
         # note here "cells" means "columns" because Connection class is universal
-
+        if colID==-1:
+            return # this region doesn't have minicolumns
         connections = self.LoadConnections(connectionTypeFile, regionName, iteration)
 
         # gets presynaptic cells grouped by segments
@@ -171,7 +174,8 @@ class BakeReader(object):
     def LoadCellConnections(self, connectionType, connectionTypeFile, regionName, iteration, cellID, connectedOnly):
 
         connections = self.LoadConnections(connectionTypeFile, regionName, iteration)
-
+        if connections is None:
+            return
         # gets presynaptic cells grouped by segments
         presynCells = self.getPresynapticCellsForCell(connections, cellID, connectedOnly)
 
