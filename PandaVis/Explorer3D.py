@@ -93,7 +93,7 @@ class cExplorer3D(ShowBase):
 
         self.iteration = 0
         self.initIterationLoaded = False
-
+        self.tmrRun = 0
         self.autoRunIteration = 0
 
     def BuildStructure(self):
@@ -232,49 +232,71 @@ class cExplorer3D(ShowBase):
         self.bakeReader.CleanCellConnections(regionName)
         self.bakeReader.CleanColumnConnections(regionName)
 
-        # ---------------------------- PROXIMAL SYNAPSES ---------------------------------------------------------------
-        if regionData.type in ["TMRegion"] and region.unifiedWithSPRegion:# only for those regions proximal data applies
-            if self.gui.showProximalSynapses:
-                # load the data
-                self.bakeReader.LoadColumnConnections(connectionType="proximal", connectionTypeFile="", regionName = region.unifiedSPRegion, iteration=self.iteration, colID=column, connectedOnly= self.gui.showOnlyConnectedSynapses) # proximal, but without prefix, because they are the only one
 
-                if 'proximal' not in self.bakeReader.regions[region.unifiedSPRegion].columnConnections or\
-                        column not in [x[0] for x in self.bakeReader.regions[region.unifiedSPRegion].columnConnections['proximal']]:
-                    printLog("Don't have column data for requested column:"+str(column) + " of region:"+str(regionName))
-                    #self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
-                    return
-                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='proximal')
-                self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
-                                                                      synapsesType="proximal", column=column, cell=-1, onlyActive=self.gui.showOnlyActiveSynapses)
+
+        # ---------------------------- Column connections SYNAPSES ---------------------------------------------------------------
+        for connType, typeFiles in region.connections.items(): # iterate over conn types
+            for typeFile in typeFiles: # iterate over connection file types (can be multiple per connectionType)
+                self.UpdateColumnConnections(regionName, region, column, obj, connectionType=connType, connectionTypeFile=typeFile)
+
+
+        # ---------------------------- Cell connections SYNAPSES -----------------------------------------------------------
+
+        for connType, typeFiles in region.connections.items(): # iterate over conn types
+            for typeFile in typeFiles: # iterate over connection file types (can be multiple per connectionType)
+                self.UpdateCellConnections(obj=obj, connectionType=connType, connectionTypeFile=typeFile, regionName=regionName, column=column, cell=cell)
+
+
+    def UpdateColumnConnections(self, regionName, region, column, obj, connectionType, connectionTypeFile):
+        if self.gui.showProximalSynapses and connectionType=='proximal':
+
+            # determine region to get data from
+            if hasattr(region, 'unifiedSPRegion'): # if it has unified SP region
+                data_regionName = region.unifiedSPRegion
             else:
-                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='proximal')
-        # ---------------------------- DISTAL/BASAL SYNAPSES -----------------------------------------------------------
+                data_regionName = regionName
+            # load the data
+            self.bakeReader.LoadColumnConnections(connectionType=connectionType, connectionTypeFile=connectionTypeFile,
+                                                  regionName=data_regionName, iteration=self.iteration,
+                                                  colID=column,
+                                                  connectedOnly=self.gui.showOnlyConnectedSynapses)  # proximal, but without prefix, because they are the only one
 
-        if regionData.type in ["TMRegion"]:
-            if self.gui.showDistalSynapses:
-                self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="", regionName=regionName, iteration=self.iteration, # basal = distal
-                                                    cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell,connectedOnly= self.gui.showOnlyConnectedSynapses)  # load it
+            if connectionType not in self.bakeReader.regions[data_regionName].columnConnections or \
+                    column not in [x[0] for x in
+                                   self.bakeReader.regions[data_regionName].columnConnections[connectionType]]:
+                printLog("Don't have column data for requested column:" + str(column) + " of region:" + str(regionName))
+                # self.HTMObjects[obj].regions[regionName].DestroyProximalSynapses()
+                return
+            self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType=connectionType)
+            self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                  synapsesType=connectionType, column=column, cell=-1,
+                                                                  onlyActive=self.gui.showOnlyActiveSynapses)
+        else:
+            self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType=connectionType)
 
-                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
-                self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
-                                                                      synapsesType="distal", column=column, cell=cell, onlyActive=self.gui.showOnlyActiveSynapses)
+    # loads data, destroys previous synapses, creates new ones
+    def UpdateCellConnections(self, obj, connectionType, connectionTypeFile, regionName, column, cell):
+        if self.gui.showDistalSynapses and connectionType == 'distal' or \
+                self.gui.showApicalSynapses and connectionType == 'apical' or \
+                self.gui.showProximalSynapses and connectionType == 'proximal' and self.HTMObjects[obj].regions[regionName].type == 'py.ColumnPoolerRegion': # special case
+
+            if hasattr(self.HTMObjects[obj].regions[regionName], 'nOfCellsPerColumn'):
+                cellID = column * self.HTMObjects[obj].regions[
+                    regionName].nOfCellsPerColumn + cell
             else:
-                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
+                cellID = cell
+            # load it
+            self.bakeReader.LoadCellConnections(connectionType=connectionType, connectionTypeFile=connectionTypeFile, regionName=regionName,
+                                                iteration=self.iteration,
+                                                cellID=cellID,
+                                                connectedOnly=self.gui.showOnlyConnectedSynapses)
 
-        if regionData.type in ["py.ApicalTMPairRegion"]:
-            if self.gui.showDistalSynapses:
-                self.bakeReader.LoadCellConnections(connectionType="distal", connectionTypeFile="basal", regionName=regionName, iteration=self.iteration, # basal = distal
-                                                    cellID= column*self.HTMObjects[obj].regions[regionName].nOfCellsPerColumn + cell, connectedOnly=self.gui.showOnlyConnectedSynapses)  # load it
-
-                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
-                self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
-                                                                   synapsesType="distal", column=column, cell=cell, onlyActive=self.gui.showOnlyActiveSynapses)
-            else:
-                self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType='distal')
-        # ---------------------------- APICAL SYNAPSES -----------------------------------------------------------------
-        if self.gui.showApicalSynapses and regionData.type in ["py.ApicalTMPairRegion"]:
-            print("TODO")
-
+            self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType=connectionType)
+            self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
+                                                                  synapsesType=connectionType, column=column, cell=cell,
+                                                                  onlyActive=self.gui.showOnlyActiveSynapses)
+        else:
+            self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType=connectionType)
 
 
     def update(self, task):
@@ -286,10 +308,18 @@ class cExplorer3D(ShowBase):
             self.LoadIteration(0)
             self.initIterationLoaded = True
 
+        # --------------------------- GUI COMMANDS ---------------------------------------------------------------------
         if self.gui.gotoReq >= 0:
             self.LoadIteration(self.gui.gotoReq)
             self.gui.gotoReq = -1
 
+        if self.gui.cmdRun and (self.tmrRun - time.time())>1: # each second perform step +1
+            self.LoadIteration(self.iteration+1)
+            self.tmrRun = time.time()
+
+        if self.gui.cmdStop:
+            self.gui.cmdRun = False
+            self.gui.cmdStop = False
 
         if self.gui.capture:
             path = os.path.join(os.path.dirname(self.databaseFilePath),"capture")
@@ -303,10 +333,13 @@ class cExplorer3D(ShowBase):
                 os.system("ffmpeg -y -framerate 10 -i "+path+"/%01d.jpg -codec copy "+path+"/recording.mkv")
             self.win.saveScreenshot(path+'/'+str(self.autoRunIteration)+'.jpg')
 
+        # --------------------------------------------------------------------------------------------------------------
+
         if self.gui.updateConnections:
             print("Updating connections due to change in GUI settings")
             self.UpdateConnections()
             self.gui.updateConnections = False
+
 
         if self.gui.terminating:
             sys.exit()
@@ -334,6 +367,16 @@ class cExplorer3D(ShowBase):
             return 0 # this return causes not to call this method anymore
         else:
             return task.cont
+
+    # def FindReferences(self):
+    #     for obj in self.HTMObjects:
+    #         for regName in self.HTMObjects[obj].regions:
+    #             self.HTMObjects[obj].regions[regName].
+    #             self.bakeReader.LoadCellConnections(connectionType=connectionType,
+    #                                                 connectionTypeFile=connectionTypeFile, regionName=regionName,
+    #                                                 iteration=self.iteration,  # basal = distal
+    #                                                 cellID=cellID,
+    #                                                 connectedOnly=self.gui.showOnlyConnectedSynapses)  # load it
 
 if __name__ == "__main__":
     import sys

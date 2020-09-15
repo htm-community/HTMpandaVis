@@ -24,6 +24,9 @@ class cTMRegion(cRegion):
 
         self.unifiedWithSPRegion = False
 
+        # connection definitions - key is connection type, follows value
+        # with file suffix name (array, one region can have multiple distal connections for example)
+        self.connections = {'proximal': [''], 'distal': ['']}
 
     def SetUnifiedSPRegion(self, region):
         print("Setting link for unification: TMregion -> " + region)

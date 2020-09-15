@@ -20,6 +20,9 @@ class cColumnPoolerRegion(cRegion):
         self.SUBOBJ_DISTANCE_X = 1 + self.CELL_OFFSET
         self.SUBOBJ_DISTANCE_Y = 1 + self.CELL_OFFSET
 
+        # connection definitions - key is connection type, follows value
+        # with file suffix name (array, one region can have multiple distal connections for example)
+        self.connections = {'proximal': ['proximal'], 'distal': ['distal']}
 
     def getBoundingBoxSize(self):
         return [self.SUBOBJ_PER_ROW * self.SUBOBJ_DISTANCE_X, 1]  # [horizontal, vertical]

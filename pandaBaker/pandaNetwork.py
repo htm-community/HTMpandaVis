@@ -14,6 +14,7 @@ class Network(BaseNetwork):
         self.iteration = 0
 
         self.updateDataStreams = None # callback for user method
+        self.verbose = False
 
         super().__init__()
 
@@ -21,8 +22,8 @@ class Network(BaseNetwork):
         if not self.bakePandaData:
             super().run(n)  # if not baking, just run as normal
             return
-
-        print("Iteration "+str(self.iteration)+" running "+str(n)+"x")
+        if self.verbose == True:
+            print("Iteration "+str(self.iteration)+" running "+str(n)+"x")
         for i in range(n):
             super().run(1)
             if self.firstRun:

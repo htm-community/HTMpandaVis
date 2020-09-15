@@ -40,6 +40,9 @@ class cRegion(ABC):
         self.offset_y = 0
         self.SUBOBJ_PER_ROW = 0
 
+        # connections - dict defining connection types on region
+        self.connections = {}
+
 
     def CreateGfx(self, loader):
 
@@ -137,7 +140,14 @@ class cRegion(ABC):
                 inputName = 'apicalInput'
             else:
                 raise NotImplemented("Not known synapsesType for py.ApicalTMPairRegion!")
-        elif synapsesType in ['proximal','distal'] : # SPRegion, TMRegion
+        elif self.type == 'py.ColumnPoolerRegion':
+            if synapsesType in ['proximal']:
+                inputName = 'feedforwardInput'
+            elif synapsesType in ['distal']: # takes from itself
+                pass
+            else:
+                raise NotImplemented("Not known synapsesType for py.ColumnPoolerRegion!")
+        elif synapsesType in ['proximal', 'distal'] : # SPRegion, TMRegion
             inputName = 'bottomUpIn'
         elif synapsesType == 'basal': # ApicalTMRegion
             inputName = 'basalInput'
@@ -146,13 +156,18 @@ class cRegion(ABC):
         else:
             raise NotImplemented("Synapses type:"+str(synapsesType)+' not implemented!')
 
-        #TMRegion takes distal input from his own
+        #TMRegion and ColumnPooler takes distal input from his own
         if synapsesType == 'distal' and self.type == 'TMRegion':
             self.minicolumns[column].cells[cell]\
                 .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
                             [self.name], onlyActive)
 
-        elif synapsesType == "proximal": # we are on minicolumns
+        elif synapsesType == 'distal' and self.type == 'py.ColumnPoolerRegion':
+            self.cells[cell] \
+                .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
+                            [self.name], onlyActive)
+
+        elif synapsesType == "proximal" and hasattr(self, 'minicolumns'): # check if this region is unified with SP (another region)
             if hasattr(self, 'unifiedWithSPRegion') and self.unifiedWithSPRegion:
                 regName = self.unifiedSPRegion
             else:

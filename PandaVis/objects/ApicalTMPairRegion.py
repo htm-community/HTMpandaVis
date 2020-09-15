@@ -25,6 +25,11 @@ class cApicalTMPairRegion(cRegion):
 
         self.unifiedWithSPRegion = False
 
+        # connection definitions - key is connection type, follows value
+        # with file suffix name (array, one region can have multiple distal connections for example)
+        self.connections = {'distal': ['basal','distal'], 'apical' : ['apical']}
+
+
     def SetUnifiedSPRegion(self, region):
         print("Setting link for unification: ApicalTMPairRegion -> " + region)
         self.unifiedSPRegion = region
