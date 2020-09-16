@@ -19,8 +19,8 @@ import datetime
 import os
 import numpy as np
 
-from htm.bindings.engine_internal import Network
-#from pandaBaker.pandaNetwork import Network # using visualizationTool https://github.com/htm-community/HTMpandaVis
+#from htm.bindings.engine_internal import Network
+from pandaBaker.pandaNetwork import Network # using visualizationTool https://github.com/htm-community/HTMpandaVis
 
 import faulthandler; faulthandler.enable()
 
