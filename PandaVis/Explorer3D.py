@@ -291,19 +291,19 @@ class cExplorer3D(ShowBase):
         destroyConn = False
 
         if connectionType == 'distal':
-            if self.gui.showDistalSynapses :
+            if self.gui.showDistalSynapses:
                 createConn = True
             else:
                 destroyConn = True
 
         if connectionType == 'apical':
-            if self.gui.showDistalSynapses :
+            if self.gui.showApicalSynapses:
                 createConn = True
             else:
                 destroyConn = True
 
         if connectionType == 'proximal' and self.HTMObjects[obj].regions[regionName].type == 'py.ColumnPoolerRegion': # special case
-            if self.gui.showProximalSynapses :
+            if self.gui.showProximalSynapses:
                 createConn = True
             else:
                 destroyConn = True
