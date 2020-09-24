@@ -16,7 +16,7 @@ from interaction import cInteraction # handles keys, user interaction etc..
 from direct.stdpy import threading
 from panda3d.core import loadPrcFileData, GraphicsWindow
 
-loadPrcFileData('', 'win-size 100 100')
+loadPrcFileData('', 'win-size 1600 900')
 
 
 import faulthandler; faulthandler.enable() # detailed debug for SIGFAULTS for example
@@ -248,7 +248,17 @@ class cExplorer3D(ShowBase):
 
 
     def UpdateColumnConnections(self, regionName, region, column, obj, connectionType, connectionTypeFile):
-        if self.gui.showProximalSynapses and connectionType=='proximal':
+
+        createConn = False
+        destroyConn = False
+
+        if connectionType == 'proximal':
+            if self.gui.showProximalSynapses:
+                createConn = True
+            else:
+                destroyConn = True
+
+        if createConn:
 
             # determine region to get data from
             if hasattr(region, 'unifiedSPRegion'): # if it has unified SP region
@@ -271,14 +281,34 @@ class cExplorer3D(ShowBase):
             self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
                                                                   synapsesType=connectionType, column=column, cell=-1,
                                                                   onlyActive=self.gui.showOnlyActiveSynapses)
-        else:
+        if destroyConn:
             self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType=connectionType)
 
     # loads data, destroys previous synapses, creates new ones
     def UpdateCellConnections(self, obj, connectionType, connectionTypeFile, regionName, column, cell):
-        if self.gui.showDistalSynapses and connectionType == 'distal' or \
-                self.gui.showApicalSynapses and connectionType == 'apical' or \
-                self.gui.showProximalSynapses and connectionType == 'proximal' and self.HTMObjects[obj].regions[regionName].type == 'py.ColumnPoolerRegion': # special case
+
+        createConn = False
+        destroyConn = False
+
+        if connectionType == 'distal':
+            if self.gui.showDistalSynapses:
+                createConn = True
+            else:
+                destroyConn = True
+
+        if connectionType == 'apical':
+            if self.gui.showApicalSynapses:
+                createConn = True
+            else:
+                destroyConn = True
+
+        if connectionType == 'proximal' and self.HTMObjects[obj].regions[regionName].type == 'py.ColumnPoolerRegion': # special case
+            if self.gui.showProximalSynapses:
+                createConn = True
+            else:
+                destroyConn = True
+
+        if createConn:
 
             if hasattr(self.HTMObjects[obj].regions[regionName], 'nOfCellsPerColumn'):
                 cellID = column * self.HTMObjects[obj].regions[
@@ -295,7 +325,7 @@ class cExplorer3D(ShowBase):
             self.HTMObjects[obj].regions[regionName].ShowSynapses(self.HTMObjects["HTM1"].regions, self.bakeReader,
                                                                   synapsesType=connectionType, column=column, cell=cell,
                                                                   onlyActive=self.gui.showOnlyActiveSynapses)
-        else:
+        if destroyConn:
             self.HTMObjects[obj].regions[regionName].DestroySynapses(synapseType=connectionType)
 
 

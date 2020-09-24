@@ -235,8 +235,10 @@ class cMinicolumn:
 
         if not self.gfxCreated:
             return
-        for syn in self.__cellsNodePath.findAllMatches("Synapse_"+str(synapseType)):
-            syn.removeNode()
+
+        if synapseType == 'proximal':
+            for syn in self.__cellsNodePath.findAllMatches("Synapse_"+str(synapseType)):
+                syn.removeNode()
 
         for cell in self.cells:
             cell.DestroySynapses(synapseType)

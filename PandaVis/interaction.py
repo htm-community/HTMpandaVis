@@ -3,7 +3,7 @@
 
 from panda3d.core import CollisionTraverser, CollisionNode
 from panda3d.core import CollisionHandlerQueue, CollisionRay
-
+import time
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -28,10 +28,14 @@ class cInteraction:
         
         self.gui = base.gui
         self.bakeReader = base.bakeReader
+
+        self.tmrLodReduction = 0
+        self.lodReduction = False
         
     """Updates the camera based on the keyboard input. Once this is
       done, then the CellManager's update function is called."""
     def UpdateCameraMovement(self):
+        isMoving = False
         deltaT = globalClock.getDt()
 
         speed = self.base.speed
@@ -48,6 +52,8 @@ class cInteraction:
             deltaX = mw.getMouseX() - self.mouseX_last
             deltaY = mw.getMouseY() - self.mouseY_last
 
+            if abs(deltaX) > 0 or abs(deltaY) > 0:
+                isMoving = True
             self.mouseX_last = mw.getMouseX()
             self.mouseY_last = mw.getMouseY()
 
@@ -60,6 +66,9 @@ class cInteraction:
         self.base.move_z = (
             deltaT * speed * self.keys["shift"] + deltaT * speed * -self.keys["control"]
         )
+
+        if abs(move_x) > 0 or abs(move_y) > 0 or abs(self.base.move_z) > 0:
+            isMoving = True
 
         self.base.camera.setPos(self.base.camera, move_x, -move_y, 0)
         self.base.camera.setZ(self.base.camera.getPos()[2] + self.base.move_z)
@@ -75,6 +84,8 @@ class cInteraction:
             + deltaT * 5000 * deltaY
         )
         self.base.camera.setHpr(self.base.camHeading, self.base.camPitch, 0)
+
+        return isMoving
         
     def SetupKeys(self):
         # Setup controls
@@ -279,12 +290,16 @@ class cInteraction:
 
     def Update(self):
         
-        self.UpdateCameraMovement()
+        isMoving = self.UpdateCameraMovement()
+
+        # lod reduction feature
+        self.HandleLodReduction(isMoving)
 
         # check that all HTM objects are loaded completely, only then you can call methods on them
         if not self.base.allHTMobjectsCreated:
             return
 
+        # wireframe mode ---------------------------------------------------
         if self.gui.wireframeChanged and len(self.base.HTMObjects) > 0:
             self.gui.wireframeChanged = False
             if not self.gui.wireframe:
@@ -298,7 +313,9 @@ class cInteraction:
             
             for obj in self.base.HTMObjects.values():
                 obj.updateWireframe(self.gui.wireframe)
+        # ------------------------------------------------------------------
 
+        # transparency changed ---------------------------------------------
         if self.gui.transparencyChanged and len(self.base.HTMObjects) > 0:
             self.gui.transparencyChanged = False
 
@@ -306,6 +323,7 @@ class cInteraction:
                 for reg in obj.regions.values():
                     reg.setTransparency(self.gui.transparency/100.0)
 
+        # lod changed ------------------------------------------------------
         if self.gui.LODChanged and len(self.base.HTMObjects) > 0:
             self.gui.LODChanged = False
             printLog("LOD changed:"+str(self.gui.LODvalue1)+" "+str(self.gui.LODvalue2))
@@ -315,3 +333,23 @@ class cInteraction:
             for obj in self.base.HTMObjects.values():
                 for reg in obj.regions.values():
                     reg.LODUpdateSwitch(self.gui.LODvalue1, self.gui.LODvalue2)
+        # -------------------------------------------------------------------
+
+    # feature of reducing LOD (level of details) if observer is making movement. It returns back to original LOD when
+    # observer is in idle
+    def HandleLodReduction(self, isMoving):
+        # condition for reduction
+        if self.gui.lodAutoReduction and isMoving and not self.lodReduction:
+            self.lodReduction = True
+            self.gui.LODChanged = True
+            self.lodPrevVal1 = self.gui.LODvalue1
+            self.gui.LODvalue1 = 1  # reduce to this value
+
+        if isMoving:
+            self.tmrLodReduction = time.time()
+
+        # after 2 secs of no movement, reset
+        if (time.time() - self.tmrLodReduction) > 2.0 and not isMoving and self.lodReduction:
+            self.lodReduction = False
+            self.gui.LODChanged = True
+            self.gui.LODvalue1 = self.lodPrevVal1

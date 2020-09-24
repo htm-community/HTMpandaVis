@@ -69,6 +69,7 @@ class cGUI:
         self.transparency = self.getDefault("transparencySlider")
         self.transparencyChanged = True
 
+        self.lodAutoReduction = self.getDefault("lodAutoReduction")
         self.LODvalue1 = self.getDefault("LODSlider1")
         self.LODvalue2 = self.getDefault("LODSlider2")
         self.LODChanged = True
@@ -112,8 +113,9 @@ class cGUI:
                   [sg.Text('Layer transparency'),
                    sg.Slider(key='transparencySlider', range=(1, 100), orientation='h', size=(10, 10),
                              default_value=100, enable_events=True)],
-                  [sg.Frame('Level of detail for columns', [[
-                  sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
+                  [sg.Frame('Level of detail for columns', [
+                  [sg.Checkbox('Automatic reduction', key="lodAutoReduction", enable_events=True)],
+                  [sg.Slider(key='LODSlider1', range=(1, 1000), orientation='h', size=(20, 10),
                             default_value=100, enable_events=True)],
                   [sg.Slider(key='LODSlider2', range=(1, 10000), orientation='h', size=(20, 10),
                             default_value=100, enable_events=True)]])],
@@ -159,6 +161,7 @@ class cGUI:
                     print(e)
                     print("Default not for:"+str(o))
 
+        # for objects outside gui collection
         self.defaults["mainWinPos"] = self.lastWinPos
         if self.legend is not None:
             self.defaults["legendWinPos"] = self.legend.window.current_location()
@@ -278,6 +281,7 @@ class cGUI:
             self.showInputOverlapWithPrevStep = values["inputPrevStepOverlap"]
             self.showPredictionCorrectness = values["predictionCorrectness"]
             self.showBursting = values["showBursting"]
+            self.lodAutoReduction = values["lodAutoReduction"]
 
             self.showLegend = values["legend"]
             self.showDescription = values["desc"]
