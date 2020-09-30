@@ -18,7 +18,7 @@ class cApicalTMPairRegion(cRegion):
 
         self.subObjects = self.minicolumns
 
-        self.COL_OFFSET = 0.4  # space between minicolumns
+        self.COL_OFFSET = 0.8  # space between minicolumns
 
         self.SUBOBJ_DISTANCE_X = 2 + self.COL_OFFSET
         self.SUBOBJ_DISTANCE_Y = 1 + self.COL_OFFSET

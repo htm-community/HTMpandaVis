@@ -85,7 +85,9 @@ class cDashVis(object):
         
         
         columnClassName = "col-sm-12"
-        if plotsPerRow == 3:
+        if plotsPerRow == 4:
+             columnClassName = "col-sm-3"
+        elif plotsPerRow == 3:
              columnClassName = "col-sm-4"
         elif plotsPerRow == 2:
             columnClassName = "col-sm-6"

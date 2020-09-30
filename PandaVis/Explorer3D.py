@@ -139,20 +139,28 @@ class cExplorer3D(ShowBase):
             # load positionOverride
             override = None
             try:
-                with open('regionPositionOverride.ini', 'r') as file:
+                with open(os.path.join(os.path.dirname(self.bakeReader.databaseFilePath),'regionPositionOverride.ini'), 'r') as file:
                     override = json.loads(file.read())
             except:
                 print("Error while loading position override file!")
 
             xShift = 0
             yShift = 0
+            xcolShift = 0
             layerHeight = 0
+            column = 0 # each 100's is one category - means these layers are next to each other, instead of stacking on top
             if override is not None:
                 for layer in override:
                     for reg in override[layer]:
                         if reg in self.HTMObjects[obj].regions.keys():
                             region = self.HTMObjects[obj].regions[reg]
-                            region.setPosition([xShift, yShift])
+
+                            if column < (int(layer)//100):# for each 100 in layerID, shift it by large step on X axis
+                                column = (int(layer)//100)
+                                xcolShift += 200
+                                yShift = 0
+
+                            region.setPosition([xShift + xcolShift, yShift])
                             x, y = region.getBoundingBoxSize()
                             xShift += x
                             layerHeight = max(layerHeight, y)
