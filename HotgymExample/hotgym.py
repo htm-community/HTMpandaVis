@@ -22,6 +22,8 @@ import numpy as np
 #from htm.bindings.engine_internal import Network
 from pandaBaker.pandaNetwork import Network # using visualizationTool https://github.com/htm-community/HTMpandaVis
 
+RECORD_COUNT_LIMIT = 1000 # how much data we feed into this example, maximum is 4394
+
 import faulthandler; faulthandler.enable()
 
 _EXAMPLE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -139,7 +141,7 @@ def main(parameters=default_parameters, argv=None, verbose=True):
   inputs = []
   anomaly = []
 
-  for count, record in enumerate(records):
+  for count, record in enumerate(records[0:RECORD_COUNT_LIMIT]):
 
     # Convert date string into Python date object.
     dateString = datetime.datetime.strptime(record[0], "%m/%d/%y %H:%M")
