@@ -21,7 +21,7 @@ class Network(BaseNetwork):
     def run(self, n):
         if not self.bakePandaData:
             super().run(n)  # if not baking, just run as normal
-            self.iteration += 1
+            self.iteration += n
             return
         if self.verbose == True:
             print("Iteration "+str(self.iteration)+" running "+str(n)+"x")
