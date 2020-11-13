@@ -6,7 +6,7 @@
 **UPDATE 9/2020 - major change - using solely NetworkAPI of HTM.core - fully AUTOMATIC baking process !**
 **UPDATE 6/2020 - major change - SQLITE3 instead of TCP sockets + Dash plots visualization in web browser !**
 
-**See presentation [video](https://youtu.be/c1aJq0p-9uY)!**
+**See [video tutorial](https://www.youtube.com/watch?v=vBUx-75t11U&t=514s) or presentation [video](https://youtu.be/c1aJq0p-9uY)!**
 
 Screenshots for visualization of the [2D recognition project](https://discourse.numenta.org/t/2d-object-recognition-project/5465/92)
 ![img1](images/img1.png)
