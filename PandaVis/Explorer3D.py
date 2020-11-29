@@ -141,8 +141,9 @@ class cExplorer3D(ShowBase):
             try:
                 with open(os.path.join(os.path.dirname(self.bakeReader.databaseFilePath),'regionPositionOverride.ini'), 'r') as file:
                     override = json.loads(file.read())
-            except:
+            except Exception as e:
                 print("Error while loading position override file!")
+                print(str(e))
 
             xShift = 0
             yShift = 0
