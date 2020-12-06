@@ -81,7 +81,7 @@ git clone https://github.com/htm-community/HTMpandaVis.git
 python -m pip install -r requirements.txt
 
  #this installs pandaBaker package for baking process
-python setup.py 
+python setup.py install
 ```
 # Run example
 There is NetworkAPI hotgym example in the [htm.core repository](https://github.com/htm-community/htm.core/tree/master/py/htm/examples/networkAPI).
