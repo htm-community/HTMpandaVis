@@ -4,6 +4,7 @@
 import os
 import numpy as np
 from objects.cell import cCell
+import math
 from panda3d.core import NodePath, PandaNode, LODNode, LColor
 from panda3d.core import (
   GeomVertexFormat,
@@ -29,14 +30,13 @@ def printLog(txt, verbosity=verbosityLow):
 
 
 class cGridCellModule:
-  def __init__(self, nOfCellsPerAxis):
+  def __init__(self, nOfCells):
     self.cells = []
-    self.nOfCellsPerAxis = nOfCellsPerAxis
+    self.nOfCells = [3,5,8]
 
     self.CELL_OFFSET = 0.4 # space between cells
 
-
-    for i in range(nOfCellsPerAxis*nOfCellsPerAxis):
+    for i in range(sum(nOfCells)):
       self.cells.append(cCell(self))
 
     self.idx = -1
@@ -46,7 +46,7 @@ class cGridCellModule:
     self.LodDistance1Stored = 100.0
     self.LodDistance2Stored = 5000.0
 
-    self.width = self.nOfCellsPerAxis * (1 + self.CELL_OFFSET) # width of the module
+    self.width = 20 * (1 + self.CELL_OFFSET) # width of the module
 
 
   def CreateGfx(self, loader, idx):
@@ -95,45 +95,28 @@ class cGridCellModule:
     x = 0
     y = 0
     idx = 0
-    for n in self.cells:
-      n.CreateGfx(loader, idx)
-      idx += 1
 
-      pos = self._TransformRhombToGlob([x, y], 1+self.CELL_OFFSET, 0.0)
+    level = 0
 
-      n.getNode().setPos(pos[0], pos[1], 0)
+    for n in self.nOfCells:
+      for i in range(n):
+        self.cells[idx].CreateGfx(loader, idx)
 
 
-      x += 1
-      if x >= self.nOfCellsPerAxis:
-        y += 1
-        x = 0
+        x = math.cos(2 * math.pi / n * i) * n / 5
+        y = math.sin(2 * math.pi / n * i) * n / 5
 
-      n.getNode().reparentTo(self.__cellsNodePath)
+
+        self.cells[idx].getNode().setPos(x, y, level)
+
+
+
+        self.cells[idx].getNode().reparentTo(self.__cellsNodePath)
+        idx += 1
+      level += 5
+
 
     self.gfxCreated = True
-
-    # transoforms coordinate system from rhombus to global
-  def _TransformRhombToGlob(self, position, scale, orientation):
-      t = np.radians(orientation)  # theta
-      r = np.radians(60)  # rhombus skew
-      s = scale
-
-      # create Rotation Matrix
-      R = np.array(((s * np.cos(t), s * np.cos(t + r)),
-                    (s * np.sin(t), s * np.sin(t + r))))
-
-      return np.matmul(R, position)  # multiply
-
-  # transforms coordinate system from global to rhombus
-  def _TransformGlobToRhomb(self, position, scale, orientation):
-        t = np.radians(orientation)  # theta
-        r = np.radians(60)  # rhombus skew
-        s = scale
-        # TODO add scale - use www.wolframalpha.com
-        # create Rotation Matrix - inverse of the one in _TransformRhombToGlob()
-        R = np.array(((np.sin(t + r) / np.sin(r), -np.cos(t + r) / np.sin(r)),
-                      (-np.sin(t) / np.sin(r), np.cos(t) / np.sin(r))))
 
   def LODUpdateSwitch(self, lodDistance, lodDistance2):
     self.lodDistance1Stored = lodDistance

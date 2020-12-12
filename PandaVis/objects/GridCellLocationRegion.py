@@ -9,8 +9,8 @@ class cGridCellLocationRegion(cRegion):
     self.gridCellModules = []
 
     self.gridCellModulesCount = self.parameters["moduleCount"]
-    self.cellPerAxis = self.parameters["cellsPerAxis"]
-    self.moduleCellCount = self.cellPerAxis*self.cellPerAxis
+    self.cellPerAxis = [3,5,8]#self.parameters["cellsPerAxis"]
+    self.moduleCellCount = sum(self.cellPerAxis)
     self.dimensions = self.parameters["dimensions"]
 
     for i in range(self.gridCellModulesCount):
@@ -31,7 +31,7 @@ class cGridCellLocationRegion(cRegion):
 
   def UpdateState(self, regionData):  # regionData is cRegionData class from dataStructs.py
     idx = 0
-    moduleCellsCnt = self.cellPerAxis*self.cellPerAxis
+    moduleCellsCnt = self.moduleCellCount
     for module in self.gridCellModules:
       module.UpdateState(regionData.data["activeCells"][idx*moduleCellsCnt : moduleCellsCnt + idx*moduleCellsCnt]) # take over only appropriate active cells for each module
       idx+=1
