@@ -9,12 +9,12 @@ class cGridCellLocationRegion(cRegion):
     self.gridCellModules = []
 
     self.gridCellModulesCount = self.parameters["moduleCount"]
-    self.cellPerAxis = [3,5,8]#self.parameters["cellsPerAxis"]
-    self.moduleCellCount = sum(self.cellPerAxis)
+    self.GCM_sizes = self.parameters["GCM_sizes"]
+    self.moduleCellCount = sum(self.GCM_sizes)
     self.dimensions = self.parameters["dimensions"]
 
     for i in range(self.gridCellModulesCount):
-      c = cGridCellModule(self.cellPerAxis)  # each with own scale and orientation
+      c = cGridCellModule(self.GCM_sizes)  # each with own scale and orientation
       self.gridCellModules.append(c)
 
     self.subObjects = self.gridCellModules

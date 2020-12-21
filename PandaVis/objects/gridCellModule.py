@@ -30,13 +30,13 @@ def printLog(txt, verbosity=verbosityLow):
 
 
 class cGridCellModule:
-  def __init__(self, nOfCells):
+  def __init__(self, sizes):
     self.cells = []
-    self.nOfCells = [3,5,8]
+    self.sizes = sizes
 
     self.CELL_OFFSET = 0.4 # space between cells
 
-    for i in range(sum(nOfCells)):
+    for i in range(sum(sizes)):
       self.cells.append(cCell(self))
 
     self.idx = -1
@@ -98,7 +98,7 @@ class cGridCellModule:
 
     level = 0
 
-    for n in self.nOfCells:
+    for n in self.sizes:
       for i in range(n):
         self.cells[idx].CreateGfx(loader, idx)
 
