@@ -92,7 +92,7 @@ class PandaBaker(object):
                                 iteration, regionOutArr)
 
 
-            if regInstance[0] in ["SPRegion", "py.ApicalTMPairRegion", "TMRegion", 'py.ColumnPoolerRegion']: # here list all regions that have connections
+            if regInstance[0] in ["SPRegion", "py.ApicalTMPairRegion", "TMRegion", 'py.ColumnPoolerRegion', 'py.GridCellLocationRegion']: # here list all regions that have connections
                 regInstance[1].executeCommand("saveConnectionsToFile",
                                                            os.path.join(self.dumpFolderPath,str(regName) + "_" + str(iteration)))
 

@@ -15,6 +15,7 @@ from panda3d.core import (
   GeomNode,
 )
 from Colors import *
+import objects.ConnectionFactory as ConnectionFactory
 
 verbosityLow = 0
 verbosityMedium = 1
@@ -37,7 +38,7 @@ class cGridCellModule:
     self.CELL_OFFSET = 0.4 # space between cells
 
     for i in range(sum(sizes)):
-      self.cells.append(cCell(self))
+      self.cells.append(cCell(None))
 
     self.idx = -1
 
