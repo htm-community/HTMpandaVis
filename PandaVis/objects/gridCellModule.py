@@ -33,12 +33,12 @@ class cGridCellModule:
   def __init__(self, nOfCellsPerAxis):
     self.cells = []
     self.nOfCellsPerAxis = nOfCellsPerAxis
-
+    self.cellCount = nOfCellsPerAxis*nOfCellsPerAxis
     self.CELL_OFFSET = 0.4 # space between cells
 
 
-    for i in range(nOfCellsPerAxis*nOfCellsPerAxis):
-      self.cells.append(cCell(self))
+    for i in range(self.cellCount):
+      self.cells.append(cCell(None))
 
     self.idx = -1
 

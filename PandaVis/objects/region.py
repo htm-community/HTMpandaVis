@@ -172,8 +172,8 @@ class cRegion(ABC):
         elif synapsesType == 'distal' and self.type == 'py.GridCellLocationRegion':
 
             #find to what module this cell belongs
-            module = cell // sum(self.gridCellModules[0].sizes) # all gcm has same size
-            cellID = cell % sum(self.gridCellModules[0].sizes)
+            module = column # all gcm has same size
+            cellID = cell
             if module >=0:
                 self.gridCellModules[module].cells[cellID] \
                     .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,

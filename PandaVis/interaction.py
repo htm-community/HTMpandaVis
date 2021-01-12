@@ -252,6 +252,7 @@ class cInteraction:
                 elif hasattr(region,"gridCellModules"):
                     newCellFocus = region.gridCellModules[parentId].cells[thisId]
                     self.gui.gridModuleID = parentId
+                    self.gui.columnID = parentId
                     self.gui.cellID = thisId
                 else:
                     printLog("Not able to get data on clicked object!")
