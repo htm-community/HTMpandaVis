@@ -24,6 +24,10 @@ class cGridCellLocationRegion(cRegion):
     self.SUBOBJ_DISTANCE_X = c.width + self.MODULE_OFFSET # take some module width and add space between modules
     self.SUBOBJ_DISTANCE_Y = c.width + self.MODULE_OFFSET # take some module width and add space between modules
 
+    # connection definitions - key is connection type, follows value
+    # with file suffix name (array, one region can have multiple distal connections for example)
+    self.connections = {'distal': [str(i) for i in range(self.gridCellModulesCount)]} # named by gcm numbers
+
 
   def getBoundingBoxSize(self):
     return [(int)(self.MODULE_OFFSET*self.gridCellModulesCount), 1+10]  # [horizontal, vertical]

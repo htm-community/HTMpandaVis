@@ -14,6 +14,7 @@ from panda3d.core import (
   GeomNode,
 )
 from Colors import *
+import objects.ConnectionFactory as ConnectionFactory
 
 verbosityLow = 0
 verbosityMedium = 1

@@ -133,7 +133,10 @@ class cRegion(ABC):
     def ShowSynapses(self, regionObjects, bakeReader, synapsesType, column, cell, onlyActive):
 
 
-        if self.type == 'py.ApicalTMPairRegion':
+        if self.type == 'py.GridCellLocationRegion':
+            if synapsesType in ['distal']:
+                inputName = 'anchorInput'
+        elif self.type == 'py.ApicalTMPairRegion':
             if synapsesType in ['distal']:
                 inputName = 'basalInput'
             elif synapsesType in ['apical']:
@@ -166,7 +169,17 @@ class cRegion(ABC):
             self.cells[cell] \
                 .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
                             [self.name], onlyActive)
+        elif synapsesType == 'distal' and self.type == 'py.GridCellLocationRegion':
 
+            #find to what module this cell belongs
+            module = cell // sum(self.gridCellModules[0].sizes) # all gcm has same size
+            cellID = cell % sum(self.gridCellModules[0].sizes)
+            if module >=0:
+                self.gridCellModules[module].cells[cellID] \
+                    .CreateSynapses(regionObjects, bakeReader.regions[self.name].cellConnections[synapsesType], synapsesType,
+                                self.FindSourceRegionsOfInput(bakeReader, self.name, inputName), onlyActive)
+            else:
+                raise NotImplemented("Not possible to find proper cell for py.GridCellLocationRegion!")
         elif synapsesType == "proximal" and hasattr(self, 'minicolumns'): # check if this region is unified with SP (another region)
             if hasattr(self, 'unifiedWithSPRegion') and self.unifiedWithSPRegion:
                 regName = self.unifiedSPRegion
